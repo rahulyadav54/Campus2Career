@@ -11,7 +11,6 @@ export const checkEmail = async (req, res) => {
   try {
     const { email } = req.params;
     const existing = await User.findOne({ email });
-    console.log('Check email result:', { email, exists: !!existing });
     
     res.json({
       exists: !!existing,
@@ -27,23 +26,11 @@ export const registerStudent = async (req, res) => {
   try {
     const { name, email, password, phone, department, year, rollNo, cgpa, skills } = req.body;
 
-    console.log('Registration attempt:', { email, rollNo });
     
     // Check email first
-    console.log('Checking email:', email);
     const existingEmail = await User.findOne({ email: email.toLowerCase() });
-    console.log('Existing email check result:', existingEmail ? {
-      existingEmail: existingEmail.email,
-      existingName: existingEmail.name,
-      existingStatus: existingEmail.status,
-      createdAt: existingEmail.createdAt
-    } : 'No existing user');
     
     if (existingEmail) {
-      console.log('Email already exists:', { 
-        attemptedEmail: email,
-        existingEmail: existingEmail.email 
-      });
       return res.status(400).json({ 
         message: "This email address is already registered",
         field: "email"
@@ -53,7 +40,6 @@ export const registerStudent = async (req, res) => {
     // Then check roll number
     const existingRollNo = await User.findOne({ rollNo });
     if (existingRollNo) {
-      console.log('Roll number already exists:', { attemptedRollNo: rollNo });
       return res.status(400).json({ 
         message: "This roll number is already registered",
         field: "rollNo"
@@ -163,34 +149,25 @@ export const register = async (req, res) => {
 // @route POST /api/auth/login
 export const login = async (req, res) => {
   try {
-    console.log('Login attempt:', req.body);
     const { email, password } = req.body;
 
     if (!email || !password) {
-      console.log('Missing email or password');
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    console.log('Looking for user with email:', email);
     const user = await User.findOne({ email }).select("+password");
-    console.log('User found:', user ? { id: user._id, email: user.email, status: user.status, role: user.role } : 'No user found');
     
     if (!user) {
-      console.log('User not found for email:', email);
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     if (user.status === "pending") {
-      console.log('User account pending approval:', user.email);
       return res.status(403).json({ message: "Account pending approval" });
     }
 
-    console.log('Comparing password...');
     const isMatch = await user.comparePassword(password);
-    console.log('Password match result:', isMatch);
     
     if (!isMatch) {
-      console.log('Password mismatch for user:', user.email);
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
@@ -199,7 +176,6 @@ export const login = async (req, res) => {
     user.activityLog.push({ action: 'Logged in', date: new Date() });
     await user.save();
 
-    console.log('Login successful for user:', user.email);
     res.status(200).json({
       success: true,
       token: generateToken(user._id),
@@ -231,8 +207,6 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    console.log('Received update request for user:', userId);
-    console.log('Update data:', req.body);
 
     // Find user first
     const user = await User.findById(userId);
@@ -280,7 +254,6 @@ export const updateProfile = async (req, res) => {
       
       // Save the updated user
       await user.save();
-      console.log('User profile updated successfully');
 
       // Send back the updated user data
       res.json({

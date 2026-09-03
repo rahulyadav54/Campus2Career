@@ -23,4 +23,6 @@ const connectDB = async () => {
   throw new Error("MongoDB could not be connected after 3 attempts");
 };
 
+export const isDatabaseReady = () => mongoose.connection.readyState === 1;
+
 export default connectDB;

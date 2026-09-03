@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import connectDB from "./config/db.js";
+import connectDB, { isDatabaseReady } from "./config/db.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
@@ -61,6 +61,14 @@ app.use('/uploads', (req, res, next) => {
 // Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!' });
+});
+
+app.get('/api/health', (req, res) => {
+  const databaseReady = isDatabaseReady();
+  res.status(databaseReady ? 200 : 503).json({
+    status: databaseReady ? 'ok' : 'degraded',
+    database: databaseReady ? 'connected' : 'disconnected'
+  });
 });
 
 

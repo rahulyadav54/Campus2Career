@@ -70,7 +70,7 @@
 ### Priority 2: Reliability and security
 
 - [ ] Diagnose and eliminate the intermittent MongoDB Atlas TLS/DNS failure on the development network.
-- [ ] Add backend health and readiness endpoints that report MongoDB state.
+- [x] Add backend health and readiness endpoints that report MongoDB state.
 - [ ] Add centralized frontend API client with consistent timeout, retry, and error handling.
 - [ ] Replace remaining direct `localhost:5000` calls in all frontend pages with `API_URL`.
 - [ ] Add request validation with a schema library for auth, opportunities, assessments, portfolios, and applications.
@@ -78,7 +78,7 @@
 - [ ] Move uploads from local disk to private object storage with signed URLs.
 - [ ] Add document access audit logs and file malware/type validation.
 - [ ] Add email verification, password reset, and optional MFA for privileged roles.
-- [ ] Remove sensitive request logging, especially passwords and authorization headers.
+- [x] Remove sensitive request logging, especially passwords and authorization headers.
 - [ ] Use a strong production JWT secret and rotate all credentials exposed during development.
 
 ### Priority 3: Real-time and integrations

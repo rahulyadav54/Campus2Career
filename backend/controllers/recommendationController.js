@@ -3,19 +3,14 @@ import User from '../models/UserModel.js';
 
 export const getJobRecommendations = async (req, res) => {
   try {
-    console.log('=== Job Recommendations API Called ===');
-    console.log('Request headers:', req.headers.authorization);
-    console.log('User from token:', req.user);
     
     const studentId = req.user._id;
-    console.log('Getting recommendations for student:', studentId);
     
     // Get student profile
     const student = await User.findById(studentId).select(
       'skills department specialization preferredLocations remotePref cgpa'
     );
     
-    console.log('Student profile:', student);
     
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
@@ -27,7 +22,6 @@ export const getJobRecommendations = async (req, res) => {
       status: 'approved'
     }).populate('recruiter', 'company name');
     
-    console.log('Found jobs:', jobs.length);
 
     // Generate recommendations using built-in logic
     const recommendations = jobs.map(job => {
@@ -58,7 +52,6 @@ export const getJobRecommendations = async (req, res) => {
       };
     }).filter(rec => rec.match_score >= 40).sort((a, b) => b.match_score - a.match_score);
     
-    console.log('Generated recommendations:', recommendations.length);
 
     res.json({
       student_profile: {
