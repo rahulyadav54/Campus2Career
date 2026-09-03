@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
 
     role: {
         type: String,
-        enum: ["student", "mentor", "admin", "recruiter"],
+        enum: ["student", "mentor", "admin", "recruiter", "academician", "institution"],
         required: true
     },
     status: {
@@ -84,6 +84,15 @@ const userSchema = new mongoose.Schema({
     resumeUrl: { type: String, default: "" }, // URL to uploaded resume file
     profileUrl: { type: String, default: "" }, // Public profile/portfolio URL
     assignedMentor: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    institution: { type: String, default: "" },
+    designation: { type: String, default: "" },
+    interests: { type: [String], default: [] },
+    skillProfile: {
+        strengths: { type: [String], default: [] },
+        gaps: { type: [String], default: [] },
+        lastAssessedAt: { type: Date }
+    },
+    portfolioVisibility: { type: String, enum: ["private", "institution", "public"], default: "institution" },
 
     // ===== SOCIAL LINKS =====
     socialLinks: {

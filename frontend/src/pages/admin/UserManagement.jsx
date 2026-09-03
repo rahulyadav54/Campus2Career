@@ -11,6 +11,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { API_URL } from "../../config/api";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -59,8 +60,8 @@ const UserManagement = () => {
       const token = localStorage.getItem("token");
       const url =
         filter === "all"
-          ? "http://localhost:5000/api/admin/users"
-          : `http://localhost:5000/api/admin/users?role=${filter}`;
+          ? `${API_URL}/api/admin/users`
+          : `${API_URL}/api/admin/users?role=${filter}`;
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -82,7 +83,7 @@ const UserManagement = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        "http://localhost:5000/api/admin/create-user",
+        `${API_URL}/api/admin/create-user`,
         {
           method: "POST",
           headers: {
@@ -120,7 +121,7 @@ const UserManagement = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await fetch(
-          `http://localhost:5000/api/admin/delete-user/${userId}`,
+          `${API_URL}/api/admin/delete-user/${userId}`,
           {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
@@ -143,7 +144,7 @@ const UserManagement = () => {
   const fetchMentors = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/admin/users?role=mentor", {
+      const response = await fetch(`${API_URL}/api/admin/users?role=mentor`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -159,7 +160,7 @@ const UserManagement = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/api/admin/assign-mentor/${selectedStudent._id}`,
+        `${API_URL}/api/admin/assign-mentor/${selectedStudent._id}`,
         {
           method: "PUT",
           headers: {

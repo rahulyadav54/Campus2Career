@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, User, Building, Search, Filter } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { API_URL } from "../../config/api";
 
 const UserApprovals = () => {
   const [users, setUsers] = useState([]);
@@ -24,7 +25,7 @@ const UserApprovals = () => {
       if (filterRole !== "all") params.append("role", filterRole);
 
       const response = await axios.get(
-        `http://localhost:5000/api/admin/users/pending?${params}`,
+        `${API_URL}/api/admin/users/pending?${params}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -44,7 +45,7 @@ const UserApprovals = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/admin/users/${selectedUser._id}/approve`,
+        `${API_URL}/api/admin/users/${selectedUser._id}/approve`,
         {
           approved: actionType === "approve",
           comments
@@ -120,6 +121,7 @@ const UserApprovals = () => {
           <option value="student">Students</option>
           <option value="recruiter">Recruiters</option>
           <option value="mentor">Mentors</option>
+          <option value="academician">Academicians</option>
         </select>
       </div>
 

@@ -90,7 +90,11 @@ export const registerStudent = async (req, res) => {
 // @route POST /api/auth/register
 export const register = async (req, res) => {
   try {
-    const { name, email, password, phone, department, year, rollNo, cgpa, skills, role, company, status } = req.body;
+    const { name, email, password, phone, department, year, rollNo, cgpa, skills, role, company, institution, designation } = req.body;
+    const acceptedRoles = ["student", "recruiter", "academician"];
+    if (!acceptedRoles.includes(role || "student")) {
+      return res.status(400).json({ message: "Invalid registration role" });
+    }
     
     const isRecruiter = role === "recruiter";
     
@@ -131,6 +135,12 @@ export const register = async (req, res) => {
     
     if (isRecruiter) {
       userData.company = company;
+      userData.status = "pending";
+    }
+
+    if (role === "academician") {
+      userData.institution = institution;
+      userData.designation = designation;
       userData.status = "pending";
     }
 

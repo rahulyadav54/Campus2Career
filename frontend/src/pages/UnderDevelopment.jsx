@@ -99,10 +99,10 @@ export default function UnderDevelopment() {
         <div className="mt-8 text-sm text-gray-500">
           <p>Need immediate assistance? </p>
           <a
-            href="mailto:support.internconnect@gmail.com"
+            href="mailto:support@campus2career.com"
             className="text-indigo-500 hover:text-indigo-700 font-medium transition-colors"
           >
-            support@internconnect.gov.in
+            support@campus2career.com
           </a>
         </div>
       </div>

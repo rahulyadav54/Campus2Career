@@ -10,6 +10,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { API_URL } from "../../config/api";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({});
@@ -23,7 +24,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        "http://localhost:5000/api/admin/dashboard",
+        `${API_URL}/api/admin/dashboard`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

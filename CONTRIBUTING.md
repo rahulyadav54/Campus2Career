@@ -1,4 +1,4 @@
-# Contributing to ITPO - Internship and Training Placement Office
+# Contributing to Campus2Career - Internship and Training Placement Portal
 
 Thank you for your interest in contributing to this project!  
 Follow the steps below to get started.
@@ -12,7 +12,7 @@ This creates your own copy.
 
 
 ```bash
-git clone https://github.com/suraj-savle/ITPO.git
+git clone https://github.com/rahulyadav54/Campus2Career.git
 ```
 
 ## 3. Create a New Branch

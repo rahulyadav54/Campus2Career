@@ -11,6 +11,10 @@ import jobRoutes from "./routes/jobRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 import recommendationRoutes from "./routes/recommendationRoutes.js";
+import assessmentRoutes from "./routes/assessmentRoutes.js";
+import opportunityRoutes from "./routes/opportunityRoutes.js";
+import portfolioRoutes from "./routes/portfolioRoutes.js";
+import realtimeRoutes from "./routes/realtimeRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -25,9 +29,16 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     // Allow localhost and any Vercel deployment URL for your project
+    const configuredOrigins = (process.env.FRONTEND_URLS || "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+
     if (
       origin === "http://localhost:5173" ||
-      origin.match(/https:\/\/internconnect-[a-z0-9]+-swapnils-projects-270a9a02\.vercel\.app/)
+      origin === "http://127.0.0.1:5173" ||
+      configuredOrigins.includes(origin) ||
+      origin.match(/https:\/\/campus2career-[a-z0-9-]+\.vercel\.app/)
     ) {
       return callback(null, true);
     }
@@ -45,9 +56,6 @@ app.use('/uploads', (req, res, next) => {
   }
   next();
 }, express.static('uploads'));
-
-// Connect DB
-connectDB();
 
 // Routes
 // Test route
@@ -67,6 +75,10 @@ app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/assessments", assessmentRoutes);
+app.use("/api/opportunities", opportunityRoutes);
+app.use("/api/portfolio", portfolioRoutes);
+app.use("/api/realtime", realtimeRoutes);
 
 
 
@@ -94,7 +106,18 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  } catch (error) {
+    console.error("❌ Backend startup stopped:", error.message);
+    process.exitCode = 1;
+  }
+};
+
+startServer();
 
 
 

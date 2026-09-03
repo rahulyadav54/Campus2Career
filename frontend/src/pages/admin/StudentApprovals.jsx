@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { API_URL } from "../../config/api";
 
 const StudentApprovals = () => {
   const [pendingStudents, setPendingStudents] = useState([]);
@@ -27,7 +28,7 @@ const StudentApprovals = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        "http://localhost:5000/api/admin/pending-students",
+        `${API_URL}/api/admin/pending-students`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -47,7 +48,7 @@ const StudentApprovals = () => {
   const fetchMentors = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/admin/mentors", {
+      const response = await fetch(`${API_URL}/api/admin/mentors`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -65,7 +66,7 @@ const StudentApprovals = () => {
       const token = localStorage.getItem("token");
       const mentorId = selectedMentors[studentId] || "";
       const response = await fetch(
-        `http://localhost:5000/api/admin/approve-student/${studentId}`,
+        `${API_URL}/api/admin/approve-student/${studentId}`,
         {
           method: "PUT",
           headers: {
@@ -94,7 +95,7 @@ const StudentApprovals = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/api/admin/reject-student/${studentId}`,
+        `${API_URL}/api/admin/reject-student/${studentId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

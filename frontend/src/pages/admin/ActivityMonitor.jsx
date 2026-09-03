@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Activity, Users, Clock, Filter, RefreshCw } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { makeAuthenticatedRequest } from "../../utils/auth";
+import { API_URL } from "../../config/api";
+import { useNavigate } from "react-router-dom";
 
 const ActivityMonitor = () => {
   const [activities, setActivities] = useState([]);
@@ -10,6 +12,7 @@ const ActivityMonitor = () => {
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState("");
   const [activeTab, setActiveTab] = useState("activities");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -20,16 +23,16 @@ const ActivityMonitor = () => {
     try {
       const [activitiesRes, statusRes] = await Promise.all([
         makeAuthenticatedRequest(
-          `http://localhost:5000/api/admin/activities${selectedRole ? `?role=${selectedRole}` : ""}`,
+          `${API_URL}/api/admin/activities${selectedRole ? `?role=${selectedRole}` : ""}`,
           {},
-          null
+          navigate
         ),
         makeAuthenticatedRequest(
-          `http://localhost:5000/api/admin/users-status${
+          `${API_URL}/api/admin/users-status${
             selectedRole ? `?role=${selectedRole}` : ""
           }`,
           {},
-          null
+          navigate
         ),
       ]);
 

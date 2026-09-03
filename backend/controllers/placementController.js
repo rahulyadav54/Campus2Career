@@ -224,6 +224,19 @@ export const getApplicationsOverview = async (req, res) => {
 // Dashboard Analytics
 export const getDashboardStats = async (req, res) => {
   try {
+    const countQueries = [
+      User.countDocuments({ role: "student" }),
+      User.countDocuments({ role: "student", status: "active" }),
+      User.countDocuments({ role: "student", status: "pending" }),
+      User.countDocuments({ role: "recruiter" }),
+      User.countDocuments({ role: "recruiter", status: "pending" }),
+      Job.countDocuments(),
+      Job.countDocuments({ status: "approved", isActive: true }),
+      Job.countDocuments({ status: "pending_approval" }),
+      Application.countDocuments(),
+      Application.countDocuments({ status: "hired" })
+    ];
+    const results = await Promise.allSettled(countQueries);
     const [
       totalStudents,
       activeStudents,
@@ -235,18 +248,7 @@ export const getDashboardStats = async (req, res) => {
       pendingJobs,
       totalApplications,
       placedStudents
-    ] = await Promise.all([
-      User.countDocuments({ role: "student" }),
-      User.countDocuments({ role: "student", status: "active" }),
-      User.countDocuments({ role: "student", status: "pending" }),
-      User.countDocuments({ role: "recruiter" }),
-      User.countDocuments({ role: "recruiter", status: "pending" }),
-      Job.countDocuments(),
-      Job.countDocuments({ status: "approved", isActive: true }),
-      Job.countDocuments({ status: "pending_approval" }),
-      Application.countDocuments(),
-      Application.countDocuments({ status: "hired" })
-    ]);
+    ] = results.map((result) => result.status === "fulfilled" ? result.value : 0);
 
     res.json({
       users: {

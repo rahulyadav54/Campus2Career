@@ -151,13 +151,13 @@ export default function Landing() {
     {
       name: "Sarah Chen",
       role: "Head of Career Services, Stanford University",
-      content: "InternConnect reduced our placement process from weeks to days. The AI matching is incredibly accurate.",
+      content: "Campus2Career reduced our placement process from weeks to days. The AI matching is incredibly accurate.",
       company: "Stanford University"
     },
     {
       name: "Michael Rodriguez",
       role: "HR Director, Microsoft",
-      content: "The quality of candidates matched through InternConnect has been exceptional. Highly efficient platform.",
+      content: "The quality of candidates matched through Campus2Career has been exceptional. Highly efficient platform.",
       company: "Microsoft"
     },
     {
@@ -180,7 +180,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <span className="text-xl font-bold text-gray-900 tracking-tight">InternConnect</span>
+              <span className="text-xl font-bold text-gray-900 tracking-tight">Campus2Career</span>
               <span className="text-xs text-gray-500 font-medium px-2 py-1 bg-gray-100 rounded">Enterprise</span>
             </div>
 
@@ -399,7 +399,7 @@ export default function Landing() {
               Trusted by Leading Institutions
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              See what our partners say about their experience with InternConnect
+              See what our partners say about their experience with Campus2Career
             </p>
           </AnimatedSection>
 
@@ -437,7 +437,7 @@ export default function Landing() {
               Ready to Transform Your Campus Placements?
             </h2>
             <p className="text-gray-300 mb-10 max-w-2xl mx-auto text-lg">
-              Join leading institutions worldwide using InternConnect to streamline their placement process 
+              Join leading institutions worldwide using Campus2Career to streamline their placement process 
               and achieve exceptional results.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -461,7 +461,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-10 mb-12">
             <div>
-              <h3 className="text-xl font-bold text-white mb-6">InternConnect</h3>
+              <h3 className="text-xl font-bold text-white mb-6">Campus2Career</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
                 Enterprise-grade platform transforming campus placements through intelligent technology and data-driven insights.
               </p>
@@ -503,7 +503,7 @@ export default function Landing() {
               <ul className="space-y-4">
                 <li className="flex items-center text-sm">
                   <Mail className="w-4 h-4 mr-2" />
-                  contact@internconnect.com
+                  contact@campus2career.com
                 </li>
                 <li className="flex items-center text-sm">
                   <Phone className="w-4 h-4 mr-2" />
@@ -519,7 +519,7 @@ export default function Landing() {
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm">
-              © 2024 InternConnect. All rights reserved. Enterprise Campus Placement Platform.
+              © 2024 Campus2Career. All rights reserved. Enterprise Campus Placement Platform.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="text-gray-500 hover:text-white text-sm">Privacy Policy</a>

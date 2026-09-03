@@ -1,5 +1,6 @@
 import Notification from "../models/NotificationModel.js";
 import User from "../models/UserModel.js";
+import { publishToUser } from "./realtimeService.js";
 
 class NotificationService {
   // Create a notification
@@ -24,6 +25,8 @@ class NotificationService {
         priority,
         expiresAt
       });
+
+      publishToUser(recipient, "notification", notification);
 
       return notification;
     } catch (error) {

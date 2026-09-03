@@ -1,11 +1,11 @@
 
-# ITPO - Internship and Training Placement Office
+# Campus2Career - Internship and Training Placement Portal
 
 A comprehensive web application for managing internship and training placements with AI-powered job recommendations, mentor approval workflows, and modern placement management system.
 
 ## 🚀 Project Overview
 
-ITPO is a full-stack web application designed to streamline the internship and training placement process for educational institutions. It connects students, mentors, recruiters, and administrators in a unified platform with intelligent job matching and comprehensive workflow management.
+Campus2Career is a full-stack web application designed to streamline the internship and training placement process for educational institutions. It connects students, mentors, recruiters, and administrators in a unified platform with intelligent job matching and comprehensive workflow management.
 
 ## ✨ Key Features
 
@@ -151,7 +151,7 @@ ITPO/
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/suraj-savle/ITPO.git
+git clone https://github.com/rahulyadav54/Campus2Career.git
 ```
 
 ### Backend Setup

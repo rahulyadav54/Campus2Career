@@ -11,6 +11,7 @@ import {
   Bell,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { API_URL } from "../../config/api";
 
 const AdminPostSection = () => {
   const [posts, setPosts] = useState([]);
@@ -32,7 +33,7 @@ const AdminPostSection = () => {
   const fetchPosts = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://localhost:5000/api/admin/posts", {
+      const res = await fetch(`${API_URL}/api/admin/posts`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch announcements");
@@ -49,7 +50,7 @@ const AdminPostSection = () => {
   const fetchPostHistory = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://localhost:5000/api/admin/post-history", {
+      const res = await fetch(`${API_URL}/api/admin/post-history`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch announcement history");
@@ -76,8 +77,8 @@ const AdminPostSection = () => {
     const token = localStorage.getItem("token");
     try {
       const url = editingPost
-        ? `http://localhost:5000/api/admin/posts/${editingPost._id}`
-        : "http://localhost:5000/api/admin/posts";
+        ? `${API_URL}/api/admin/posts/${editingPost._id}`
+        : `${API_URL}/api/admin/posts`;
       const method = editingPost ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -115,7 +116,7 @@ const AdminPostSection = () => {
 
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/posts/${postId}`, {
+      const res = await fetch(`${API_URL}/api/admin/posts/${postId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

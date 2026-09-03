@@ -36,6 +36,12 @@ import RecruiterDashboard from "./pages/recruiter/RecruiterDashboard";
 import RecruiterHistory from "./pages/recruiter/History";
 import JobApplications from "./pages/recruiter/JobApplications";
 import UnderDevelopment from "./pages/UnderDevelopment";
+import SkillAssessment from "./pages/student/SkillAssessment";
+import OpportunityHub from "./pages/shared/OpportunityHub";
+import AcademicianRegistration from "./pages/auth/AcademicianRegistration";
+import Portfolio from "./pages/student/Portfolio";
+import AcademicianDashboard from "./pages/academician/AcademicianDashboard";
+import OpportunityApprovals from "./pages/admin/OpportunityApprovals";
 
 
 function App() {
@@ -46,6 +52,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/recruiter/register" element={<RecruiterRegistration />} />
+        <Route path="/academician/register" element={<AcademicianRegistration />} />
         <Route path="*" element={<UnderDevelopment />} />
         
         <Route path="/student" element={<ProtectedRoute><DashboardLayout userRole="student" /></ProtectedRoute>}>
@@ -54,8 +61,17 @@ function App() {
           <Route path="profile/:studentId" element={<Profile />} />
           <Route path="jobs" element={<JobOpenings />} />
           <Route path="recommendations" element={<JobRecommendations />} />
+          <Route path="assessment" element={<SkillAssessment />} />
+          <Route path="opportunities" element={<OpportunityHub />} />
           <Route path="applications" element={<Applications />} />
           <Route path="certificates" element={<Certificates />} />
+          <Route path="portfolio" element={<Portfolio />} />
+        </Route>
+
+        <Route path="/academician" element={<ProtectedRoute><DashboardLayout userRole="academician" /></ProtectedRoute>}>
+          <Route index element={<AcademicianDashboard />} />
+          <Route path="dashboard" element={<AcademicianDashboard />} />
+          <Route path="opportunities" element={<OpportunityHub />} />
         </Route>
         
         <Route path="/mentor" element={<ProtectedRoute><DashboardLayout userRole="mentor" /></ProtectedRoute>}>
@@ -88,6 +104,7 @@ function App() {
           <Route path="dashboard" element={<PlacementDashboard />} />
           <Route path="user-approvals" element={<UserApprovals />} />
           <Route path="job-verification" element={<JobVerification />} />
+          <Route path="opportunity-approvals" element={<OpportunityApprovals />} />
           <Route path="approvals" element={<StudentApprovals />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="activities" element={<ActivityMonitor />} />

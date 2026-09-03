@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Edit, Building, MapPin, DollarSign, Calendar, Clock, Users, Award, Eye, ChevronDown, ChevronUp } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { API_URL } from "../../config/api";
 
 const JobVerification = () => {
   const [jobs, setJobs] = useState([]);
@@ -21,7 +22,7 @@ const JobVerification = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/admin/jobs/pending",
+        `${API_URL}/api/admin/jobs/pending`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -41,7 +42,7 @@ const JobVerification = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/admin/jobs/${selectedJob._id}/review`,
+        `${API_URL}/api/admin/jobs/${selectedJob._id}/review`,
         {
           action: actionType,
           comments

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Users, Briefcase, TrendingUp, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { API_URL } from "../../config/api";
 
 const PlacementDashboard = () => {
   const [stats, setStats] = useState({
@@ -19,7 +20,7 @@ const PlacementDashboard = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/admin/dashboard/stats",
+        `${API_URL}/api/admin/dashboard/stats`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }

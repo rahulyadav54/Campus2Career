@@ -1,6 +1,7 @@
 // src/pages/dashboard/DashboardLayout.jsx
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   Bell,
   LogOut,
@@ -12,6 +13,7 @@ import {
   BarChart3,
   CheckCircle,
   Award,
+  GraduationCap,
   Megaphone,
   History,
   Activity,
@@ -36,6 +38,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
       try {
         const res = await fetch("http://localhost:5000/api/auth/profile", {
           headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
         });
         
         if (res.ok) {
@@ -51,34 +54,47 @@ const DashboardLayout = ({ userRole = "student" }) => {
           }
           
           setUserData(user);
+        } else if (res.status === 401) {
+          console.error("Session rejected by backend");
+          setUserData(JSON.parse(localStorage.getItem("user") || "null"));
         } else {
-          console.error("Failed to fetch profile");
-          localStorage.removeItem("token");
-          navigate("/login");
+          console.error(`Profile request failed with status ${res.status}`);
         }
       } catch (error) {
         console.error("Failed to fetch user data:", error);
-        localStorage.removeItem("token");
-        navigate("/login");
       }
     };
     fetchUserData();
   }, [userRole, navigate]);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return undefined;
+    const events = new EventSource(`http://localhost:5000/api/realtime/events?token=${encodeURIComponent(token)}`);
+    events.addEventListener("notification", (event) => {
+      const notification = JSON.parse(event.data);
+      toast(notification.title || "You have a new notification", { icon: "!" });
+    });
+    return () => events.close();
+  }, []);
+
   const menuConfig = {
     student: {
-      title: "ITPO Portal",
+      title: "Campus2Career",
       items: [
         { path: "/student", label: "Dashboard", icon: BarChart3 },
         { path: "/student/profile", label: "Profile", icon: User },
         { path: "/student/jobs", label: "Job Openings", icon: Briefcase },
         { path: "/student/recommendations", label: "Job Recommendations", icon: CheckCircle },
+        { path: "/student/assessment", label: "Skill Assessment", icon: Activity },
+        { path: "/student/opportunities", label: "Learning & Programs", icon: Award },
         {
           path: "/student/applications",
           label: "My Applications",
           icon: Users,
         },
         { path: "/student/certificates", label: "Certificates", icon: Award },
+        { path: "/student/portfolio", label: "Digital Portfolio", icon: Award },
       ],
     },
     mentor: {
@@ -103,6 +119,13 @@ const DashboardLayout = ({ userRole = "student" }) => {
         },
       ],
     },
+    academician: {
+      title: "Campus2Career - Academia",
+      items: [
+        { path: "/academician", label: "Academia Hub", icon: BarChart3 },
+        { path: "/academician/opportunities", label: "Faculty Programs", icon: GraduationCap },
+      ],
+    },
     recruiter: {
       title: "Recruiter Portal",
       items: [
@@ -118,11 +141,13 @@ const DashboardLayout = ({ userRole = "student" }) => {
       ],
     },
     admin: {
-      title: "ITPO Portal - Placement Cell",
+      title: "Campus2Career - Placement Cell",
       items: [
         { path: "/admin", label: "Dashboard", icon: BarChart3 },
         { path: "/admin/user-approvals", label: "User Approvals", icon: CheckCircle },
         { path: "/admin/job-verification", label: "Job Verification", icon: Briefcase },
+        { path: "/admin/opportunity-approvals", label: "Program Approvals", icon: CheckCircle },
+        { path: "/admin/approvals", label: "Student Approvals", icon: Users },
         { path: "/admin/users", label: "User Management", icon: Users },
         { path: "/admin/activities", label: "Activity Monitor", icon: Activity },
         { path: "/admin/post", label: "Announcements", icon: Megaphone },
