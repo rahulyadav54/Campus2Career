@@ -48,14 +48,14 @@ app.use(cors({
     // Allow localhost and any Vercel deployment URL for your project
     const configuredOrigins = (process.env.FRONTEND_URLS || "")
       .split(",")
-      .map((value) => value.trim())
+      .map((value) => value.trim().replace(/\/$/, ""))
       .filter(Boolean);
 
     if (
       origin === "http://localhost:5173" ||
       origin === "http://127.0.0.1:5173" ||
       configuredOrigins.includes(origin) ||
-      origin.match(/https:\/\/campus2career-[a-z0-9-]+\.vercel\.app/)
+      origin.match(/^https:\/\/campus2[-]career-[a-z0-9-]+\.vercel\.app$/)
     ) {
       return callback(null, true);
     }
