@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 // src/pages/dashboard/DashboardLayout.jsx
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -36,7 +37,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/api/auth/profile", {
+        const res = await fetch(`${API_URL}/api/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
@@ -70,7 +71,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return undefined;
-    const events = new EventSource(`http://localhost:5000/api/realtime/events?token=${encodeURIComponent(token)}`);
+    const events = new EventSource(`${API_URL}/api/realtime/events?token=${encodeURIComponent(token)}`);
     events.addEventListener("notification", (event) => {
       const notification = JSON.parse(event.data);
       toast(notification.title || "You have a new notification", { icon: "!" });

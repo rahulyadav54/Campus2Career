@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import {
   Clock,
@@ -25,7 +26,7 @@ const History = () => {
 
       try {
         const res = await fetch(
-          "http://localhost:5000/api/recruiter/application-history",
+          `${API_URL}/api/recruiter/application-history`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

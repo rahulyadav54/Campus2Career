@@ -134,7 +134,7 @@ const AdminPostSection = () => {
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(
-        `http://localhost:5000/api/posts/${postId}/applications`,
+        `${API_URL}/api/posts/${postId}/applications`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

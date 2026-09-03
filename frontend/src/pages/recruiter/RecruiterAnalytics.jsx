@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -33,10 +34,10 @@ const RecruiterAnalytics = () => {
       startDate.setDate(startDate.getDate() - parseInt(dateRange));
 
       const [statsRes, reportsRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/recruiter/dashboard/stats", {
+        axios.get(`${API_URL}/api/recruiter/dashboard/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`http://localhost:5000/api/recruiter/reports?type=${reportType}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, {
+        axios.get(`${API_URL}/api/recruiter/reports?type=${reportType}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -85,7 +86,7 @@ const RecruiterAnalytics = () => {
       startDate.setDate(startDate.getDate() - parseInt(dateRange));
 
       const response = await axios.get(
-        `http://localhost:5000/api/recruiter/reports?type=${reportType}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&format=csv`,
+        `${API_URL}/api/recruiter/reports?type=${reportType}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&format=csv`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'

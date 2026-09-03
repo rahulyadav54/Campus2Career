@@ -72,7 +72,7 @@
 - [ ] Diagnose and eliminate the intermittent MongoDB Atlas TLS/DNS failure on the development network.
 - [x] Add backend health and readiness endpoints that report MongoDB state.
 - [ ] Add centralized frontend API client with consistent timeout, retry, and error handling.
-- [ ] Replace remaining direct `localhost:5000` calls in all frontend pages with `API_URL`.
+- [x] Replace remaining direct `localhost:5000` calls in all frontend pages with `API_URL`.
 - [ ] Add request validation with a schema library for auth, opportunities, assessments, portfolios, and applications.
 - [ ] Add rate limiting, security headers, request size limits, and structured production logging.
 - [ ] Move uploads from local disk to private object storage with signed URLs.

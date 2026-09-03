@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import {
   Plus,
@@ -28,7 +29,7 @@ export default function RecruiterJobs() {
 
   const fetchJobs = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/jobs/recruiter", {
+      const res = await axios.get(`${API_URL}/api/jobs/recruiter`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setJobs(res.data);
@@ -46,7 +47,7 @@ export default function RecruiterJobs() {
     e.preventDefault();
     try {
       await axios.post(
-        "http://localhost:5000/api/jobs",
+        `${API_URL}/api/jobs`,
         {
           title: form.title,
           description: form.description,
@@ -80,7 +81,7 @@ export default function RecruiterJobs() {
     }
 
     try {
-      await axios.put(`http://localhost:5000/api/jobs/${jobId}/toggle`, 
+      await axios.put(`${API_URL}/api/jobs/${jobId}/toggle`, 
         { isActive: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -99,7 +100,7 @@ export default function RecruiterJobs() {
     }
 
     try {
-      await axios.delete(`http://localhost:5000/api/jobs/${jobId}`, {
+      await axios.delete(`${API_URL}/api/jobs/${jobId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Job deleted successfully!");

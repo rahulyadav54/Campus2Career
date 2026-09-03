@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import {
   Mail,
@@ -113,8 +114,8 @@ const Profile = () => {
         }
 
         const endpoint = isMentor
-          ? `http://localhost:5000/api/mentor/student-profile/${studentId}`
-          : "http://localhost:5000/api/student/profile";
+          ? `${API_URL}/api/mentor/student-profile/${studentId}`
+          : `${API_URL}/api/student/profile`;
           
         console.log('Fetching from endpoint:', endpoint);
 
@@ -204,7 +205,7 @@ const Profile = () => {
       };
 
       const res = await makeAuthenticatedRequest(
-        "http://localhost:5000/api/student/update-profile",
+        `${API_URL}/api/student/update-profile`,
         {
           method: "PUT",
           body: JSON.stringify(updateData),
@@ -271,7 +272,7 @@ const Profile = () => {
 
       try {
         const response = await makeAuthenticatedRequest(
-          "http://localhost:5000/api/student/upload-resume",
+          `${API_URL}/api/student/upload-resume`,
           {
             method: "POST",
             body: formData,
@@ -858,7 +859,7 @@ const Profile = () => {
                             try {
                               const token = localStorage.getItem("token");
                               const response = await fetch(
-                                `http://localhost:5000/api/mentor/student-resume/${studentId}`,
+                                `${API_URL}/api/mentor/student-resume/${studentId}`,
                                 {
                                   headers: { Authorization: `Bearer ${token}` },
                                 }

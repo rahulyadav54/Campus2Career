@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useEffect, useState } from "react";
 import { BookOpen, Send, Users } from "lucide-react";
 
@@ -20,7 +21,7 @@ export default function AcademicianDashboard() {
   const token = localStorage.getItem("token");
 
   const loadSubmissions = () => {
-    fetch("http://localhost:5000/api/opportunities", { headers: { Authorization: `Bearer ${token}` } })
+    fetch(`${API_URL}/api/opportunities`, { headers: { Authorization: `Bearer ${token}` } })
       .then((response) => response.json())
       .then((data) => setSubmissions(data.opportunities || []));
   };
@@ -32,7 +33,7 @@ export default function AcademicianDashboard() {
   const submit = async (event) => {
     event.preventDefault();
     setMessage("");
-    const response = await fetch("http://localhost:5000/api/opportunities", {
+    const response = await fetch(`${API_URL}/api/opportunities`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({

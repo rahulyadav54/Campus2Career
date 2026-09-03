@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import {
   Eye,
@@ -35,7 +36,7 @@ const Mentees = () => {
 
     try {
       const res = await makeAuthenticatedRequest(
-        "http://localhost:5000/api/mentor/mentees",
+        `${API_URL}/api/mentor/mentees`,
         {},
         navigate
       );

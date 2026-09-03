@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import {
   Activity,
@@ -49,12 +50,12 @@ const Progress = () => {
     try {
       const [menteesRes, appsRes] = await Promise.all([
         makeAuthenticatedRequest(
-          "http://localhost:5000/api/mentor/mentees",
+          `${API_URL}/api/mentor/mentees`,
           {},
           navigate
         ),
         makeAuthenticatedRequest(
-          "http://localhost:5000/api/mentor/application-history",
+          `${API_URL}/api/mentor/application-history`,
           {},
           navigate
         ),

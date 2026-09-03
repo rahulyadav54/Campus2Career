@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { Search, MapPin, DollarSign, Clock, Briefcase, Star, Target, AlertTriangle, ChevronDown } from "lucide-react";
 import axios from "axios";
@@ -33,7 +34,7 @@ export default function StudentJobs() {
       let applications = [];
       try {
         const appsRes = await makeAuthenticatedRequest(
-          "http://localhost:5000/api/applications/me",
+          `${API_URL}/api/applications/me`,
           {},
           navigate
         );
@@ -47,11 +48,11 @@ export default function StudentJobs() {
       const token = localStorage.getItem('token');
       const [jobsRes, recRes] = await Promise.all([
         makeAuthenticatedRequest(
-          "http://localhost:5000/api/jobs?status=approved",
+          `${API_URL}/api/jobs?status=approved`,
           {},
           navigate
         ),
-fetch('http://localhost:5000/api/recommendations/jobs', {
+fetch(`${API_URL}/api/recommendations/jobs`, {
           headers: { Authorization: `Bearer ${token}` }
         }).then(res => res.ok ? res : { json: () => ({ recommendations: [] }) })
         .catch(() => ({ json: () => ({ recommendations: [] }) }))
@@ -152,7 +153,7 @@ fetch('http://localhost:5000/api/recommendations/jobs', {
 
     try {
       const response = await makeAuthenticatedRequest(
-        `http://localhost:5000/api/applications/${jobId}/apply`,
+        `${API_URL}/api/applications/${jobId}/apply`,
         {
           method: "POST",
           body: JSON.stringify({}),

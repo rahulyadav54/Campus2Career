@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { Users, Briefcase, Calendar, TrendingUp, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -29,7 +30,7 @@ const RecruiterDashboard = () => {
       try {
         // Fetch user profile
         const profileRes = await axios.get(
-          "http://localhost:5000/api/auth/profile",
+          `${API_URL}/api/auth/profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -40,7 +41,7 @@ const RecruiterDashboard = () => {
         });
 
         const jobsRes = await axios.get(
-          "http://localhost:5000/api/jobs/recruiter",
+          `${API_URL}/api/jobs/recruiter`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -48,7 +49,7 @@ const RecruiterDashboard = () => {
         const jobs = jobsRes.data || [];
 
         const studentsRes = await axios.get(
-          "http://localhost:5000/api/recruiter/students",
+          `${API_URL}/api/recruiter/students`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -59,7 +60,7 @@ const RecruiterDashboard = () => {
         let applications = [];
         try {
           const appsRes = await axios.get(
-            "http://localhost:5000/api/recruiter/applications",
+            `${API_URL}/api/recruiter/applications`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }

@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { Check, X, Eye, Clock, User, Briefcase, Calendar } from "lucide-react";
 import toast from "react-hot-toast";
@@ -31,7 +32,7 @@ const Approvals = () => {
 
     try {
       const res = await makeAuthenticatedRequest(
-        "http://localhost:5000/api/mentor/pending-applications",
+        `${API_URL}/api/mentor/pending-applications`,
         {},
         navigate
       );
@@ -50,7 +51,7 @@ const Approvals = () => {
   const handleDecision = async (appId, action) => {
     try {
       const res = await makeAuthenticatedRequest(
-        `http://localhost:5000/api/applications/${appId}/mentor`,
+        `${API_URL}/api/applications/${appId}/mentor`,
         {
           method: "PUT",
           body: JSON.stringify({ action, mentorNote: comment }),

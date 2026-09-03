@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { Calendar, X } from "lucide-react";
 import toast from "react-hot-toast";
@@ -14,7 +15,7 @@ const Applications = () => {
   const fetchApplications = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/applications/me", {
+      const res = await axios.get(`${API_URL}/api/applications/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setApplications(res.data || []);
@@ -91,7 +92,7 @@ const Applications = () => {
   const handleWithdraw = async (applicationId) => {
     try {
       await axios.delete(
-        `http://localhost:5000/api/applications/${applicationId}/withdraw`,
+        `${API_URL}/api/applications/${applicationId}/withdraw`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import {
   Clock,
@@ -44,7 +45,7 @@ const History = () => {
 
     try {
       const res = await makeAuthenticatedRequest(
-        "http://localhost:5000/api/mentor/application-history",
+        `${API_URL}/api/mentor/application-history`,
         {},
         navigate
       );

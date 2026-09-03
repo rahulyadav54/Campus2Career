@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -40,7 +41,7 @@ const RecruiterStudentProfile = () => {
 
       try {
         const res = await fetch(
-          `http://localhost:5000/api/recruiter/student/${id}`,
+          `${API_URL}/api/recruiter/student/${id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -245,7 +246,7 @@ const RecruiterStudentProfile = () => {
                       try {
                         const token = localStorage.getItem("token");
                         const response = await fetch(
-                          `http://localhost:5000/api/recruiter/student-resume/${student._id}`,
+                          `${API_URL}/api/recruiter/student-resume/${student._id}`,
                           {
                             headers: { Authorization: `Bearer ${token}` },
                           }

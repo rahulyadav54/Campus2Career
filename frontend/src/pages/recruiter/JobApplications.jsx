@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -27,7 +28,7 @@ const JobApplications = () => {
   const fetchJobApplications = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/jobs/${jobId}/applications`,
+        `${API_URL}/api/jobs/${jobId}/applications`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -49,7 +50,7 @@ const JobApplications = () => {
   ) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/applications/${applicationId}/recruiter`,
+        `${API_URL}/api/applications/${applicationId}/recruiter`,
         { action, interviewDate },
         { headers: { Authorization: `Bearer ${token}` } }
       );

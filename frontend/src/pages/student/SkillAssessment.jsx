@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState } from "react";
 import { CheckCircle, Target, BookOpen } from "lucide-react";
 
@@ -19,7 +20,7 @@ export default function SkillAssessment() {
     event.preventDefault();
     setError("");
     try {
-      const response = await fetch("http://localhost:5000/api/assessments", {
+      const response = await fetch(`${API_URL}/api/assessments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
         body: JSON.stringify({

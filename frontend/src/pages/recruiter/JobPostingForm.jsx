@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Save, Send, FileText, Calendar, MapPin, DollarSign, Users, Clock } from "lucide-react";
@@ -60,7 +61,7 @@ const JobPostingForm = () => {
   const fetchJobData = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:5000/api/jobs/${jobId}`, {
+      const response = await axios.get(`${API_URL}/api/jobs/${jobId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -166,12 +167,12 @@ const JobPostingForm = () => {
       };
 
       if (isEditMode) {
-        await axios.put(`http://localhost:5000/api/jobs/${jobId}`, payload, {
+        await axios.put(`${API_URL}/api/jobs/${jobId}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success(isDraft ? "Job updated as draft" : "Job resubmitted for approval");
       } else {
-        await axios.post("http://localhost:5000/api/jobs", payload, {
+        await axios.post(`${API_URL}/api/jobs`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success(isDraft ? "Job saved as draft" : "Job submitted for approval");

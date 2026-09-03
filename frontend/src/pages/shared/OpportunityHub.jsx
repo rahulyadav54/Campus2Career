@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useEffect, useState } from "react";
 import { Briefcase, GraduationCap, Users, FlaskConical } from "lucide-react";
 
@@ -11,14 +12,14 @@ export default function OpportunityHub() {
 
   useEffect(() => {
     const query = category === "all" ? "" : `?type=${category}`;
-    fetch(`http://localhost:5000/api/opportunities${query}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
+    fetch(`${API_URL}/api/opportunities${query}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } })
       .then(async (response) => { const data = await response.json(); if (!response.ok) throw new Error(data.message); return data; })
       .then((data) => setOpportunities(data.opportunities || []))
       .catch((error) => setMessage(error.message || "Unable to load opportunities"));
   }, [category]);
 
   const apply = async (id) => {
-    const response = await fetch(`http://localhost:5000/api/opportunities/${id}/apply`, { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+    const response = await fetch(`${API_URL}/api/opportunities/${id}/apply`, { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
     const data = await response.json();
     setMessage(data.message);
   };

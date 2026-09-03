@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useEffect, useState } from "react";
 
 export default function Portfolio() {
@@ -6,11 +7,11 @@ export default function Portfolio() {
   const [message, setMessage] = useState("");
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` };
 
-  const load = () => fetch("http://localhost:5000/api/portfolio/me", { headers }).then((response) => response.json()).then((data) => setItems(data.items || []));
+  const load = () => fetch(`${API_URL}/api/portfolio/me`, { headers }).then((response) => response.json()).then((data) => setItems(data.items || []));
   useEffect(load, []);
   const submit = async (event) => {
     event.preventDefault();
-    const response = await fetch("http://localhost:5000/api/portfolio", { method: "POST", headers, body: JSON.stringify(form) });
+    const response = await fetch(`${API_URL}/api/portfolio`, { method: "POST", headers, body: JSON.stringify(form) });
     const data = await response.json();
     setMessage(data.message || "Portfolio item added for verification");
     setForm({ ...form, title: "", description: "", issuer: "", evidenceUrl: "" });

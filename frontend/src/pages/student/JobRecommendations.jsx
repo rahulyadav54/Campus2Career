@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from 'react';
 import { Star, MapPin, Clock, DollarSign, Target, CheckCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
@@ -17,12 +18,12 @@ const JobRecommendations = () => {
   const fetchRecommendations = async () => {
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.get('http://localhost:5000/api/recommendations/jobs', {
+      const response = await axios.get(`${API_URL}/api/recommendations/jobs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
       // Fetch full job details for each recommendation
-      const jobsResponse = await axios.get('http://localhost:5000/api/jobs?status=approved', {
+      const jobsResponse = await axios.get(`${API_URL}/api/jobs?status=approved`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

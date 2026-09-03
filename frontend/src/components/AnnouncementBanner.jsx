@@ -1,3 +1,4 @@
+import { API_URL } from '../config/api';
 import { useState, useEffect } from 'react';
 import { AlertCircle, Info, CheckCircle, Clock } from 'lucide-react';
 import axios from 'axios';
@@ -21,7 +22,7 @@ const AnnouncementBanner = () => {
 
     try {
       console.log('Fetching announcements...');
-      const response = await axios.get('http://localhost:5000/api/posts/announcements', {
+      const response = await axios.get(`${API_URL}/api/posts/announcements`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log('Announcements response:', response.data);

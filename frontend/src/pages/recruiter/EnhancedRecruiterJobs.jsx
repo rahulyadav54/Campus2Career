@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { Eye, Edit, Trash2, Plus, Search, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -30,7 +31,7 @@ const EnhancedRecruiterJobs = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:5000/api/recruiter/jobs?${params}`,
+        `${API_URL}/api/recruiter/jobs?${params}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -44,7 +45,7 @@ const EnhancedRecruiterJobs = () => {
       // Fallback to legacy API
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/jobs/recruiter",
+          `${API_URL}/api/jobs/recruiter`,
           {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
           }
@@ -63,7 +64,7 @@ const EnhancedRecruiterJobs = () => {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/jobs/${jobId}`, {
+      await axios.delete(`${API_URL}/api/jobs/${jobId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Job deleted successfully");
@@ -78,7 +79,7 @@ const EnhancedRecruiterJobs = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.patch(
-        `http://localhost:5000/api/jobs/${jobId}/toggle`,
+        `${API_URL}/api/jobs/${jobId}/toggle`,
         { isActive: !currentStatus },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -100,7 +101,7 @@ const EnhancedRecruiterJobs = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/jobs/${jobId}`,
+        `${API_URL}/api/jobs/${jobId}`,
         { submit: true },
         {
           headers: { Authorization: `Bearer ${token}` },

@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
@@ -32,7 +33,7 @@ const ApplicationManagement = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/recruiter/jobs/${jobId}/applications`,
+        `${API_URL}/api/recruiter/jobs/${jobId}/applications`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -66,7 +67,7 @@ const ApplicationManagement = () => {
       }
 
       await axios.put(
-        `http://localhost:5000/api/recruiter/applications/${selectedApplication._id}`,
+        `${API_URL}/api/recruiter/applications/${selectedApplication._id}`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -88,7 +89,7 @@ const ApplicationManagement = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/recruiter/student-resume/${studentId}`,
+        `${API_URL}/api/recruiter/student-resume/${studentId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'blob'

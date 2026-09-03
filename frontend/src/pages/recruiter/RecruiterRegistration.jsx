@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Building, Upload, Shield, CheckCircle, AlertCircle } from "lucide-react";
@@ -134,7 +135,7 @@ const RecruiterRegistration = () => {
     
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        `${API_URL}/api/auth/register`,
         {
           name: formData.name,
           email: formData.email,

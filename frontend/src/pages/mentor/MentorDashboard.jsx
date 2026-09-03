@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import {
   Users,
@@ -68,7 +69,7 @@ const MentorDashboard = () => {
       
       // Fetch mentor dashboard data
       const response = await makeAuthenticatedRequest(
-        "http://localhost:5000/api/mentor/dashboard",
+        `${API_URL}/api/mentor/dashboard`,
         {},
         navigate
       );
@@ -87,7 +88,7 @@ const MentorDashboard = () => {
   const handleApplicationAction = async (applicationId, action, feedback = "") => {
     try {
       const response = await makeAuthenticatedRequest(
-        `http://localhost:5000/api/mentor/applications/${applicationId}/${action}`,
+        `${API_URL}/api/mentor/applications/${applicationId}/${action}`,
         {
           method: "PUT",
           body: JSON.stringify({ feedback }),

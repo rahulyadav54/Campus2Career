@@ -1,3 +1,4 @@
+import { API_URL } from '../../config/api';
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -37,7 +38,7 @@ export default function StudentHome() {
       try {
         // Fetch applications data
         const appsRes = await axios.get(
-          "http://localhost:5000/api/applications/me",
+          `${API_URL}/api/applications/me`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
