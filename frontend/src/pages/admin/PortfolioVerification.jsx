@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle, ExternalLink } from "lucide-react";
 import apiClient from "../../services/apiClient";
+import { API_URL } from "../../config/api";
 
 export default function AdminPortfolioVerification() {
   const [items, setItems] = useState([]);
@@ -10,7 +11,7 @@ export default function AdminPortfolioVerification() {
     apiClient.get("/api/portfolio/me")
       .then(() => {
         // Admin sees all unverified items via a dedicated query
-        return fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/portfolio/pending`, {
+        return fetch(`${API_URL}/api/portfolio/pending`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         }).then((r) => r.json());
       })
