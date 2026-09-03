@@ -6,7 +6,7 @@ import LoginPage from "./pages/auth/Login";
 import DashboardLayout from "./components/shared/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import StudentHome from "./pages/student/StudentHome";
-import Profile from "./pages/student/Profile";
+import Profile from "./pages/student/profile";
 import JobOpenings from "./pages/student/JobOpenings";
 import JobRecommendations from "./pages/student/JobRecommendations";
 import Applications from "./pages/student/Applications";
