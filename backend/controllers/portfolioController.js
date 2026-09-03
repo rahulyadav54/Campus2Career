@@ -11,6 +11,18 @@ export const getPortfolio = async (req, res) => {
   }
 };
 
+export const getPendingPortfolioItems = async (req, res) => {
+  try {
+    const items = await PortfolioItem.find({ verified: false })
+      .populate("owner", "name email department rollNo institution")
+      .populate("verifiedBy", "name role")
+      .sort({ createdAt: -1 });
+    res.json({ items });
+  } catch (error) {
+    res.status(500).json({ message: "Unable to load pending portfolio items", error: error.message });
+  }
+};
+
 export const addPortfolioItem = async (req, res) => {
   try {
     const item = await PortfolioItem.create({ ...req.body, owner: req.user._id });

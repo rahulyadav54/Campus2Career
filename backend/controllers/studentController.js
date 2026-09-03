@@ -140,7 +140,8 @@ export const uploadResume = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const resumeUrl = `http://localhost:5000/uploads/resumes/${req.file.filename}`;
+    const backendUrl = (process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`).replace(/\/$/, "");
+    const resumeUrl = `${backendUrl}/uploads/resumes/${req.file.filename}`;
     
     const student = await User.findByIdAndUpdate(
       req.user._id,

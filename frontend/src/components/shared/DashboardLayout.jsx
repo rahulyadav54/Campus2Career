@@ -1,4 +1,5 @@
 import { API_URL } from '../../config/api';
+import { refreshSession } from '../../services/auth';
 // src/pages/dashboard/DashboardLayout.jsx
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -18,6 +19,10 @@ import {
   Megaphone,
   History,
   Activity,
+  Compass,
+  BookOpen,
+  ClipboardList,
+  TrendingUp,
 } from "lucide-react";
 
 const DashboardLayout = ({ userRole = "student" }) => {
@@ -36,33 +41,52 @@ const DashboardLayout = ({ userRole = "student" }) => {
         return;
       }
 
+      // Always seed from localStorage first so the UI renders immediately
+      const cached = JSON.parse(localStorage.getItem("user") || "null");
+      if (cached) setUserData(cached);
+
       try {
-        const res = await fetch(`${API_URL}/api/auth/profile`, {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        let res = await fetch(`${API_URL}/api/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
+          signal: controller.signal,
         });
-        
+        clearTimeout(timeout);
+
+        if (res.status === 401 && await refreshSession()) {
+          const renewedToken = localStorage.getItem("token");
+          res = await fetch(`${API_URL}/api/auth/profile`, {
+            headers: { Authorization: `Bearer ${renewedToken}` },
+            cache: "no-store",
+          });
+        }
+
         if (res.ok) {
           const data = await res.json();
           const user = data.user || data.student;
-          
-          // Validate user role matches expected role
+          // Only redirect on a real role mismatch from a fresh token
           if (user.role !== userRole) {
-            console.error(`Role mismatch: expected ${userRole}, got ${user.role}`);
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
             navigate("/login");
             return;
           }
-          
+          localStorage.setItem("user", JSON.stringify(user));
           setUserData(user);
         } else if (res.status === 401) {
-          console.error("Session rejected by backend");
-          setUserData(JSON.parse(localStorage.getItem("user") || "null"));
-        } else {
-          console.error(`Profile request failed with status ${res.status}`);
+          // Token truly invalid — force logout with toast only if user was active
+          const hadUser = !!localStorage.getItem("user");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          if (hadUser) toast.error("Session expired. Please login again.");
+          navigate("/login");
         }
+        // For any other status (429, 503, etc.) keep the cached user and stay on dashboard
       } catch (error) {
-        console.error("Failed to fetch user data:", error);
+        // Network error or timeout — keep cached user, don't redirect
+        console.warn("Profile fetch failed, using cached user:", error.message);
       }
     };
     fetchUserData();
@@ -77,6 +101,13 @@ const DashboardLayout = ({ userRole = "student" }) => {
       toast(notification.title || "You have a new notification", { icon: "!" });
     });
     return () => events.close();
+  }, []);
+
+  useEffect(() => {
+    const refreshTimer = setInterval(() => {
+      refreshSession().catch(() => {});
+    }, 6 * 60 * 60 * 1000);
+    return () => clearInterval(refreshTimer);
   }, []);
 
   const menuConfig = {
@@ -96,6 +127,10 @@ const DashboardLayout = ({ userRole = "student" }) => {
         },
         { path: "/student/certificates", label: "Certificates", icon: Award },
         { path: "/student/portfolio", label: "Digital Portfolio", icon: Award },
+        { path: "/student/career", label: "Career Guidance", icon: Compass },
+        { path: "/student/skill-mapping", label: "Skill Mapping", icon: TrendingUp },
+        { path: "/student/learning", label: "Learning Recommendations", icon: BookOpen },
+        { path: "/student/internships", label: "Internships", icon: ClipboardList },
       ],
     },
     mentor: {
@@ -117,6 +152,11 @@ const DashboardLayout = ({ userRole = "student" }) => {
           path: "/mentor/history",
           label: "Application History",
           icon: History,
+        },
+        {
+          path: "/mentor/internships",
+          label: "Internship Progress",
+          icon: ClipboardList,
         },
       ],
     },
@@ -152,6 +192,17 @@ const DashboardLayout = ({ userRole = "student" }) => {
         { path: "/admin/users", label: "User Management", icon: Users },
         { path: "/admin/activities", label: "Activity Monitor", icon: Activity },
         { path: "/admin/post", label: "Announcements", icon: Megaphone },
+        { path: "/admin/portfolio-verification", label: "Portfolio Verification", icon: Award },
+        { path: "/admin/question-bank", label: "Question Bank", icon: GraduationCap },
+        { path: "/admin/pathways", label: "Career Pathways", icon: Compass },
+        { path: "/admin/analytics", label: "Analytics Dashboard", icon: TrendingUp },
+      ],
+    },
+    institution: {
+      title: "Campus2Career - Institution",
+      items: [
+        { path: "/institution", label: "Dashboard", icon: BarChart3 },
+        { path: "/institution/portfolio-verification", label: "Portfolio Verification", icon: Award },
       ],
     },
   };

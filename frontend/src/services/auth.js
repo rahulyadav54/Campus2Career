@@ -24,3 +24,17 @@ export const handleApiError = (error) => {
     return error.message || 'An unexpected error occurred';
   }
 };
+
+export const refreshSession = async () => {
+  const token = localStorage.getItem("token");
+  if (!token) return false;
+
+  const res = await fetch(`${API_URL}/api/auth/refresh`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.token) return false;
+  localStorage.setItem("token", data.token);
+  return true;
+};

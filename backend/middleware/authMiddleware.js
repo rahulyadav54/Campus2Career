@@ -59,3 +59,20 @@ export const studentOnly = (req, res, next) => {
     res.status(403).json({ message: "Access denied. Student only." });
   }
 };
+
+export const institutionOnly = (req, res, next) => {
+  if (req.user && (req.user.role === "institution" || req.user.role === "admin")) {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. Institution admin only." });
+  }
+};
+
+// Staff = admin or institution admin (for analytics / management dashboards)
+export const staffOnly = (req, res, next) => {
+  if (req.user && (req.user.role === "admin" || req.user.role === "institution")) {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. Admin or institution staff only." });
+  }
+};

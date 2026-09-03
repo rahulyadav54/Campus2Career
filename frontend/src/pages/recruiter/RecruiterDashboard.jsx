@@ -22,10 +22,7 @@ const RecruiterDashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/login");
-        return;
-      }
+      if (!token) return;
 
       try {
         // Fetch user profile
@@ -88,7 +85,9 @@ const RecruiterDashboard = () => {
         setRecentApplications(applications.slice(0, 5));
       } catch (err) {
         console.error("Dashboard fetch error:", err);
-        toast.error("Failed to load dashboard data");
+        if (err?.response?.status !== 401 && err?.response?.status !== 403) {
+          toast.error("Could not load dashboard data");
+        }
       } finally {
         setLoading(false);
       }

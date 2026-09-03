@@ -10,7 +10,7 @@ const skillAssessmentSchema = new mongoose.Schema({
   interests: { type: [String], default: [] },
   strengths: { type: [String], default: [] },
   gaps: { type: [String], default: [] },
-  learningRecommendations: { type: [String], default: [] },
+  learningRecommendations: { type: [mongoose.Schema.Types.Mixed], default: [] },
   completedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 

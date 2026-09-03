@@ -42,6 +42,17 @@ import AcademicianRegistration from "./pages/auth/AcademicianRegistration";
 import Portfolio from "./pages/student/Portfolio";
 import AcademicianDashboard from "./pages/academician/AcademicianDashboard";
 import OpportunityApprovals from "./pages/admin/OpportunityApprovals";
+import InstitutionDashboard from "./pages/institution/InstitutionDashboard";
+import PortfolioVerification from "./pages/institution/PortfolioVerification";
+import AdminPortfolioVerification from "./pages/admin/PortfolioVerification";
+import QuestionBankManagement from "./pages/admin/QuestionBankManagement";
+import AdminPathways from "./pages/admin/AdminPathways";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import CareerGuidance from "./pages/student/CareerGuidance";
+import LearningRecommendations from "./pages/student/LearningRecommendations";
+import SkillMapping from "./pages/student/SkillMapping";
+import Internships from "./pages/student/Internships";
+import MentorInternships from "./pages/mentor/MentorInternships";
 
 
 function App() {
@@ -66,6 +77,10 @@ function App() {
           <Route path="applications" element={<Applications />} />
           <Route path="certificates" element={<Certificates />} />
           <Route path="portfolio" element={<Portfolio />} />
+          <Route path="career" element={<CareerGuidance />} />
+          <Route path="skill-mapping" element={<SkillMapping />} />
+          <Route path="learning" element={<LearningRecommendations />} />
+          <Route path="internships" element={<Internships />} />
         </Route>
 
         <Route path="/academician" element={<ProtectedRoute><DashboardLayout userRole="academician" /></ProtectedRoute>}>
@@ -81,6 +96,7 @@ function App() {
           <Route path="approvals" element={<Approvals />} />
           <Route path="progress" element={<Progress />} />
           <Route path="history" element={<MentorHistory />} />
+          <Route path="internships" element={<MentorInternships />} />
           <Route path="student/:studentId" element={<Profile />} />
         </Route>
         
@@ -109,6 +125,16 @@ function App() {
           <Route path="users" element={<UserManagement />} />
           <Route path="activities" element={<ActivityMonitor />} />
           <Route path="post" element={<AdminPostSection />} />
+          <Route path="portfolio-verification" element={<AdminPortfolioVerification />} />
+          <Route path="question-bank" element={<QuestionBankManagement />} />
+          <Route path="pathways" element={<AdminPathways />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
+        </Route>
+
+        <Route path="/institution" element={<ProtectedRoute><DashboardLayout userRole="institution" /></ProtectedRoute>}>
+          <Route index element={<InstitutionDashboard />} />
+          <Route path="dashboard" element={<InstitutionDashboard />} />
+          <Route path="portfolio-verification" element={<PortfolioVerification />} />
         </Route>
 
       </Routes>

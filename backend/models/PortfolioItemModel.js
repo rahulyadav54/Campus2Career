@@ -9,7 +9,8 @@ const portfolioItemSchema = new mongoose.Schema({
   issuer: { type: String, default: "" },
   verified: { type: Boolean, default: false },
   verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  verifiedAt: { type: Date }
+  verifiedAt: { type: Date },
+  rejectionReason: { type: String, default: "" }
 }, { timestamps: true });
 
 export default mongoose.model("PortfolioItem", portfolioItemSchema);

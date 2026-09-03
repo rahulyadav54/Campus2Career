@@ -55,15 +55,15 @@
 
 ### Priority 1: Make all SIH workflows production-complete
 
-- [ ] Add a dedicated institution entity and institution-admin role.
-- [ ] Add institution onboarding, departments, and multi-institution data isolation.
-- [ ] Add institution dashboard for skill development, internship participation, placements, and program outcomes.
-- [ ] Add admin/institution portfolio verification UI, not only the verification API.
-- [ ] Add assessment question-bank management and configurable scoring.
-- [ ] Add aptitude test question types, timed attempts, result history, and score breakdowns.
-- [ ] Replace generated learning recommendations with real course, certification, and workshop records.
-- [ ] Add career pathways based on skills, interests, roles, and industry demand.
-- [ ] Add internship progress records, mentor feedback, completion evidence, and completion certificates.
+- [x] Add a dedicated institution entity and institution-admin role.
+- [x] Add institution onboarding, departments, and multi-institution data isolation.
+- [x] Add institution dashboard for skill development, internship participation, placements, and program outcomes.
+- [x] Add admin/institution portfolio verification UI, not only the verification API.
+- [x] Add assessment question-bank management and configurable scoring.
+- [x] Add aptitude test question types, timed attempts, result history, and score breakdowns.
+- [x] Replace generated learning recommendations with real course, certification, and workshop records.
+- [x] Add career pathways based on skills, interests, roles, and industry demand.
+- [x] Add internship progress records, mentor feedback, completion evidence, and completion certificates.
 - [ ] Add structured mentorship sessions, goals, scheduling, attendance, and feedback.
 - [ ] Add collaboration records for guest lectures, workshops, research, consultancy, innovation challenges, and live projects.
 
@@ -71,10 +71,10 @@
 
 - [ ] Diagnose and eliminate the intermittent MongoDB Atlas TLS/DNS failure on the development network.
 - [x] Add backend health and readiness endpoints that report MongoDB state.
-- [ ] Add centralized frontend API client with consistent timeout, retry, and error handling.
+- [x] Add centralized frontend API client with consistent timeout, retry, and error handling.
 - [x] Replace remaining direct `localhost:5000` calls in all frontend pages with `API_URL`.
-- [ ] Add request validation with a schema library for auth, opportunities, assessments, portfolios, and applications.
-- [ ] Add rate limiting, security headers, request size limits, and structured production logging.
+- [x] Add request validation with a schema library for auth, opportunities, assessments, portfolios, and applications.
+- [x] Add rate limiting, security headers, request size limits, and structured production logging.
 - [ ] Move uploads from local disk to private object storage with signed URLs.
 - [ ] Add document access audit logs and file malware/type validation.
 - [ ] Add email verification, password reset, and optional MFA for privileged roles.
@@ -102,9 +102,9 @@
 - [ ] Push the latest commit after remaining changes.
 - [ ] Deploy frontend to Vercel with `VITE_API_URL`.
 - [ ] Deploy backend and recommendation service to Render or Railway.
-- [ ] Configure production `MONGO_URI`, `JWT_SECRET`, and `FRONTEND_URLS`.
+- [x] Add production `MONGO_URI`, `JWT_SECRET`, and `FRONTEND_URLS` configuration examples.
 - [ ] Replace every production-incompatible localhost URL.
-- [ ] Add a live demo seed dataset without real personal credentials.
+- [x] Add a live demo seed dataset without real personal credentials.
 - [ ] Prepare SIH demo script, architecture diagram, requirement mapping, and measurable impact metrics.
 
 ## Agent Work Packages

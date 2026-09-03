@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import connectDB, { isDatabaseReady } from "./config/db.js";
 import studentRoutes from "./routes/studentRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -15,12 +17,27 @@ import assessmentRoutes from "./routes/assessmentRoutes.js";
 import opportunityRoutes from "./routes/opportunityRoutes.js";
 import portfolioRoutes from "./routes/portfolioRoutes.js";
 import realtimeRoutes from "./routes/realtimeRoutes.js";
+import institutionRoutes from "./routes/institutionRoutes.js";
+import questionBankRoutes from "./routes/questionBankRoutes.js";
+import careerRoutes from "./routes/careerRoutes.js";
+import internshipProgressRoutes from "./routes/internshipProgressRoutes.js";
 
 dotenv.config();
 const app = express();
 
-// Middleware
-app.use(express.json());
+// Security headers
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+
+// Request size limits
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+
+// Rate limiting
+const globalLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true, legacyHeaders: false });
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false, message: { message: "Too many requests, please try again later" } });
+app.use("/api", globalLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 
 // ✅ Configure CORS here, not in middleware
 app.use(cors({
@@ -87,6 +104,10 @@ app.use("/api/assessments", assessmentRoutes);
 app.use("/api/opportunities", opportunityRoutes);
 app.use("/api/portfolio", portfolioRoutes);
 app.use("/api/realtime", realtimeRoutes);
+app.use("/api/institutions", institutionRoutes);
+app.use("/api/question-bank", questionBankRoutes);
+app.use("/api/career", careerRoutes);
+app.use("/api/internship-progress", internshipProgressRoutes);
 
 
 

@@ -1,7 +1,26 @@
 import SkillAssessment from "../models/SkillAssessmentModel.js";
 import User from "../models/UserModel.js";
+import LearningResource from "../models/LearningResourceModel.js";
 
-const getLearningRecommendations = (gaps) => gaps.map((skill) => `Build ${skill} through an industry certification or guided project`);
+const getLearningRecommendations = async (gaps) => {
+  if (!gaps.length) return [];
+  const resources = await LearningResource.find({
+    skills: { $in: gaps.map((g) => new RegExp(g, "i")) },
+    isActive: true
+  }).limit(gaps.length * 2).select("title provider type url skills level isFree durationHours");
+  if (resources.length) return resources.map((r) => ({
+    resourceId: r._id,
+    title: r.title,
+    provider: r.provider,
+    type: r.type,
+    url: r.url,
+    skills: r.skills,
+    level: r.level,
+    isFree: r.isFree,
+    durationHours: r.durationHours
+  }));
+  return [];
+};
 
 export const submitAssessment = async (req, res) => {
   try {
@@ -18,7 +37,7 @@ export const submitAssessment = async (req, res) => {
       interests,
       strengths: [...new Set(strengths)],
       gaps: [...new Set(gaps)],
-      learningRecommendations: getLearningRecommendations([...new Set(gaps)])
+      learningRecommendations: await getLearningRecommendations([...new Set(gaps)])
     });
 
     await User.findByIdAndUpdate(req.user._id, {

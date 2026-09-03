@@ -23,11 +23,6 @@ import {
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import {
-  makeAuthenticatedRequest,
-  isTokenValid,
-  handleAuthError,
-} from "../../utils/auth";
 import AnnouncementBanner from "../../components/AnnouncementBanner";
 
 const MentorDashboard = () => {
@@ -59,27 +54,22 @@ const MentorDashboard = () => {
   }, []);
 
   const fetchDashboardData = async () => {
-    if (!isTokenValid()) {
-      handleAuthError(navigate);
-      return;
-    }
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
     try {
       setLoading(true);
-      
-      // Fetch mentor dashboard data
-      const response = await makeAuthenticatedRequest(
-        `${API_URL}/api/mentor/dashboard`,
-        {},
-        navigate
-      );
-      
-      const data = await response.json();
-      setDashboardData(data);
-    } catch (error) {
-      if (!error.message.includes("Authentication")) {
-        toast.error("Failed to load dashboard data");
+      const res = await fetch(`${API_URL}/api/mentor/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDashboardData(data);
+      } else if (res.status !== 401 && res.status !== 403) {
+        toast.error("Could not load dashboard data");
       }
+    } catch (error) {
+      console.error("Mentor dashboard error:", error);
     } finally {
       setLoading(false);
     }
@@ -87,21 +77,23 @@ const MentorDashboard = () => {
 
   const handleApplicationAction = async (applicationId, action, feedback = "") => {
     try {
-      const response = await makeAuthenticatedRequest(
+      const token = localStorage.getItem("token");
+      const res = await fetch(
         `${API_URL}/api/mentor/applications/${applicationId}/${action}`,
         {
           method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({ feedback }),
-        },
-        navigate
+        }
       );
-
-      if (response.ok) {
+      if (res.ok) {
         toast.success(`Application ${action}d successfully`);
         setShowApplicationModal(false);
         setSelectedApplication(null);
         setFeedbackText("");
         fetchDashboardData();
+      } else {
+        toast.error(`Failed to ${action} application`);
       }
     } catch (error) {
       toast.error(`Failed to ${action} application`);

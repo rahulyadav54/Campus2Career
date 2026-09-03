@@ -30,10 +30,7 @@ export default function StudentHome() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       const token = localStorage.getItem("token");
-      if (!token) {
-        navigate("/login");
-        return;
-      }
+      if (!token) return;
 
       try {
         // Fetch applications data
@@ -91,7 +88,10 @@ export default function StudentHome() {
         setUpcomingInterviews(upcomingInterviews);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
-        toast.error("Failed to load dashboard data");
+        // Only show error if it's not an auth issue (auth is handled by DashboardLayout)
+        if (error?.response?.status !== 401 && error?.response?.status !== 403) {
+          toast.error("Could not load some dashboard data");
+        }
       } finally {
         setLoading(false);
       }

@@ -3,7 +3,11 @@ import NotificationService from "../services/notificationService.js";
 import jwt from "jsonwebtoken";
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
+};
+
+export const refreshToken = async (req, res) => {
+  res.json({ success: true, token: generateToken(req.user._id) });
 };
 
 // @route GET /api/auth/check-email/:email

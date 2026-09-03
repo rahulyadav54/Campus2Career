@@ -28,7 +28,10 @@ const PlacementDashboard = () => {
       setStats(response.data);
     } catch (error) {
       console.error("Dashboard stats error:", error);
-      toast.error("Failed to load dashboard data");
+      // Don't show error toast for auth failures — DashboardLayout handles those
+      if (error?.response?.status !== 401 && error?.response?.status !== 403) {
+        toast.error("Could not load dashboard stats");
+      }
     } finally {
       setLoading(false);
     }
