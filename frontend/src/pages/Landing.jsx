@@ -516,15 +516,15 @@ export default function Landing() {
               <ul className="space-y-4">
                 <li className="flex items-center text-sm">
                   <Mail className="w-4 h-4 mr-2" />
-                  contact@campus2career.com
+                  supportt@hamrolearning.com
                 </li>
                 <li className="flex items-center text-sm">
                   <Phone className="w-4 h-4 mr-2" />
-                  +1 (555) 123-4567
+                  +91 7033399183
                 </li>
                 <li className="flex items-center text-sm">
                   <MapPin className="w-4 h-4 mr-2" />
-                  San Francisco, CA
+                  Salem, Tamilnadu, India 636005
                 </li>
               </ul>
             </div>
