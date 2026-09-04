@@ -38,7 +38,12 @@ export default function StudentJobs() {
           {},
           navigate
         );
-        applications = await appsRes.json();
+        const appliedData = await appsRes.json();
+        applications = Array.isArray(appliedData)
+          ? appliedData
+          : Array.isArray(appliedData?.applications)
+          ? appliedData.applications
+          : [];
       } catch (appError) {
         // No applications yet
       }
@@ -60,19 +65,15 @@ fetch(`${API_URL}/api/recommendations/jobs`, {
       
       const jobsData = await jobsRes.json();
       const recData = await recRes.json().catch(() => ({ recommendations: [] }));
-      
-      console.log('Jobs data:', jobsData.length);
-      console.log('Recommendations data:', recData);
-      
+
       // Create recommendations map
       const recMap = {};
       recData.recommendations?.forEach(rec => {
         recMap[rec.job_id] = rec;
       });
-      console.log('Recommendations map:', recMap);
       setRecommendations(recMap);
 
-      const approvedJobs = jobsData.filter(job => job.status === 'approved');
+      const approvedJobs = (Array.isArray(jobsData) ? jobsData : Array.isArray(jobsData?.jobs) ? jobsData.jobs : []).filter(job => job.status === 'approved');
       const jobsWithStatus = approvedJobs.map((job) => {
         const application = applications.find(
           (app) => app.job && app.job._id === job._id
@@ -120,13 +121,19 @@ fetch(`${API_URL}/api/recommendations/jobs`, {
 
   useEffect(() => {
     let filtered = jobs.filter(
-      (job) =>
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.skillsRequired?.some((skill) =>
-          skill.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      (job) => {
+        const q = searchTerm.toLowerCase().trim();
+        if (!q) return true;
+        const title = (job.title || "").toLowerCase();
+        const description = (job.description || "").toLowerCase();
+        const location = (job.location || "").toLowerCase();
+        return (
+          title.includes(q) ||
+          description.includes(q) ||
+          location.includes(q) ||
+          job.skillsRequired?.some((skill) => String(skill).toLowerCase().includes(q))
+        );
+      }
     );
     
     if (showRecommended) {

@@ -41,7 +41,12 @@ export default function StudentHome() {
           }
         );
 
-        const applications = appsRes.data || [];
+        const rawApplications = appsRes.data;
+        const applications = Array.isArray(rawApplications)
+          ? rawApplications
+          : Array.isArray(rawApplications?.applications)
+          ? rawApplications.applications
+          : [];
 
         // Calculate statistics
         const totalApplications = applications.length;

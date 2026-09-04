@@ -185,11 +185,13 @@ const UserManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter((user) => {
+    const q = searchTerm.toLowerCase().trim();
+    if (!q) return true;
+    const name = (user.name || "").toLowerCase();
+    const email = (user.email || "").toLowerCase();
+    return name.includes(q) || email.includes(q);
+  });
 
   if (loading) {
     return (

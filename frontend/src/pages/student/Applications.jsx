@@ -18,7 +18,8 @@ const Applications = () => {
       const res = await axios.get(`${API_URL}/api/applications/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setApplications(res.data || []);
+      const rawData = res.data;
+      setApplications(Array.isArray(rawData) ? rawData : Array.isArray(rawData?.applications) ? rawData.applications : []);
     } catch (err) {
       toast.error("Failed to load applications");
       setApplications([]);

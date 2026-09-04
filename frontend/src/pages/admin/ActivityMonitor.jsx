@@ -76,7 +76,9 @@ const ActivityMonitor = () => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleString();
+    if (!date) return "—";
+    const parsed = new Date(date);
+    return isNaN(parsed.getTime()) ? "—" : parsed.toLocaleString();
   };
 
   const getLastSeenText = (lastLogin) => {

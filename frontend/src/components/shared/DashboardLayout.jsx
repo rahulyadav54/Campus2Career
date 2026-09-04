@@ -43,7 +43,14 @@ const DashboardLayout = ({ userRole = "student" }) => {
       }
 
       // Always seed from localStorage first so the UI renders immediately
-      const cached = JSON.parse(localStorage.getItem("user") || "null");
+      let cached = null;
+      try {
+        cached = JSON.parse(localStorage.getItem("user") || "null");
+      } catch (parseError) {
+        // Corrupt/legacy value in localStorage — ignore it rather than crash
+        console.warn("Ignoring unparseable cached user:", parseError.message);
+        localStorage.removeItem("user");
+      }
       if (cached) setUserData(cached);
 
       try {

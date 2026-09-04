@@ -1,6 +1,169 @@
+import fs from "fs/promises";
+import path from "path";
+import pdfParse from "pdf-parse";
+import mammoth from "mammoth";
 import UserModel from "../models/UserModel.js";
 import AssessmentAttemptModel from "../models/AssessmentAttemptModel.js";
 import PortfolioItemModel from "../models/PortfolioItemModel.js";
+
+const SKILL_KEYWORDS = [
+  "JavaScript",
+  "TypeScript",
+  "React",
+  "Node.js",
+  "Express",
+  "MongoDB",
+  "Python",
+  "Java",
+  "C++",
+  "SQL",
+  "Git",
+  "Docker",
+  "Kubernetes",
+  "AWS",
+  "HTML",
+  "CSS",
+  "Tailwind",
+  "Machine Learning",
+  "Data Analysis",
+  "Pandas",
+  "Scikit-Learn",
+  "REST API",
+];
+
+const cleanLines = (text) =>
+  text
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+
+const findSocialLink = (text, label) => {
+  const patterns = {
+    linkedin: /https?:\/\/(?:www\.)?linkedin\.com\/[^\s)]+/i,
+    github: /https?:\/\/(?:www\.)?github\.com\/[^\s)]+/i,
+    portfolio: /https?:\/\/[^\s)]+/i,
+    twitter: /https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[^\s)]+/i,
+  };
+
+  const match = text.match(patterns[label]);
+  return match ? match[0] : "";
+};
+
+const buildImportedProfile = (resumeText) => {
+  const lines = cleanLines(resumeText);
+  const topLines = lines.slice(0, 8);
+
+  const emailMatch = resumeText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  const phoneMatch = resumeText.match(/(?:\+?\d[\d\s().-]{7,}\d)/);
+  const nameCandidate = topLines.find(
+    (line) =>
+      line.length >= 3 &&
+      line.length <= 60 &&
+      !/@/.test(line) &&
+      !/resume|curriculum vitae|profile|portfolio/i.test(line)
+  );
+
+  const skills = SKILL_KEYWORDS.filter((skill) =>
+    new RegExp(`\\b${skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(
+      resumeText
+    )
+  );
+
+  const projectMatches = [];
+  lines.forEach((line, index) => {
+    if (
+      /project|built|developed|created|engineered|designed/i.test(line) &&
+      line.length < 120
+    ) {
+      projectMatches.push({
+        title: line.replace(/^[^a-zA-Z0-9]+/, ""),
+        description:
+          lines[index + 1] ||
+          "Extracted from the uploaded resume during AI import.",
+        technologies: skills.slice(0, 3),
+      });
+    }
+  });
+
+  const experienceMatches = [];
+  lines.forEach((line, index) => {
+    if (
+      /experience|intern|internship|full[-\s]?time|part[-\s]?time|worked at|employment/i.test(
+        line
+      ) &&
+      line.length < 140
+    ) {
+      experienceMatches.push({
+        company: line.replace(/^[^a-zA-Z0-9]+/, ""),
+        role: lines[index + 1] || "Role extracted from uploaded resume",
+        description:
+          lines[index + 2] ||
+          "Imported from resume text by the Campus2Career AI helper.",
+      });
+    }
+  });
+
+  const certifications = [];
+  lines.forEach((line) => {
+    if (/certif|credential|course|workshop|training/i.test(line) && line.length < 140) {
+      certifications.push({
+        name: line.replace(/^[^a-zA-Z0-9]+/, ""),
+        issuer: "Imported from resume",
+      });
+    }
+  });
+
+  return {
+    name: nameCandidate || "",
+    email: emailMatch?.[0] || "",
+    phone: phoneMatch?.[0] || "",
+    description: topLines.slice(0, 3).join(" "),
+    skills: skills.length > 0 ? skills : ["Communication", "Problem Solving", "Adaptability"],
+    projects:
+      projectMatches.length > 0
+        ? projectMatches.slice(0, 3)
+        : [
+            {
+              title: "Imported Resume Project",
+              description: "Resume import detected project-style content.",
+              technologies: skills.slice(0, 2),
+            },
+          ],
+    experiences:
+      experienceMatches.length > 0
+        ? experienceMatches.slice(0, 3)
+        : [],
+    certifications: certifications.slice(0, 3),
+    socialLinks: {
+      linkedin: findSocialLink(resumeText, "linkedin"),
+      github: findSocialLink(resumeText, "github"),
+      portfolio: findSocialLink(resumeText, "portfolio"),
+      twitter: findSocialLink(resumeText, "twitter"),
+    },
+  };
+};
+
+const extractResumeTextFromFile = async (filePath, originalName, mimeType) => {
+  const ext = path.extname(originalName || filePath).toLowerCase();
+  const buffer = await fs.readFile(filePath);
+
+  if (ext === ".pdf" || mimeType === "application/pdf") {
+    const parsed = await pdfParse(buffer);
+    return parsed.text || "";
+  }
+
+  if (ext === ".docx" || mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+    const parsed = await mammoth.extractRawText({ buffer });
+    return parsed.value || "";
+  }
+
+  throw new Error("AI import currently supports PDF and DOCX resumes only.");
+};
+
+const mergeImportedArrays = (existing = [], imported = []) => {
+  const merged = [...existing, ...imported].filter(Boolean);
+  return Array.from(new Map(merged.map((item) => [JSON.stringify(item), item])).values());
+};
 
 // ==========================================
 // 1. Custom Local ML AI Career Advisor Engine
@@ -135,6 +298,85 @@ export const parseResumeAI = async (req, res) => {
   } catch (error) {
     console.error("Error in parseResumeAI:", error);
     res.status(500).json({ message: "Failed to parse resume text" });
+  }
+};
+
+export const importResumeFromFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Resume file is required" });
+    }
+
+    const resumeText = await extractResumeTextFromFile(
+      req.file.path,
+      req.file.originalname,
+      req.file.mimetype
+    );
+
+    if (!resumeText || !resumeText.trim()) {
+      return res.status(400).json({
+        message: "We could not read any text from that resume. Please upload a text-based PDF or DOCX file.",
+      });
+    }
+
+    const importedProfile = buildImportedProfile(resumeText);
+    const backendUrl = (
+      process.env.BACKEND_URL ||
+      `http://localhost:${process.env.PORT || 5000}`
+    ).replace(/\/$/, "");
+    const resumeUrl = `${backendUrl}/uploads/resumes/${req.file.filename}`;
+
+    const student = await UserModel.findById(req.user._id);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    student.resumeUrl = resumeUrl;
+    if (!student.skills || student.skills.length === 0) {
+      student.skills = importedProfile.skills;
+    } else {
+      student.skills = mergeImportedArrays(student.skills, importedProfile.skills);
+    }
+
+    if (!student.projects || student.projects.length === 0) {
+      student.projects = importedProfile.projects;
+    }
+
+    if (!student.experiences || student.experiences.length === 0) {
+      student.experiences = importedProfile.experiences;
+    }
+
+    if (!student.certifications || student.certifications.length === 0) {
+      student.certifications = importedProfile.certifications;
+    }
+
+    student.description = student.description || importedProfile.description;
+    student.socialLinks = {
+      ...student.socialLinks,
+      ...importedProfile.socialLinks,
+    };
+
+    student.calculateProfileCompletion();
+    student.calculateReputation();
+    await student.save();
+
+    res.json({
+      success: true,
+      message: "Resume imported successfully",
+      data: importedProfile,
+      resumeUrl,
+      user: student.getPublicProfile(),
+      source: "Campus2Career Resume Importer",
+    });
+  } catch (error) {
+    console.error("Error in importResumeFromFile:", error);
+    res.status(500).json({
+      message: error.message || "Failed to import resume",
+    });
+  } finally {
+    if (req.file?.path) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
   }
 };
 

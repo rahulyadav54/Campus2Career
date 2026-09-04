@@ -38,7 +38,7 @@ const AdminPostSection = () => {
       });
       if (!res.ok) throw new Error("Failed to fetch announcements");
       const data = await res.json();
-      setPosts(data);
+      setPosts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load announcements");
@@ -55,7 +55,7 @@ const AdminPostSection = () => {
       });
       if (!res.ok) throw new Error("Failed to fetch announcement history");
       const data = await res.json();
-      setPostHistory(data);
+      setPostHistory(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load announcement history");

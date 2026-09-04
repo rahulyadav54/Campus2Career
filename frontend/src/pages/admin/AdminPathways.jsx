@@ -118,7 +118,7 @@ export default function AdminPathways() {
                   <tr key={p._id} className="border-b last:border-0">
                     <td className="p-4 font-medium text-gray-900">{p.role}</td>
                     <td className="p-4 text-gray-600">{p.industry}</td>
-                    <td className="p-4"><div className="flex flex-wrap gap-1 max-w-xs">{p.requiredSkills.slice(0, 4).map((s) => <span key={s} className="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded">{s}</span>)}</div></td>
+                    <td className="p-4"><div className="flex flex-wrap gap-1 max-w-xs">{(Array.isArray(p.requiredSkills) ? p.requiredSkills : []).slice(0, 4).map((s) => <span key={s} className="text-[10px] px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded">{s}</span>)}</div></td>
                     <td className="p-4"><span className="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 capitalize">{p.demandLevel}</span></td>
                     <td className="p-4 text-gray-600">₹{p.averageSalaryLPA} LPA</td>
                     <td className="p-4">
