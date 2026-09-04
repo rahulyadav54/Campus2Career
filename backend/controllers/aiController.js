@@ -7,8 +7,9 @@ import PortfolioItemModel from "../models/PortfolioItemModel.js";
 // ==========================================
 export const getCareerAdvice = async (req, res) => {
   try {
-    const { prompt, studentContext } = req.body;
-    if (!prompt) {
+    const { prompt, message, studentContext } = req.body;
+    const userPrompt = prompt || message;
+    if (!userPrompt) {
       return res.status(400).json({ message: "Prompt is required" });
     }
 
@@ -62,6 +63,8 @@ Based on your query regarding *"${prompt}"* and current skill profile ([${userSk
     res.status(500).json({ message: "Failed to generate local AI career advice" });
   }
 };
+
+export const chatWithAdvisor = getCareerAdvice;
 
 // ==========================================
 // 2. Custom Local Trained Resume Parser (Python Microservice Call / Local NLP)
