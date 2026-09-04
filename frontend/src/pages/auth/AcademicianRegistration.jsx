@@ -17,7 +17,22 @@ export default function AcademicianRegistration() {
       toast.success("Registration submitted for institution approval");
       navigate("/login");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Registration failed");
+      const data = error.response?.data;
+      if (data?.errors) {
+        let errorMessages = "";
+        if (Array.isArray(data.errors)) {
+          errorMessages = data.errors
+            .map(err => `${err.param || err.field}: ${err.msg || err.message}`)
+            .join("; ");
+        } else {
+          errorMessages = Object.entries(data.errors)
+            .map(([field, msg]) => `${field}: ${msg}`)
+            .join("; ");
+        }
+        toast.error(`${data.message}: ${errorMessages}`);
+      } else {
+        toast.error(data?.message || "Registration failed");
+      }
     } finally {
       setLoading(false);
     }

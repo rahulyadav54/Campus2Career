@@ -86,6 +86,17 @@ export const registerRecruiter = async (req, res) => {
     });
   } catch (error) {
     console.error("Recruiter registration error:", error);
+    if (error.name === 'ValidationError') {
+      const errors = Object.keys(error.errors).reduce((acc, key) => {
+        acc[key] = error.errors[key].message;
+        return acc;
+      }, {});
+      return res.status(400).json({ message: "Validation error", errors });
+    }
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({ message: `${field} already exists`, field });
+    }
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

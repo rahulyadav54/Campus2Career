@@ -73,6 +73,13 @@ export const registerStudent = async (req, res) => {
       user: user.getPublicProfile(),
     });
   } catch (err) {
+    if (err.name === 'ValidationError') {
+      const errors = Object.keys(err.errors).reduce((acc, key) => {
+        acc[key] = err.errors[key].message;
+        return acc;
+      }, {});
+      return res.status(400).json({ message: "Validation error", errors });
+    }
     res.status(500).json({ message: "Server Error", error: err.message });
   }
 };
@@ -146,6 +153,13 @@ export const register = async (req, res) => {
       user: user.getPublicProfile(),
     });
   } catch (err) {
+    if (err.name === 'ValidationError') {
+      const errors = Object.keys(err.errors).reduce((acc, key) => {
+        acc[key] = err.errors[key].message;
+        return acc;
+      }, {});
+      return res.status(400).json({ message: "Validation error", errors });
+    }
     res.status(500).json({ message: "Server Error", error: err.message });
   }
 };

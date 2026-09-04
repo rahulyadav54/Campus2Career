@@ -65,8 +65,23 @@ export default function Register() {
         }
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "Registration failed";
-      toast.error(errorMessage);
+      const data = err.response?.data;
+      if (data?.errors) {
+        let errorMessages = "";
+        if (Array.isArray(data.errors)) {
+          errorMessages = data.errors
+            .map(err => `${err.param || err.field}: ${err.msg || err.message}`)
+            .join("; ");
+        } else {
+          errorMessages = Object.entries(data.errors)
+            .map(([field, msg]) => `${field}: ${msg}`)
+            .join("; ");
+        }
+        toast.error(`${data.message}: ${errorMessages}`);
+      } else {
+        const errorMessage = data?.message || "Registration failed";
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

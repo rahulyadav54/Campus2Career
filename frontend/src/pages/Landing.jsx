@@ -73,98 +73,111 @@ export default function Landing() {
 
   const features = [
     {
-      title: "AI-Powered Matching",
-      desc: "Advanced algorithms match students with ideal opportunities using skill-based profiling",
+      title: "AI-Powered Career Advisor",
+      desc: "Intelligent chatbot and resume parser that guides students with personalized career advice and analyzes resume strength",
       icon: <Brain className="w-6 h-6" />,
-      metric: "95% Match Accuracy",
+      metric: "AI-Driven Insights",
       delay: 0.1
     },
     {
-      title: "Real-time Analytics",
-      desc: "Comprehensive dashboard with placement metrics, performance tracking, and insights",
+      title: "Skill Assessment & Mapping",
+      desc: "Comprehensive skill evaluations, gap analysis, and learning recommendations tailored to industry requirements",
       icon: <BarChart className="w-6 h-6" />,
-      metric: "Live Reporting",
+      metric: "360° Skill Profile",
       delay: 0.2
     },
     {
-      title: "Enterprise Security",
-      desc: "Bank-grade security, data encryption, and guaranteed 99.9% platform uptime",
-      icon: <Shield className="w-6 h-6" />,
-      metric: "SOC2 Certified",
+      title: "Smart Job Matching",
+      desc: "Advanced algorithms match students with internships and jobs based on skills, preferences, and career goals",
+      icon: <Target className="w-6 h-6" />,
+      metric: "High-Precision Matching",
       delay: 0.3
     },
     {
-      title: "Automated Workflows",
-      desc: "Streamlined processes reduce administrative work by 70% with smart automation",
-      icon: <Zap className="w-6 h-6" />,
-      metric: "70% Time Saved",
+      title: "Mentorship & Progress Tracking",
+      desc: "Dedicated mentor-mentee connections with weekly progress updates, feedback loops, and certificate issuance",
+      icon: <Users className="w-6 h-6" />,
+      metric: "Guided Growth",
       delay: 0.4
     },
     {
-      title: "Performance Tracking",
-      desc: "Monitor student progress, interview outcomes, and placement statistics in real-time",
-      icon: <TrendingUp className="w-6 h-6" />,
-      metric: "360° Insights",
+      title: "Recruiter & Placement Dashboard",
+      desc: "End-to-end hiring workflow from job posting and application review to interview scheduling and analytics",
+      icon: <Building className="w-6 h-6" />,
+      metric: "Full Recruitment Lifecycle",
       delay: 0.5
     },
     {
-      title: "Smart Scheduling",
-      desc: "Automated interview scheduling, calendar integration, and conflict resolution",
-      icon: <Calendar className="w-6 h-6" />,
-      metric: "Zero Conflicts",
+      title: "Admin & Institution Controls",
+      desc: "Complete placement cell oversight with user approvals, job verification, opportunity management, and real-time monitoring",
+      icon: <Shield className="w-6 h-6" />,
+      metric: "Enterprise Governance",
       delay: 0.6
     },
   ];
 
   const stats = [
-    { number: "10,832+", label: "Students Successfully Placed", icon: <Users className="w-5 h-5" /> },
-    { number: "527+", label: "Partner Companies", icon: <Building className="w-5 h-5" /> },
-    { number: "95.3%", label: "Placement Success Rate", icon: <Trophy className="w-5 h-5" /> },
-    { number: "62+", label: "Leading Institutions", icon: <Award className="w-5 h-5" /> }
+    { number: "6+", label: "User Roles Supported", icon: <Users className="w-5 h-5" /> },
+    { number: "20+", label: "Core Modules", icon: <Building className="w-5 h-5" /> },
+    { number: "100+", label: "API Endpoints", icon: <Trophy className="w-5 h-5" /> },
+    { number: "4", label: "Portal Segments", icon: <Award className="w-5 h-5" /> }
   ];
 
   const processSteps = [
     {
       step: "01",
-      title: "Profile & Skill Mapping",
-      description: "Students create detailed profiles with skills, academics, projects, and career preferences",
+      title: "Register & Build Profile",
+      description: "Students, mentors, recruiters, and academicians create accounts. Students upload resumes, add skills, projects, and complete assessments",
       icon: <FileText className="w-6 h-6" />,
-      details: ["Skill assessment", "Portfolio upload", "Career preference setup"]
+      details: ["Multi-role registration", "Resume upload & AI parsing", "Skill assessment & mapping"]
     },
     {
       step: "02",
-      title: "Intelligent Matching",
-      description: "AI algorithms analyze profiles and match with optimal opportunities based on multiple parameters",
+      title: "Explore & Apply",
+      description: "Browse internships, jobs, and opportunities. Get AI-powered recommendations, career guidance, and learning resources",
       icon: <Cpu className="w-6 h-6" />,
-      details: ["AI analysis", "Multi-factor matching", "Opportunity ranking"]
+      details: ["Job & internship matching", "AI career advisor", "Learning recommendations"]
     },
     {
       step: "03",
-      title: "Streamlined Placement",
-      description: "Automated interview scheduling, real-time tracking, and seamless hiring process management",
+      title: "Track & Grow",
+      description: "Mentors review applications, track progress, provide feedback. Students update weekly progress, earn certificates, and get placed",
       icon: <Target className="w-6 h-6" />,
-      details: ["Automated scheduling", "Progress tracking", "Analytics dashboard"]
+      details: ["Mentor guidance", "Progress tracking", "Certificate issuance"]
+    },
+    {
+      step: "04",
+      title: "Manage & Analyze",
+      description: "Admins and placement cells verify users, jobs, and portfolios. Recruiters manage postings, review applicants, and schedule interviews",
+      icon: <Shield className="w-6 h-6" />,
+      details: ["User & job verification", "Analytics dashboard", "Real-time monitoring"]
     }
   ];
 
   const testimonials = [
     {
-      name: "Sarah Chen",
-      role: "Head of Career Services, Stanford University",
-      content: "Campus2Career reduced our placement process from weeks to days. The AI matching is incredibly accurate.",
-      company: "Stanford University"
+      name: "Student",
+      role: "Campus2Career Student",
+      content: "The skill assessments and AI career advisor helped me identify my gaps and prepare better. Got placed through the platform!",
+      company: "Student User"
     },
     {
-      name: "Michael Rodriguez",
-      role: "HR Director, Microsoft",
-      content: "The quality of candidates matched through Campus2Career has been exceptional. Highly efficient platform.",
-      company: "Microsoft"
+      name: "Mentor",
+      role: "Faculty Mentor",
+      content: "Tracking my mentees' internship progress and providing weekly feedback has never been easier. The platform is very intuitive.",
+      company: "Mentor User"
     },
     {
-      name: "Dr. James Wilson",
-      role: "Dean of Engineering, MIT",
-      content: "Transformed our campus placement process. 40% more placements in the first semester itself.",
-      company: "MIT"
+      name: "Recruiter",
+      role: "HR Manager",
+      content: "We can post jobs, review applications, and schedule interviews all in one place. The student matching is surprisingly accurate.",
+      company: "Recruiter User"
+    },
+    {
+      name: "Admin",
+      role: "Placement Cell Officer",
+      content: "Managing approvals, verifications, and analytics from a single dashboard saves us hours every week. Highly recommended.",
+      company: "Admin User"
     }
   ];
 
@@ -262,8 +275,8 @@ export default function Landing() {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-lg text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed"
             >
-              Enterprise-grade AI platform connecting students with opportunities through intelligent matching, 
-              automated workflows, and real-time analytics for institutions and companies.
+              Complete campus placement ecosystem connecting students, mentors, recruiters, and placement cells through 
+              AI-driven matching, skill assessments, progress tracking, and real-time analytics.
             </motion.p>
 
             <motion.div
@@ -313,10 +326,10 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Enterprise-Grade Features
+              Complete Placement Ecosystem
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Comprehensive tools designed for modern campus placement management
+              Everything students, mentors, recruiters, and placement cells need in one platform
             </p>
           </AnimatedSection>
 
@@ -350,10 +363,10 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Streamlined Placement Process
+              How Campus2Career Works
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Three-step workflow designed for maximum efficiency and results
+              A four-step workflow designed for students, mentors, recruiters, and placement cells
             </p>
           </AnimatedSection>
 
@@ -432,14 +445,14 @@ export default function Landing() {
       {/* CTA Section */}
       <section className="py-20 bg-gray-900">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <AnimatedSection>
-            <h2 className="text-3xl font-bold text-white mb-6">
-              Ready to Transform Your Campus Placements?
-            </h2>
-            <p className="text-gray-300 mb-10 max-w-2xl mx-auto text-lg">
-              Join leading institutions worldwide using Campus2Career to streamline their placement process 
-              and achieve exceptional results.
-            </p>
+            <AnimatedSection>
+              <h2 className="text-3xl font-bold text-white mb-6">
+                Ready to Transform Campus Placements?
+              </h2>
+              <p className="text-gray-300 mb-10 max-w-2xl mx-auto text-lg">
+                Join students, mentors, recruiters, and institutions already using Campus2Career to streamline 
+                placements, assessments, and career growth.
+              </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/register"
@@ -518,9 +531,14 @@ export default function Landing() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-500 text-sm">
-              © 2024 Campus2Career. All rights reserved. Enterprise Campus Placement Platform.
-            </p>
+            <div>
+              <p className="text-gray-500 text-sm">
+                © 2026 Campus2Career. All rights reserved. Enterprise Campus Placement Platform.
+              </p>
+              <p className="text-gray-600 text-xs mt-1">
+                Managed by ZAYA CODE HUB
+              </p>
+            </div>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="text-gray-500 hover:text-white text-sm">Privacy Policy</a>
               <a href="#" className="text-gray-500 hover:text-white text-sm">Terms of Service</a>
