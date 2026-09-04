@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import pdfParse from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
 import UserModel from "../models/UserModel.js";
 import AssessmentAttemptModel from "../models/AssessmentAttemptModel.js";
@@ -148,8 +148,13 @@ const extractResumeTextFromFile = async (filePath, originalName, mimeType) => {
   const buffer = await fs.readFile(filePath);
 
   if (ext === ".pdf" || mimeType === "application/pdf") {
-    const parsed = await pdfParse(buffer);
-    return parsed.text || "";
+    const parser = new PDFParse({ data: buffer });
+    try {
+      const parsed = await parser.getText();
+      return parsed.text || "";
+    } finally {
+      await parser.destroy().catch(() => {});
+    }
   }
 
   if (ext === ".docx" || mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
