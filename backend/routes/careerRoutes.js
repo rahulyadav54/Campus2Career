@@ -8,6 +8,7 @@ import {
 import {
   getSkillDemandAnalytics, getPlacementReadinessAnalytics
 } from "../controllers/analyticsController.js";
+import { chatWithAdvisor } from "../controllers/aiController.js";
 
 const router = express.Router();
 router.use(protect);
@@ -36,5 +37,8 @@ router.delete("/resources/:id", adminOnly, deleteResource);
 
 // All authenticated: browse resources
 router.get("/resources", listResources);
+
+// AI Career Advisor (student + academician)
+router.post("/ai/chat", chatWithAdvisor);
 
 export default router;

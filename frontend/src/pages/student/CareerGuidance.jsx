@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { TrendingUp, BookOpen, Target, ExternalLink, ChevronDown, ChevronUp, Zap } from "lucide-react";
+import { TrendingUp, BookOpen, Target, ExternalLink, ChevronDown, ChevronUp, Zap, Sparkles } from "lucide-react";
 import apiClient from "../../services/apiClient";
+import CareerAdvisorChat from "../../components/CareerAdvisorChat";
 
 const demandColor = { low: "bg-gray-100 text-gray-600", medium: "bg-blue-100 text-blue-700", high: "bg-amber-100 text-amber-700", very_high: "bg-green-100 text-green-700" };
 const demandLabel = { low: "Low Demand", medium: "Medium Demand", high: "High Demand", very_high: "Very High Demand" };
@@ -24,10 +25,15 @@ export default function CareerGuidance() {
   return (
     <main className="max-w-5xl mx-auto p-6 space-y-8">
       <header>
-        <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">Career Guidance</p>
+        <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">Career Guidance & AI Assistant</p>
         <h1 className="text-3xl font-bold text-gray-900 mt-2">Your personalised career roadmap</h1>
-        <p className="text-gray-600 mt-2">Based on your skills, strengths, and interests.</p>
+        <p className="text-gray-600 mt-2">Based on your skills, strengths, and smart AI automation.</p>
       </header>
+
+      {/* AI Career Advisor Chat Widget */}
+      <section>
+        <CareerAdvisorChat />
+      </section>
 
       {/* Profile snapshot */}
       <section className="bg-white border border-gray-200 rounded-xl p-5">

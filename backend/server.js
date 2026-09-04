@@ -21,6 +21,7 @@ import institutionRoutes from "./routes/institutionRoutes.js";
 import questionBankRoutes from "./routes/questionBankRoutes.js";
 import careerRoutes from "./routes/careerRoutes.js";
 import internshipProgressRoutes from "./routes/internshipProgressRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -39,13 +40,10 @@ app.use("/api", globalLimiter);
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 
-// ✅ Configure CORS here, not in middleware
+// Configure CORS
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
-    // Allow localhost and any Vercel deployment URL for your project
     const configuredOrigins = (process.env.FRONTEND_URLS || "")
       .split(",")
       .map((value) => value.trim().replace(/\/$/, ""))
@@ -65,7 +63,7 @@ app.use(cors({
   credentials: true
 }));
 
-// Serve static files from uploads directory with proper headers for PDFs
+// Serve static files from uploads directory
 app.use('/uploads', (req, res, next) => {
   if (req.path.endsWith('.pdf')) {
     res.setHeader('Content-Type', 'application/pdf');
@@ -75,7 +73,6 @@ app.use('/uploads', (req, res, next) => {
 }, express.static('uploads'));
 
 // Routes
-// Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!' });
 });
@@ -88,14 +85,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-
-
 app.use("/api/auth", authRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/recruiter", recruiterRoutes);
 app.use("/api/mentor", mentorRoutes);
-
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/posts", postRoutes);
@@ -108,8 +102,7 @@ app.use("/api/institutions", institutionRoutes);
 app.use("/api/question-bank", questionBankRoutes);
 app.use("/api/career", careerRoutes);
 app.use("/api/internship-progress", internshipProgressRoutes);
-
-
+app.use("/api/ai", aiRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -120,7 +113,6 @@ app.use((err, req, res, next) => {
   });
 
   if (err.name === 'MongoServerError' && err.code === 11000) {
-    // Handle duplicate key error
     const field = Object.keys(err.keyPattern)[0];
     return res.status(400).json({
       message: `This ${field} is already registered`,
@@ -147,6 +139,3 @@ const startServer = async () => {
 };
 
 startServer();
-
-
-

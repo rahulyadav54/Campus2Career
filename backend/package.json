@@ -11,6 +11,7 @@
     "seed:admin": "node scripts/seedAdmin.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@ljharb/tsconfig": "^0.3.2",
     "axios": "^1.12.2",
     "bcryptjs": "^2.4.3",

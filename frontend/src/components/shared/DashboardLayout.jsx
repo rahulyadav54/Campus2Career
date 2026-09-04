@@ -1,5 +1,6 @@
 import { API_URL } from '../../config/api';
 import { refreshSession } from '../../services/auth';
+import AIChatbot from '../AIChatbot';
 // src/pages/dashboard/DashboardLayout.jsx
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
@@ -337,6 +338,9 @@ const DashboardLayout = ({ userRole = "student" }) => {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* AI Career Advisor Chatbot */}
+      <AIChatbot />
     </div>
   );
 };

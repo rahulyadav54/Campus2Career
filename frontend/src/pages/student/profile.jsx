@@ -326,8 +326,8 @@ const Profile = () => {
                 : "Manage your personal information and preferences"}
             </p>
           </div>
-          {!isMentorView &&
-            (isEditing ? (
+          {!isMentorView && (
+            isEditing ? (
               <div className="flex gap-3">
                 <button
                   onClick={() => setIsEditing(false)}
@@ -344,14 +344,24 @@ const Profile = () => {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 transition-colors"
-              >
-                <Edit3 size={18} />
-                Edit Profile
-              </button>
-            ))}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowAIResumeModal(true)}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-medium text-sm flex items-center gap-2 transition-all shadow-md"
+                >
+                  <Sparkles size={18} className="text-amber-300 animate-pulse" />
+                  AI Resume Import
+                </button>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2 transition-colors"
+                >
+                  <Edit3 size={18} />
+                  Edit Profile
+                </button>
+              </div>
+            )
+          )}
         </div>
 
         {/* Profile Card */}
