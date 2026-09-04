@@ -27,6 +27,7 @@ import {
   Bookmark,
   Edit3,
   Save,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
@@ -39,13 +40,13 @@ import {
 const Profile = () => {
   const navigate = useNavigate();
   const { studentId } = useParams();
+  const isMentorView = studentId !== undefined;
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
-  const [isMentorView, setIsMentorView] = useState(false);
-  const [resume, setResume] = useState(null);
   const [resumePreview, setResumePreview] = useState("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [showAIResumeModal, setShowAIResumeModal] = useState(false);
 
   const avatarOptions = [
     "https://api.dicebear.com/7.x/avataaars/svg?seed=alex",
@@ -104,16 +105,14 @@ const Profile = () => {
 
       try {
         // Check if this is mentor viewing student profile
-        const isMentor = studentId !== undefined;
-        setIsMentorView(isMentor);
-        console.log('Is mentor view:', isMentor);
+        console.log('Is mentor view:', isMentorView);
 
         // Disable editing for mentor view
-        if (isMentor) {
+        if (isMentorView) {
           setIsEditing(false);
         }
 
-        const endpoint = isMentor
+        const endpoint = isMentorView
           ? `${API_URL}/api/mentor/student-profile/${studentId}`
           : `${API_URL}/api/student/profile`;
           
@@ -160,7 +159,7 @@ const Profile = () => {
       }, 30000);
       return () => clearInterval(interval);
     }
-  }, [navigate, studentId, isEditing]);
+  }, [navigate, studentId, isEditing, isMentorView]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -264,8 +263,6 @@ const Profile = () => {
   const handleResumeChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setResume(file);
-
       // Upload the file immediately
       const formData = new FormData();
       formData.append("resume", file);
@@ -497,6 +494,35 @@ const Profile = () => {
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        )}
+
+        {showAIResumeModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-lg w-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center">
+                  <Sparkles size={18} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">AI Resume Import</h3>
+                  <p className="text-sm text-gray-500">Quick resume helper</p>
+                </div>
+              </div>
+              <p className="text-gray-600 leading-relaxed">
+                This feature is reserved for the AI import flow. Your profile is safe,
+                and the page will now stay stable instead of crashing. You can still
+                upload your resume from the resume section below.
+              </p>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowAIResumeModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
