@@ -73,6 +73,10 @@ import CollaborationRegistrations from "./pages/student/CollaborationRegistratio
 import AdminCollaborationManagement from "./pages/admin/AdminCollaborationManagement";
 import LearningPlatforms from "./pages/shared/LearningPlatforms";
 import AdminLearningPlatforms from "./pages/admin/AdminLearningPlatforms";
+import StudentCourses from "./pages/student/StudentCourses";
+import CourseDetail from "./pages/student/CourseDetail";
+import MyCourses from "./pages/student/MyCourses";
+import AdminCourses from "./pages/admin/AdminCourses";
 import Announcements from "./pages/shared/Announcements";
 
 
@@ -110,6 +114,9 @@ function App() {
           <Route path="projects" element={<LiveIndustryProjects />} />
           <Route path="collaborations" element={<CollaborationRegistrations />} />
           <Route path="announcements" element={<Announcements />} />
+          <Route path="courses" element={<StudentCourses />} />
+          <Route path="courses/:id" element={<CourseDetail />} />
+          <Route path="my-courses" element={<MyCourses />} />
         </Route>
 
         <Route path="/academician" element={<ProtectedRoute><DashboardLayout userRole="academician" /></ProtectedRoute>}>
@@ -167,6 +174,7 @@ function App() {
           <Route path="analytics/student-skill-gaps" element={<StudentSkillGapReport />} />
           <Route path="collaboration" element={<AdminCollaborationManagement />} />
           <Route path="learning-platforms" element={<AdminLearningPlatforms />} />
+          <Route path="courses" element={<AdminCourses />} />
         </Route>
 
         <Route path="/institution" element={<ProtectedRoute><DashboardLayout userRole="institution" /></ProtectedRoute>}>

@@ -156,6 +156,8 @@ const DashboardLayout = ({ userRole = "student" }) => {
         { path: "/student/challenges", label: "Innovation Challenges", icon: Trophy },
         { path: "/student/projects", label: "Live Industry Projects", icon: Building2 },
         { path: "/student/collaborations", label: "My Collaborations", icon: Users },
+        { path: "/student/courses", label: "Explore Courses", icon: BookOpen },
+        { path: "/student/my-courses", label: "My Courses", icon: Award },
         { path: "/student/announcements", label: "Announcements", icon: Megaphone },
       ],
     },
@@ -234,6 +236,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
         { path: "/admin/analytics/student-skill-gaps", label: "Student Skill Gaps", icon: AlertTriangle },
         { path: "/admin/collaboration", label: "Collaboration Management", icon: Presentation },
         { path: "/admin/learning-platforms", label: "Learning Platforms", icon: Globe },
+        { path: "/admin/courses", label: "Course Management", icon: BookOpen },
       ],
     },
     institution: {
