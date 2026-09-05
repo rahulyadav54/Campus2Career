@@ -37,10 +37,16 @@ import RecruiterHistory from "./pages/recruiter/History";
 import JobApplications from "./pages/recruiter/JobApplications";
 import UnderDevelopment from "./pages/UnderDevelopment";
 import SkillAssessment from "./pages/student/SkillAssessment";
+import AptitudeTests from "./pages/student/AptitudeTests";
+import AptitudeTestAttempt from "./pages/student/AptitudeTestAttempt";
+import AptitudeResults from "./pages/student/AptitudeResults";
 import OpportunityHub from "./pages/shared/OpportunityHub";
 import AcademicianRegistration from "./pages/auth/AcademicianRegistration";
 import Portfolio from "./pages/student/Portfolio";
 import AcademicianDashboard from "./pages/academician/AcademicianDashboard";
+import AcademicianOpportunities from "./pages/academician/AcademicianOpportunities";
+import AcademicianOpportunityDetail from "./pages/academician/AcademicianOpportunityDetail";
+import AcademicianMyApplications from "./pages/academician/AcademicianMyApplications";
 import OpportunityApprovals from "./pages/admin/OpportunityApprovals";
 import InstitutionDashboard from "./pages/institution/InstitutionDashboard";
 import PortfolioVerification from "./pages/institution/PortfolioVerification";
@@ -48,11 +54,20 @@ import AdminPortfolioVerification from "./pages/admin/PortfolioVerification";
 import QuestionBankManagement from "./pages/admin/QuestionBankManagement";
 import AdminPathways from "./pages/admin/AdminPathways";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import SkillDemandAnalytics from "./pages/admin/SkillDemandAnalytics";
+import InternshipAnalytics from "./pages/admin/InternshipAnalytics";
+import StudentSkillGapReport from "./pages/admin/StudentSkillGapReport";
+import RecruitmentAnalytics from "./pages/recruiter/RecruitmentAnalytics";
 import CareerGuidance from "./pages/student/CareerGuidance";
 import LearningRecommendations from "./pages/student/LearningRecommendations";
 import SkillMapping from "./pages/student/SkillMapping";
 import Internships from "./pages/student/Internships";
 import MentorInternships from "./pages/mentor/MentorInternships";
+import Workshops from "./pages/student/Workshops";
+import InnovationChallenges from "./pages/student/InnovationChallenges";
+import LiveIndustryProjects from "./pages/student/LiveIndustryProjects";
+import CollaborationRegistrations from "./pages/student/CollaborationRegistrations";
+import AdminCollaborationManagement from "./pages/admin/AdminCollaborationManagement";
 
 
 function App() {
@@ -73,6 +88,9 @@ function App() {
           <Route path="jobs" element={<JobOpenings />} />
           <Route path="recommendations" element={<JobRecommendations />} />
           <Route path="assessment" element={<SkillAssessment />} />
+          <Route path="aptitude" element={<AptitudeTests />} />
+          <Route path="aptitude/:testId" element={<AptitudeTestAttempt />} />
+          <Route path="aptitude/results/:attemptId" element={<AptitudeResults />} />
           <Route path="opportunities" element={<OpportunityHub />} />
           <Route path="applications" element={<Applications />} />
           <Route path="certificates" element={<Certificates />} />
@@ -81,12 +99,18 @@ function App() {
           <Route path="skill-mapping" element={<SkillMapping />} />
           <Route path="learning" element={<LearningRecommendations />} />
           <Route path="internships" element={<Internships />} />
+          <Route path="workshops" element={<Workshops />} />
+          <Route path="challenges" element={<InnovationChallenges />} />
+          <Route path="projects" element={<LiveIndustryProjects />} />
+          <Route path="collaborations" element={<CollaborationRegistrations />} />
         </Route>
 
         <Route path="/academician" element={<ProtectedRoute><DashboardLayout userRole="academician" /></ProtectedRoute>}>
           <Route index element={<AcademicianDashboard />} />
           <Route path="dashboard" element={<AcademicianDashboard />} />
-          <Route path="opportunities" element={<OpportunityHub />} />
+          <Route path="opportunities" element={<AcademicianOpportunities />} />
+          <Route path="opportunities/:id" element={<AcademicianOpportunityDetail />} />
+          <Route path="applications" element={<AcademicianMyApplications />} />
         </Route>
         
         <Route path="/mentor" element={<ProtectedRoute><DashboardLayout userRole="mentor" /></ProtectedRoute>}>
@@ -113,6 +137,7 @@ function App() {
           <Route path="post" element={<RecruiterJobs /> } />
           <Route path="job/:jobId/applications" element={<JobApplications />} />
           <Route path="history" element={<RecruiterHistory />} />
+          <Route path="analytics" element={<RecruitmentAnalytics />} />
         </Route>
         
         <Route path="/admin" element={<ProtectedRoute><DashboardLayout userRole="admin" /></ProtectedRoute>}>
@@ -129,6 +154,10 @@ function App() {
           <Route path="question-bank" element={<QuestionBankManagement />} />
           <Route path="pathways" element={<AdminPathways />} />
           <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="analytics/skill-demand-trends" element={<SkillDemandAnalytics />} />
+          <Route path="analytics/internship-participation" element={<InternshipAnalytics />} />
+          <Route path="analytics/student-skill-gaps" element={<StudentSkillGapReport />} />
+          <Route path="collaboration" element={<AdminCollaborationManagement />} />
         </Route>
 
         <Route path="/institution" element={<ProtectedRoute><DashboardLayout userRole="institution" /></ProtectedRoute>}>

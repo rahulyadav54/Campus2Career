@@ -24,6 +24,10 @@ import {
   BookOpen,
   ClipboardList,
   TrendingUp,
+  AlertTriangle,
+  Presentation,
+  Trophy,
+  Building2,
 } from "lucide-react";
 
 const DashboardLayout = ({ userRole = "student" }) => {
@@ -139,6 +143,10 @@ const DashboardLayout = ({ userRole = "student" }) => {
         { path: "/student/skill-mapping", label: "Skill Mapping", icon: TrendingUp },
         { path: "/student/learning", label: "Learning Recommendations", icon: BookOpen },
         { path: "/student/internships", label: "Internships", icon: ClipboardList },
+        { path: "/student/workshops", label: "Workshops & Lectures", icon: Presentation },
+        { path: "/student/challenges", label: "Innovation Challenges", icon: Trophy },
+        { path: "/student/projects", label: "Live Industry Projects", icon: Building2 },
+        { path: "/student/collaborations", label: "My Collaborations", icon: Users },
       ],
     },
     mentor: {
@@ -173,6 +181,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
       items: [
         { path: "/academician", label: "Academia Hub", icon: BarChart3 },
         { path: "/academician/opportunities", label: "Faculty Programs", icon: GraduationCap },
+        { path: "/academician/applications", label: "My Applications", icon: ClipboardList },
       ],
     },
     recruiter: {
@@ -182,12 +191,17 @@ const DashboardLayout = ({ userRole = "student" }) => {
         { path: "/recruiter/jobs", label: "Job Management", icon: Briefcase },
         { path: "/recruiter/applications", label: "Applications", icon: Users },
         { path: "/recruiter/students", label: "Students", icon: Users },
-        {
-          path: "/recruiter/history",
-          label: "History",
-          icon: History,
-        },
-      ],
+          {
+            path: "/recruiter/history",
+            label: "History",
+            icon: History,
+          },
+          {
+            path: "/recruiter/analytics",
+            label: "Analytics",
+            icon: BarChart3,
+          },
+        ],
     },
     admin: {
       title: "Campus2Career - Placement Cell",
@@ -204,6 +218,10 @@ const DashboardLayout = ({ userRole = "student" }) => {
         { path: "/admin/question-bank", label: "Question Bank", icon: GraduationCap },
         { path: "/admin/pathways", label: "Career Pathways", icon: Compass },
         { path: "/admin/analytics", label: "Analytics Dashboard", icon: TrendingUp },
+        { path: "/admin/analytics/skill-demand-trends", label: "Skill Demand Trends", icon: BarChart3 },
+        { path: "/admin/analytics/internship-participation", label: "Internship Analytics", icon: ClipboardList },
+        { path: "/admin/analytics/student-skill-gaps", label: "Student Skill Gaps", icon: AlertTriangle },
+        { path: "/admin/collaboration", label: "Collaboration Management", icon: Presentation },
       ],
     },
     institution: {

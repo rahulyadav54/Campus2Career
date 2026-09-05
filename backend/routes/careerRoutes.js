@@ -6,7 +6,8 @@ import {
   createResource, listResources, deleteResource
 } from "../controllers/careerPathwayController.js";
 import {
-  getSkillDemandAnalytics, getPlacementReadinessAnalytics
+  getSkillDemandAnalytics, getPlacementReadinessAnalytics,
+  getSkillDemandTrends
 } from "../controllers/analyticsController.js";
 import { chatWithAdvisor } from "../controllers/aiController.js";
 
@@ -29,6 +30,7 @@ router.get("/learning/recommendations", studentOnly, getLearningRecommendations)
 
 // Admin / institution: analytics
 router.get("/analytics/skill-demand", staffOnly, getSkillDemandAnalytics);
+router.get("/analytics/skill-demand-trends", staffOnly, getSkillDemandTrends);
 router.get("/analytics/placement-readiness", staffOnly, getPlacementReadinessAnalytics);
 
 // Admin: learning resource management

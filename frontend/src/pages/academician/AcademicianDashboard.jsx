@@ -1,6 +1,7 @@
 import { API_URL } from '../../config/api';
 import { useEffect, useState } from "react";
-import { BookOpen, Send, Users } from "lucide-react";
+import { BookOpen, Send, Users, GraduationCap, FlaskConical, Briefcase, ClipboardList } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const initialForm = {
   title: "",
@@ -19,6 +20,7 @@ export default function AcademicianDashboard() {
   const [submissions, setSubmissions] = useState([]);
   const [message, setMessage] = useState("");
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   const loadSubmissions = () => {
     fetch(`${API_URL}/api/opportunities`, { headers: { Authorization: `Bearer ${token}` } })
@@ -50,13 +52,39 @@ export default function AcademicianDashboard() {
     }
   };
 
+  const quickLinks = [
+    { path: "/academician/opportunities", icon: GraduationCap, label: "Faculty Programs", desc: "Browse FDPs, internships, consultancy, and research collaborations" },
+    { path: "/academician/applications", icon: ClipboardList, label: "My Applications", desc: "Track your applied programs and their review status" },
+  ];
+
   return (
     <main className="max-w-6xl mx-auto p-6 space-y-6">
       <header>
         <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">Academia workspace</p>
         <h1 className="text-3xl font-bold text-gray-900 mt-2">Connect learning with industry</h1>
-        <p className="text-gray-600 mt-2">Publish faculty opportunities and collaboration programs for institution review.</p>
+        <p className="text-gray-600 mt-2">Publish faculty opportunities and explore collaboration programs.</p>
       </header>
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        {quickLinks.map((link) => {
+          const Icon = link.icon;
+          return (
+            <button
+              key={link.path}
+              onClick={() => navigate(link.path)}
+              className="text-left bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-all duration-200 group"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                  <Icon className="text-indigo-600" size={20} />
+                </div>
+                <h2 className="text-lg font-semibold text-gray-900">{link.label}</h2>
+              </div>
+              <p className="text-sm text-gray-600 ml-[52px]">{link.desc}</p>
+            </button>
+          );
+        })}
+      </div>
 
       <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-6">
         <form onSubmit={submit} className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">

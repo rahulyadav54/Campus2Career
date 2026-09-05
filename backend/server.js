@@ -22,6 +22,7 @@ import questionBankRoutes from "./routes/questionBankRoutes.js";
 import careerRoutes from "./routes/careerRoutes.js";
 import internshipProgressRoutes from "./routes/internshipProgressRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import aptitudeRoutes from "./routes/aptitudeRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -117,6 +118,7 @@ app.use("/api/question-bank", questionBankRoutes);
 app.use("/api/career", careerRoutes);
 app.use("/api/internship-progress", internshipProgressRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/aptitude", aptitudeRoutes);
 
 // 404 handler for unknown routes
 app.use((req, res) => {

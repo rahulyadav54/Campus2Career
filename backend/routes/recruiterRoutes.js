@@ -16,6 +16,7 @@ import {
 } from "../controllers/recruiterController.js";
 import User from "../models/UserModel.js";
 import Application from "../models/ApplicationModel.js";
+import { getRecruitmentOutcomes } from "../controllers/analyticsController.js";
 
 const router = express.Router();
 
@@ -45,6 +46,7 @@ router.get("/applications/history", getApplicationHistory);
 
 // Dashboard & Analytics
 router.get("/dashboard/stats", getDashboardStats);
+router.get("/analytics/recruitment-outcomes", getRecruitmentOutcomes);
 router.get("/reports", generateReport);
 
 // Get approved students for browsing

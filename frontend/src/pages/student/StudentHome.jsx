@@ -129,15 +129,21 @@ export default function StudentHome() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 sm:p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-indigo-600 text-sm font-medium">
-                Total Applications
-              </p>
-              <p className="text-2xl font-bold text-indigo-700">
-                {stats.totalApplications}
-              </p>
-            </div>
-            <FileText className="h-8 w-8 text-indigo-500" />
+<div>
+            <p className="text-indigo-600 text-sm font-medium">
+              Total Applications
+            </p>
+            <p className="text-2xl font-bold text-indigo-700">
+              {stats.totalApplications}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/student/aptitude")}
+            className="text-xs px-2 py-1 rounded-md bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+          >
+            Aptitude
+          </button>
+          <FileText className="h-8 w-8 text-indigo-500" />
           </div>
         </div>
 
@@ -183,6 +189,35 @@ export default function StudentHome() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 lg:col-span-2">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-indigo-600" />
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              onClick={() => navigate("/student/aptitude")}
+              className="flex items-center justify-between p-4 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-left"
+            >
+              <div>
+                <p className="font-semibold text-indigo-700">Aptitude Tests</p>
+                <p className="text-xs text-indigo-600 mt-1">Practice timed aptitude tests and view results</p>
+              </div>
+              <FileText className="h-6 w-6 text-indigo-600" />
+            </button>
+            <button
+              onClick={() => navigate("/student/skill-assessment")}
+              className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 border border-gray-200 rounded-lg text-left"
+            >
+              <div>
+                <p className="font-semibold text-slate-700">Skill Assessment</p>
+                <p className="text-xs text-slate-500 mt-1">Rate your skills to get personalised recommendations</p>
+              </div>
+              <TrendingUp className="h-6 w-6 text-slate-600" />
+            </button>
+          </div>
+        </div>
         {/* Recent Applications */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-400 p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">

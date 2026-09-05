@@ -24,6 +24,11 @@ import {
   generateReport
 } from "../controllers/placementController.js";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
+import {
+  getRecruitmentOutcomes,
+  getInternshipAnalytics,
+  getStudentSkillGapReport
+} from "../controllers/analyticsController.js";
 import { getAllPosts, createPost, updatePost, deletePost, getPostHistory } from "../controllers/postController.js";
 
 const router = express.Router();
@@ -40,6 +45,11 @@ router.get("/applications/stats", getApplicationStats);
 router.get("/applications/overview", getApplicationsOverview);
 router.post("/notifications/bulk", sendBulkNotification);
 router.get("/reports", generateReport);
+
+// Analytics dashboard routes
+router.get("/analytics/recruitment-outcomes", getRecruitmentOutcomes);
+router.get("/analytics/internship-participation", getInternshipAnalytics);
+router.get("/analytics/student-skill-gaps", getStudentSkillGapReport);
 
 // Legacy routes
 router.get("/dashboard", getDashboard);
