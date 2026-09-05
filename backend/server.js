@@ -26,6 +26,7 @@ import aptitudeRoutes from "./routes/aptitudeRoutes.js";
 import academicianOpportunityRoutes from "./routes/academicianOpportunityRoutes.js";
 import collaborationRoutes from "./routes/collaborationRoutes.js";
 import learningPlatformRoutes from "./routes/learningPlatformRoutes.js";
+import mentorshipRoutes from "./routes/mentorshipRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -125,6 +126,7 @@ app.use("/api/aptitude", aptitudeRoutes);
 app.use("/api/academician-opportunities", academicianOpportunityRoutes);
 app.use("/api/collaborations", collaborationRoutes);
 app.use("/api/learning-platforms", learningPlatformRoutes);
+app.use("/api/mentorship", mentorshipRoutes);
 
 // 404 handler for unknown routes
 app.use((req, res) => {

@@ -171,7 +171,7 @@ const mergeImportedArrays = (existing = [], imported = []) => {
 };
 
 // ==========================================
-// 1. Custom Local ML AI Career Advisor Engine
+// 1. Campus2Career Career Advisor
 // ==========================================
 export const getCareerAdvice = async (req, res) => {
   try {
@@ -183,52 +183,84 @@ export const getCareerAdvice = async (req, res) => {
 
     const user = req.user ? await UserModel.findById(req.user.id).lean() : null;
     const userSkills = user?.skills?.join(", ") || studentContext?.skills?.join(", ") || "General software development";
+    const userGaps = user?.skillProfile?.gaps?.join(", ") || studentContext?.gaps?.join(", ") || "Not assessed yet";
+    const userInterests = user?.interests?.join(", ") || studentContext?.interests?.join(", ") || "General";
+    const profileCompletion = user?.profileCompletion || 0;
+    const readinessScore = user?.readinessScore || 0;
 
-    const lowerPrompt = prompt.toLowerCase();
+    const lowerPrompt = userPrompt.toLowerCase();
     let adviceText = "";
 
-    if (lowerPrompt.includes("data science") || lowerPrompt.includes("data analyst")) {
-      adviceText = `### 📊 Custom ML Trained Career Roadmap: Data Science & Analytics
-Based on our local skill mapping model and industry demand statistics:
+    if (lowerPrompt.includes("data science") || lowerPrompt.includes("data analyst") || lowerPrompt.includes("machine learning")) {
+      adviceText = `### 📊 Career Guidance: Data Science & Analytics
+Based on your profile and current industry requirements:
 
-1. **Core Programming & Mathematics**: Python, Pandas, NumPy, Vector Algebra, Probability & Statistics.
-2. **Local Machine Learning**: Scikit-Learn (Random Forest, Decision Trees, Logistic Regression, Support Vector Machines).
-3. **Data Pipeline & Databases**: SQL, Data Wrangling, ETL principles, BigQuery.
-4. **Model Deployment**: Building local API endpoints using Flask / FastAPI.
+**Your current skills:** ${userSkills}
+**Identified gaps:** ${userGaps}
+**Interests:** ${userInterests}
 
-💡 **ML Recommendation**: Complete the Technical Skill Assessment on the portal to compute your exact data gap index!`;
-    } else if (lowerPrompt.includes("web development") || lowerPrompt.includes("react") || lowerPrompt.includes("frontend")) {
-      adviceText = `### 💻 Custom ML Trained Career Roadmap: Web Development & Engineering
-Based on current industry placement requirements:
+**Recommended actions:**
+1. Strengthen Python, SQL, and Statistics through the Learning Recommendations section.
+2. Complete the skill assessment to update your gap analysis.
+3. Explore internships and projects tagged with "Data Science" or "Machine Learning".
+4. Use the Digital Portfolio to showcase any data projects or certifications.
 
-1. **Foundations**: HTML5, CSS3, JavaScript (ES6+ async/await, closures, functional programming).
-2. **Frontend Architecture**: React.js, State Management, Responsive Design, TailwindCSS.
-3. **Backend & Microservices**: Node.js, Express.js, RESTful API design, Microservice integration.
-4. **Version Control & CI/CD**: Git, GitHub, containerized build pipelines.
+💡 **Tip:** If your profile completion is ${profileCompletion}%, updating your skills and resume can improve your job matching score.`;
+    } else if (lowerPrompt.includes("web development") || lowerPrompt.includes("react") || lowerPrompt.includes("frontend") || lowerPrompt.includes("backend")) {
+      adviceText = `### 💻 Career Guidance: Web Development
+Based on your profile and current industry requirements:
 
-💡 **ML Recommendation**: Upload 2-3 verified project repositories in your Digital Portfolio to boost your placement matching score!`;
+**Your current skills:** ${userSkills}
+**Identified gaps:** ${userGaps}
+
+**Recommended actions:**
+1. Build projects in React, Node.js, or full-stack workflows and add them to your Portfolio.
+2. Check Learning Recommendations for courses aligned with your skill gaps.
+3. Apply for internships or live projects in web development.
+4. Complete the aptitude and skill assessments to improve placement readiness analytics.
+
+💡 **Tip:** Uploading a resume and enabling AI Resume Import can auto-enrich your profile faster.`;
+    } else if (lowerPrompt.includes("internship") || lowerPrompt.includes("placement") || lowerPrompt.includes("job")) {
+      adviceText = `### 🎯 Career Guidance: Internships & Placements
+Based on your current portal profile:
+
+**Profile completion:** ${profileCompletion}%
+**Placement readiness score:** ${readinessScore}
+
+**Recommended actions:**
+1. Complete your profile, skills, and resume for better matching.
+2. Explore recommended jobs and internships based on your skill profile.
+3. Use Skill Mapping to see which roles best match your strengths.
+4. Track applications and follow up through My Applications.
+
+💡 **Tip:** Students with verified portfolios and completed assessments receive higher-quality recommendations.`;
     } else {
-      adviceText = `### 🎯 Custom ML Trained Guidance & Skill Roadmap
-Based on your query regarding *"${prompt}"* and current skill profile ([${userSkills}]):
+      adviceText = `### 🎯 Career Guidance
+Based on your query: *"${userPrompt}"*
 
-1. **Skill Vector Alignment**: Match your technical competencies with active industry job descriptions.
-2. **Bridge Identified Gaps**: Enroll in published Industry Learning Programs and FDP/Certification courses.
-3. **Hands-On Industry Experience**: Apply for Industry Internships or Live Projects to build real-world experience.
-4. **Mentorship Sessions**: Schedule a session with an assigned industry mentor on the portal.
+**Your current skills:** ${userSkills}
+**Identified gaps:** ${userGaps}
+**Interests:** ${userInterests}
 
-💡 **Pro Tip**: Keep your Digital Portfolio verified to maximize your ML Placement Probability Score!`;
+**Recommended actions:**
+1. Complete the Skill Assessment and Aptitude tests to refresh your skill profile.
+2. Review Learning Recommendations aligned with your gaps and interests.
+3. Explore Jobs, Internships, and Learning Programs from the dashboard.
+4. Update your Portfolio with verified skills, projects, and certifications.
+
+💡 **Tip:** Keep your profile updated and upload your resume for AI-based profile enrichment.`;
     }
 
     return res.json({
       success: true,
-      source: "Campus2Career Custom Trained ML Engine",
-      model: "Local Knowledge Graph & ML Skill Distance Matcher",
+      source: "Campus2Career Career Advisor",
+      model: "Profile-Aware Career Guidance",
       answer: adviceText
     });
 
   } catch (error) {
-    console.error("Error in getCareerAdvice:", error);
-    res.status(500).json({ message: "Failed to generate local AI career advice" });
+    console.error("Career advice error:", error);
+    res.status(500).json({ message: error.message || "Failed to generate career advice" });
   }
 };
 

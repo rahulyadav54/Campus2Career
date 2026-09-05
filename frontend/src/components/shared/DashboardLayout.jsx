@@ -149,6 +149,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
         { path: "/student/challenges", label: "Innovation Challenges", icon: Trophy },
         { path: "/student/projects", label: "Live Industry Projects", icon: Building2 },
         { path: "/student/collaborations", label: "My Collaborations", icon: Users },
+        { path: "/student/announcements", label: "Announcements", icon: Megaphone },
       ],
     },
     mentor: {
@@ -203,6 +204,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
             label: "Analytics",
             icon: BarChart3,
           },
+          { path: "/recruiter/announcements", label: "Announcements", icon: Megaphone },
         ],
     },
     admin: {
@@ -231,6 +233,9 @@ const DashboardLayout = ({ userRole = "student" }) => {
       items: [
         { path: "/institution", label: "Dashboard", icon: BarChart3 },
         { path: "/institution/portfolio-verification", label: "Portfolio Verification", icon: Award },
+        { path: "/institution/analytics/skill-demand", label: "Skill Demand Trends", icon: TrendingUp },
+        { path: "/institution/analytics/internship-participation", label: "Internship Analytics", icon: ClipboardList },
+        { path: "/institution/analytics/placement-readiness", label: "Placement Readiness", icon: Award },
       ],
     },
   };

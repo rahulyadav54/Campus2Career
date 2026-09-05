@@ -50,6 +50,9 @@ import AcademicianMyApplications from "./pages/academician/AcademicianMyApplicat
 import OpportunityApprovals from "./pages/admin/OpportunityApprovals";
 import InstitutionDashboard from "./pages/institution/InstitutionDashboard";
 import PortfolioVerification from "./pages/institution/PortfolioVerification";
+import InstitutionSkillDemandAnalytics from "./pages/institution/InstitutionSkillDemandAnalytics";
+import InstitutionInternshipAnalytics from "./pages/institution/InstitutionInternshipAnalytics";
+import InstitutionPlacementReadiness from "./pages/institution/InstitutionPlacementReadiness";
 import AdminPortfolioVerification from "./pages/admin/PortfolioVerification";
 import QuestionBankManagement from "./pages/admin/QuestionBankManagement";
 import AdminPathways from "./pages/admin/AdminPathways";
@@ -69,6 +72,7 @@ import LiveIndustryProjects from "./pages/student/LiveIndustryProjects";
 import CollaborationRegistrations from "./pages/student/CollaborationRegistrations";
 import AdminCollaborationManagement from "./pages/admin/AdminCollaborationManagement";
 import LearningPlatforms from "./pages/shared/LearningPlatforms";
+import Announcements from "./pages/shared/Announcements";
 
 
 function App() {
@@ -105,6 +109,7 @@ function App() {
           <Route path="challenges" element={<InnovationChallenges />} />
           <Route path="projects" element={<LiveIndustryProjects />} />
           <Route path="collaborations" element={<CollaborationRegistrations />} />
+          <Route path="announcements" element={<Announcements />} />
         </Route>
 
         <Route path="/academician" element={<ProtectedRoute><DashboardLayout userRole="academician" /></ProtectedRoute>}>
@@ -140,6 +145,7 @@ function App() {
           <Route path="job/:jobId/applications" element={<JobApplications />} />
           <Route path="history" element={<RecruiterHistory />} />
           <Route path="analytics" element={<RecruitmentAnalytics />} />
+          <Route path="announcements" element={<Announcements />} />
         </Route>
         
         <Route path="/admin" element={<ProtectedRoute><DashboardLayout userRole="admin" /></ProtectedRoute>}>
@@ -166,6 +172,9 @@ function App() {
           <Route index element={<InstitutionDashboard />} />
           <Route path="dashboard" element={<InstitutionDashboard />} />
           <Route path="portfolio-verification" element={<PortfolioVerification />} />
+          <Route path="analytics/skill-demand" element={<InstitutionSkillDemandAnalytics />} />
+          <Route path="analytics/internship-participation" element={<InstitutionInternshipAnalytics />} />
+          <Route path="analytics/placement-readiness" element={<InstitutionPlacementReadiness />} />
         </Route>
 
       </Routes>

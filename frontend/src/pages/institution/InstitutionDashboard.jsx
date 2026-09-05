@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Users, GraduationCap, CheckCircle, Clock, BarChart2, Building2 } from "lucide-react";
 import apiClient from "../../services/apiClient";
 
-const StatCard = ({ icon: Icon, label, value, color }) => (
+const StatCard = ({ icon: IconComp, label, value, color }) => (
   <div className="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4">
-    <div className={`p-3 rounded-lg ${color}`}><Icon size={22} /></div>
+    <div className={`p-3 rounded-lg ${color}`}><IconComp size={22} /></div>
     <div><p className="text-sm text-gray-500">{label}</p><p className="text-2xl font-bold text-gray-900">{value ?? "—"}</p></div>
   </div>
 );
@@ -72,6 +72,24 @@ export default function InstitutionDashboard() {
             </table>
           </div>
         )}
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Analytics</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a href="/institution/analytics/skill-demand" className="block p-4 border border-gray-100 rounded-lg hover:border-indigo-300 hover:shadow-sm transition">
+            <p className="font-medium text-gray-900">Skill Demand Trends</p>
+            <p className="text-sm text-gray-500">Monthly skill demand across jobs, pathways, and opportunities.</p>
+          </a>
+          <a href="/institution/analytics/internship-participation" className="block p-4 border border-gray-100 rounded-lg hover:border-indigo-300 hover:shadow-sm transition">
+            <p className="font-medium text-gray-900">Internship Analytics</p>
+            <p className="text-sm text-gray-500">Participation, completion, and skills gained.</p>
+          </a>
+          <a href="/institution/analytics/placement-readiness" className="block p-4 border border-gray-100 rounded-lg hover:border-indigo-300 hover:shadow-sm transition">
+            <p className="font-medium text-gray-900">Placement Readiness</p>
+            <p className="text-sm text-gray-500">Department-wise readiness scores and outcomes.</p>
+          </a>
+        </div>
       </section>
     </main>
   );

@@ -2,6 +2,10 @@ import Workshop from "../models/Workshop.js";
 import GuestLecture from "../models/GuestLecture.js";
 import InnovationChallenge from "../models/InnovationChallenge.js";
 import LiveIndustryProject from "../models/LiveIndustryProject.js";
+import WorkshopRegistration from "../models/WorkshopRegistration.js";
+import GuestLectureRegistration from "../models/GuestLectureRegistration.js";
+import ChallengeRegistration from "../models/ChallengeRegistration.js";
+import ProjectApplication from "../models/ProjectApplication.js";
 
 export const listWorkshops = async (req, res) => {
   try {
@@ -151,8 +155,14 @@ export const registerForWorkshop = async (req, res) => {
   try {
     const item = await Workshop.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Workshop not found" });
+
+    const existing = await WorkshopRegistration.findOne({ workshop: item._id, student: req.user._id });
+    if (existing) return res.status(400).json({ message: "Already registered for this workshop" });
+
+    await WorkshopRegistration.create({ workshop: item._id, student: req.user._id });
     item.registeredCount = (item.registeredCount || 0) + 1;
     await item.save();
+
     res.json({ success: true, message: "Registered successfully", registeredCount: item.registeredCount });
   } catch (err) {
     res.status(500).json({ message: "Failed to register", error: err.message });
@@ -163,8 +173,14 @@ export const registerForGuestLecture = async (req, res) => {
   try {
     const item = await GuestLecture.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Guest lecture not found" });
+
+    const existing = await GuestLectureRegistration.findOne({ guestLecture: item._id, student: req.user._id });
+    if (existing) return res.status(400).json({ message: "Already registered for this guest lecture" });
+
+    await GuestLectureRegistration.create({ guestLecture: item._id, student: req.user._id });
     item.registeredCount = (item.registeredCount || 0) + 1;
     await item.save();
+
     res.json({ success: true, message: "Registered successfully", registeredCount: item.registeredCount });
   } catch (err) {
     res.status(500).json({ message: "Failed to register", error: err.message });
@@ -175,6 +191,17 @@ export const registerForChallenge = async (req, res) => {
   try {
     const item = await InnovationChallenge.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Innovation challenge not found" });
+
+    const existing = await ChallengeRegistration.findOne({ challenge: item._id, student: req.user._id });
+    if (existing) return res.status(400).json({ message: "Already registered for this challenge" });
+
+    await ChallengeRegistration.create({
+      challenge: item._id,
+      student: req.user._id,
+      teamName: req.body?.teamName,
+      teamMembers: req.body?.teamMembers || []
+    });
+
     res.json({ success: true, message: "Registered successfully" });
   } catch (err) {
     res.status(500).json({ message: "Failed to register", error: err.message });
@@ -185,8 +212,19 @@ export const applyToProject = async (req, res) => {
   try {
     const item = await LiveIndustryProject.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Live industry project not found" });
+
+    const existing = await ProjectApplication.findOne({ project: item._id, student: req.user._id });
+    if (existing) return res.status(400).json({ message: "Already applied for this project" });
+
+    await ProjectApplication.create({
+      project: item._id,
+      student: req.user._id,
+      coverLetter: req.body?.coverLetter
+    });
+
     item.applicantsCount = (item.applicantsCount || 0) + 1;
     await item.save();
+
     res.json({ success: true, message: "Applied successfully", applicantsCount: item.applicantsCount });
   } catch (err) {
     res.status(500).json({ message: "Failed to apply", error: err.message });
@@ -201,7 +239,15 @@ export const getMyCollaborations = async (req, res) => {
       InnovationChallenge.find({ createdBy: req.user._id }),
       LiveIndustryProject.find({ createdBy: req.user._id })
     ]);
-    res.json({ success: true, data: { workshops, guestLectures, challenges, projects } });
+
+    const [workshopRegs, guestLectureRegs, challengeRegs, projectApps] = await Promise.all([
+      WorkshopRegistration.find({ student: req.user._id }).populate("workshop"),
+      GuestLectureRegistration.find({ student: req.user._id }).populate("guestLecture"),
+      ChallengeRegistration.find({ student: req.user._id }).populate("challenge"),
+      ProjectApplication.find({ student: req.user._id }).populate("project")
+    ]);
+
+    res.json({ success: true, data: { workshops, guestLectures, challenges, projects, workshopRegs, guestLectureRegs, challengeRegs, projectApps } });
   } catch (err) {
     res.status(500).json({ message: "Failed to load collaborations", error: err.message });
   }
