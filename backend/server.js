@@ -26,7 +26,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 dotenv.config();
 const app = express();
 
-// Trust Render/Vercel reverse proxy so express-rate-limit and req.ip work correctly
+// Trust Render/Vercel reverse proxy — required for express-rate-limit and correct req.ip
 app.set('trust proxy', 1);
 
 // Security headers
@@ -49,15 +49,20 @@ app.use(cors({
 
     if (
       origin === "http://localhost:5173" ||
+      origin === "http://localhost:5174" ||
       origin === "http://127.0.0.1:5173" ||
       configuredOrigins.includes(origin) ||
-      // Any *.vercel.app deployment for this project
+      // Any *.vercel.app deployment for this project (with or without hyphen)
       /^https:\/\/campus2career[a-z0-9-]*\.vercel\.app$/.test(origin) ||
-      /^https:\/\/campus2-career[a-z0-9-]*\.vercel\.app$/.test(origin)
+      /^https:\/\/campus2-career[a-z0-9-]*\.vercel\.app$/.test(origin) ||
+      // Render preview URLs
+      /^https:\/\/campus2career[a-z0-9-]*\.onrender\.com$/.test(origin)
     ) {
       return callback(null, true);
     }
 
+    // Log blocked origins to help diagnose future CORS issues
+    console.warn(`CORS blocked origin: ${origin}`);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true
@@ -111,25 +116,42 @@ app.use("/api/career", careerRoutes);
 app.use("/api/internship-progress", internshipProgressRoutes);
 app.use("/api/ai", aiRoutes);
 
-// Error handling middleware
+// 404 handler for unknown routes
+app.use((req, res) => {
+  res.status(404).json({ message: `Route ${req.method} ${req.path} not found` });
+});
+
+// Global error handler
 app.use((err, req, res, next) => {
-  console.error('Error:', {
-    message: err.message,
-    stack: err.stack,
-    code: err.code
-  });
+  // CORS errors — return proper JSON so browser shows the real message
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({ message: 'CORS: origin not allowed' });
+  }
+
+  console.error('Server error:', err.message);
 
   if (err.name === 'MongoServerError' && err.code === 11000) {
-    const field = Object.keys(err.keyPattern)[0];
+    const field = Object.keys(err.keyPattern || {})[0] || 'field';
     return res.status(400).json({
       message: `This ${field} is already registered`,
-      field: field
+      field,
     });
+  }
+
+  if (err.name === 'ValidationError') {
+    const errors = Object.keys(err.errors).reduce((acc, key) => {
+      acc[key] = err.errors[key].message;
+      return acc;
+    }, {});
+    return res.status(400).json({ message: 'Validation error', errors });
+  }
+
+  if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
 
   res.status(err.status || 500).json({
     message: err.message || 'An unexpected error occurred',
-    error: process.env.NODE_ENV === 'development' ? err : {}
   });
 });
 
