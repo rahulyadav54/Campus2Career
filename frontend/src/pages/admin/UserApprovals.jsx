@@ -226,24 +226,26 @@ const UserApprovals = () => {
                       </div>
                     </div>
                   )}
-                </div>
+                   </div>
 
-                <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={() => openModal(user, "approve")}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => openModal(user, "reject")}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                  >
-                    <XCircle className="w-4 h-4" />
-                    Reject
-                  </button>
-                </div>
+                   <div className="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0 sm:ml-4">
+                     <button
+                       onClick={() => openModal(user, "approve")}
+                       className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm sm:text-base"
+                     >
+                       <CheckCircle className="w-4 h-4" />
+                       <span className="hidden sm:inline">Approve</span>
+                       <span className="sm:hidden">Approve</span>
+                     </button>
+                     <button
+                       onClick={() => openModal(user, "reject")}
+                       className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base"
+                     >
+                       <XCircle className="w-4 h-4" />
+                       <span className="hidden sm:inline">Reject</span>
+                       <span className="sm:hidden">Reject</span>
+                     </button>
+                   </div>
               </div>
             </div>
           ))

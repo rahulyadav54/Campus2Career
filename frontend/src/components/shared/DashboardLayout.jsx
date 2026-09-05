@@ -261,8 +261,8 @@ const DashboardLayout = ({ userRole = "student" }) => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* HEADER */}
-      <header className="flex justify-between items-center bg-white/90 backdrop-blur-md shadow-md px-6 py-4 sticky top-0 z-50">
-        <div className="flex items-center gap-4">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/90 backdrop-blur-md shadow-md px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-50 gap-3">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition"
@@ -270,23 +270,20 @@ const DashboardLayout = ({ userRole = "student" }) => {
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{config.title}</h1>
-            <p className="text-gray-500 text-sm">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">{config.title}</h1>
+            <p className="text-gray-500 text-xs sm:text-sm">
               Welcome back, {userData?.name || "User"}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Notifications */}
-          
-
+        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
           {/* User Info */}
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-lg">
               {userData?.name?.charAt(0) || "U"}
             </div>
-            <span className="hidden sm:block font-medium text-gray-900">
+            <span className="hidden sm:block font-medium text-gray-900 text-sm sm:text-base">
               {userData?.name || "User"}
             </span>
           </div>
@@ -296,22 +293,23 @@ const DashboardLayout = ({ userRole = "student" }) => {
             onClick={handleLogout}
             className="p-2 text-gray-500 hover:text-red-600 rounded-lg hover:bg-gray-100 transition"
           >
-            <LogOut size={20} />
+            <LogOut size={18} className="sm:hidden" />
+            <LogOut size={20} className="hidden sm:block" />
           </button>
         </div>
       </header>
 
       {/* MAIN */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
         {/* SIDEBAR */}
         <aside
           className={`${
-            sidebarOpen ? "translate-x-0 translate-y-20 w-full" : "-translate-x-full"
-          } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-40 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0 fixed inset-y-0 left-0 z-40 ${
             sidebarCollapsed ? "w-16" : "w-64"
-          } bg-white shadow-lg transition-all duration-300`}
+          } bg-white shadow-lg transition-transform duration-300 top-0`}
         >
-          <div className="px-3 py-4">
+          <div className="px-3 py-4 h-full overflow-y-auto">
             {/* Collapse Toggle - Desktop Only */}
             <div className="hidden lg:flex justify-end mb-4">
               <button
@@ -324,7 +322,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
               </button>
             </div>
             
-            <nav className="flex flex-col gap-2">
+            <nav className="flex flex-col gap-1 sm:gap-2">
               {config.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -335,7 +333,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
                       navigate(item.path);
                       setSidebarOpen(false);
                     }}
-                    className={`flex items-center gap-3 w-full p-3 rounded-lg transition-colors relative group ${
+                    className={`flex items-center gap-2 sm:gap-3 w-full p-2 sm:p-3 rounded-lg transition-colors relative group ${
                       isActive
                         ? "bg-indigo-50 text-indigo-600 font-semibold"
                         : "text-gray-700 hover:bg-gray-50"
@@ -346,11 +344,11 @@ const DashboardLayout = ({ userRole = "student" }) => {
                       {typeof Icon === "string" ? (
                         <span className="text-lg">{Icon}</span>
                       ) : (
-                        <Icon size={20} className="flex-shrink-0" />
+                        <Icon size={18} className="flex-shrink-0" />
                       )}
                     </div>
                     {!sidebarCollapsed && (
-                      <span className="flex-1 text-left whitespace-nowrap">{item.label}</span>
+                      <span className="flex-1 text-left whitespace-nowrap text-sm sm:text-base">{item.label}</span>
                     )}
                     
                     {/* Tooltip for collapsed state */}
@@ -367,9 +365,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
         </aside>
 
         {/* CONTENT */}
-        <main className={`flex-1 bg-gradient-to-br from-slate-50 via-indigo-50 to-indigo-100 transition-all duration-300 ${
-          sidebarCollapsed ? "lg:ml-0" : ""
-        }`}>
+        <main className={`flex-1 bg-gradient-to-br from-slate-50 via-indigo-50 to-indigo-100 transition-all duration-300 p-3 sm:p-4 lg:p-6`}>
           <Outlet />
         </main>
       </div>
