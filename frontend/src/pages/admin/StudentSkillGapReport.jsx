@@ -39,7 +39,7 @@ export default function StudentSkillGapReport() {
       }
     };
     fetchData();
-  }, []);
+  }, [navigate]);
 
   if (loading) return <p className="p-6 text-gray-500">Loading skill gap report…</p>;
   if (!data) return <p className="p-6 text-gray-500">No data available.</p>;

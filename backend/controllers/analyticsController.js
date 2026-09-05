@@ -370,9 +370,7 @@ export const getRecruitmentOutcomes = async (req, res) => {
       hired: 0
     };
     for (const app of applications) {
-      const s = statusBuckets[app.status] !== undefined ? app.status : "hired";
-      if (app.status === "hired") statusBuckets.hired += 1;
-      else if (app.status in statusBuckets) statusBuckets[app.status] += 1;
+      if (app.status in statusBuckets) statusBuckets[app.status] += 1;
     }
     const totalApplications = applications.length;
     const hired = statusBuckets.hired;
@@ -410,6 +408,10 @@ export const getRecruitmentOutcomes = async (req, res) => {
       interviewToHire: interviews ? Math.round((hired / interviews) * 100) : 0
     };
 
+    const appCountByJob = {};
+    for (const app of applications) {
+      if (app.job) appCountByJob[app.job.toString()] = (appCountByJob[app.job.toString()] || 0) + 1;
+    }
     const recentJobs = jobs
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 10)
@@ -417,7 +419,7 @@ export const getRecruitmentOutcomes = async (req, res) => {
         title: j.title,
         status: j.status,
         company: j.company || "",
-        applicationCount: 0,
+        applicationCount: appCountByJob[j._id.toString()] || 0,
         postedAt: j.createdAt
       }));
 
