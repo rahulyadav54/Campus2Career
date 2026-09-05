@@ -110,8 +110,15 @@ const DashboardLayout = ({ userRole = "student" }) => {
     if (!token) return undefined;
     const events = new EventSource(`${API_URL}/api/realtime/events?token=${encodeURIComponent(token)}`);
     events.addEventListener("notification", (event) => {
-      const notification = JSON.parse(event.data);
-      toast(notification.title || "You have a new notification", { icon: "!" });
+      try {
+        const notification = JSON.parse(event.data);
+        toast(notification.title || "You have a new notification", { icon: "!" });
+      } catch {
+        // ignore malformed SSE payloads
+      }
+    });
+    events.addEventListener("error", () => {
+      // Silently ignore transient SSE connection errors
     });
     return () => events.close();
   }, []);

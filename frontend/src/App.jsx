@@ -84,7 +84,6 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/recruiter/register" element={<RecruiterRegistration />} />
         <Route path="/academician/register" element={<AcademicianRegistration />} />
-        <Route path="*" element={<UnderDevelopment />} />
         
         <Route path="/student" element={<ProtectedRoute><DashboardLayout userRole="student" /></ProtectedRoute>}>
           <Route index element={<StudentHome />} />
@@ -177,6 +176,7 @@ function App() {
           <Route path="analytics/placement-readiness" element={<InstitutionPlacementReadiness />} />
         </Route>
 
+        <Route path="*" element={<UnderDevelopment />} />
       </Routes>
       <Toaster 
         position="top-center" 
