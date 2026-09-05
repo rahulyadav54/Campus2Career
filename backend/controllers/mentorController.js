@@ -39,10 +39,10 @@ export const getMentees = async (req, res) => {
 export const getMenteeApplications = async (req, res) => {
   try {
     const applications = await Application.find({ 
-      studentId: req.params.studentId 
+      student: req.params.studentId 
     })
-    .populate('jobId', 'title company location')
-    .populate('studentId', 'name email')
+    .populate('job', 'title company location')
+    .populate('student', 'name email')
     .sort({ createdAt: -1 });
 
     res.json({ success: true, applications });
@@ -169,7 +169,7 @@ export const getDashboard = async (req, res) => {
     today.setHours(0, 0, 0, 0);
     const approvedToday = await Application.countDocuments({
       student: { $in: students.map(s => s._id) },
-      status: "approved by mentor",
+      status: "pending recruiter review",
       updatedAt: { $gte: today }
     });
 

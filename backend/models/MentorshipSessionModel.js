@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const mentorshipSessionSchema = new mongoose.Schema({
   mentor: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   student: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  topic: { type: String, required: true },
+  topic: { type: String, required: true, trim: true },
   description: { type: String },
   scheduledAt: { type: Date, required: true },
   durationMinutes: { type: Number, default: 60 },

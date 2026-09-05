@@ -48,14 +48,15 @@ export const registerRecruiter = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Create user account
+    // Create user account - pending approval
     const user = await User.create({
       name,
       email,
       password,
       phone,
       role: "recruiter",
-      company: companyProfile.displayName
+      company: companyProfile.displayName,
+      status: "pending"
     });
 
     // Create recruiter profile
@@ -66,21 +67,14 @@ export const registerRecruiter = async (req, res) => {
       documents
     });
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
     res.status(201).json({
-      message: "Recruiter registered successfully. Awaiting verification.",
-      token,
+      message: "Recruiter registered successfully. Awaiting admin verification.",
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
+        status: user.status,
         verificationStatus: recruiter.verificationStatus
       }
     });

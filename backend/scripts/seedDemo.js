@@ -410,13 +410,13 @@ async function seed() {
 
   // Demo academician opportunities
   const adminUser = await User.findOne({ role: "admin" });
-  const institutionAdmin = await User.findOne({ role: "institution" });
+  const institutionAdmin2 = await User.findOne({ role: "institution" });
   const academician1 = await User.findOne({ email: "academician@campus2career.com" });
   const academician2 = await User.findOne({ email: "academician2@campus2career.com" });
 
   const fdps = [
     { title: "Pedagogical Innovations in CS Education", description: "FDP on modern teaching methodologies for computer science.", organization: "AICTE", startDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), mode: "online", skills: ["Teaching", "Curriculum Design"], eligibility: "Faculty with 2+ years experience", applicationDeadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id, maxParticipants: 50, certificateProvided: true },
-    { title: "Industry 4.0 Technologies for Engineers", description: "Hands-on FDP covering IoT, robotics, and smart manufacturing.", organization: "ISTE", startDate: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), mode: "hybrid", skills: ["IoT", "Robotics", "Automation"], eligibility: "Engineering faculty", applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id, maxParticipants: 40, certificateProvided: true }
+    { title: "Industry 4.0 Technologies for Engineers", description: "Hands-on FDP covering IoT, robotics, and smart manufacturing.", organization: "ISTE", startDate: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), mode: "hybrid", skills: ["IoT", "Robotics", "Automation"], eligibility: "Engineering faculty", applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin2?._id, maxParticipants: 40, certificateProvided: true }
   ];
   for (const fdp of fdps) {
     const existing = await FacultyDevelopmentProgram.findOne({ title: fdp.title });
@@ -426,7 +426,7 @@ async function seed() {
 
   const facultyInternships = [
     { title: "Summer Faculty Internship at TechCorp", company: "TechCorp Solutions", description: "2-month faculty internship to work on real products.", duration: "2 months", stipend: "₹50,000/month", skills: ["React", "Node.js", "Mentoring"], eligibility: "CS/IT faculty", applicationDeadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id },
-    { title: "Embedded Systems Research Internship", company: "InnoSoft Systems", description: "Faculty research internship on IoT firmware.", duration: "3 months", stipend: "₹45,000/month", skills: ["C", "Microcontrollers", "IoT"], eligibility: "ECE faculty", applicationDeadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id }
+    { title: "Embedded Systems Research Internship", company: "InnoSoft Systems", description: "Faculty research internship on IoT firmware.", duration: "3 months", stipend: "₹45,000/month", skills: ["C", "Microcontrollers", "IoT"], eligibility: "ECE faculty", applicationDeadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin2?._id }
   ];
   for (const fi of facultyInternships) {
     const existing = await FacultyInternship.findOne({ title: fi.title });
@@ -436,7 +436,7 @@ async function seed() {
 
   const consultancies = [
     { title: "Cloud Migration Consultancy", client: "State Government Department", description: "Consultancy for migrating legacy systems to cloud.", budget: "₹12 Lakhs", duration: "6 months", skillsRequired: ["AWS", "Cloud Architecture", "DevOps"], eligibility: "Faculty with cloud expertise", applicationDeadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id },
-    { title: "AI-Powered Chatbot for Citizen Services", client: "Municipal Corporation", description: "Develop and deploy an AI chatbot for citizen grievance redressal.", budget: "₹8 Lakhs", duration: "4 months", skillsRequired: ["Python", "NLP", "LLMs"], eligibility: "Faculty + student team", applicationDeadline: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id }
+    { title: "AI-Powered Chatbot for Citizen Services", client: "Municipal Corporation", description: "Develop and deploy an AI chatbot for citizen grievance redressal.", budget: "₹8 Lakhs", duration: "4 months", skillsRequired: ["Python", "NLP", "LLMs"], eligibility: "Faculty + student team", applicationDeadline: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin2?._id }
   ];
   for (const c of consultancies) {
     const existing = await ConsultancyOpportunity.findOne({ title: c.title });
@@ -446,7 +446,7 @@ async function seed() {
 
   const researchCollabs = [
     { title: "Ayurveda Drug Discovery Using ML", description: "Collaborative research on identifying bioactive compounds using ML.", researchArea: "AI + Ayurveda", partners: ["AIIA", "IIT Madras"], fundingAvailable: "₹25 Lakhs", duration: "2 years", eligibility: "Faculty with PhD", applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id },
-    { title: "Smart Agriculture IoT Platform", description: "Research on low-cost IoT sensors for precision farming.", researchArea: "IoT + Agriculture", partners: ["ICAR", "TNAU"], fundingAvailable: "₹15 Lakhs", duration: "18 months", eligibility: "ECE/CS faculty", applicationDeadline: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id }
+    { title: "Smart Agriculture IoT Platform", description: "Research on low-cost IoT sensors for precision farming.", researchArea: "IoT + Agriculture", partners: ["ICAR", "TNAU"], fundingAvailable: "₹15 Lakhs", duration: "18 months", eligibility: "ECE/CS faculty", applicationDeadline: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin2?._id }
   ];
   for (const r of researchCollabs) {
     const existing = await ResearchCollaboration.findOne({ title: r.title });
@@ -467,7 +467,7 @@ async function seed() {
 
   const guestLectures = [
     { title: "Building Scalable Systems at Google", speaker: "Ms. Anjali Mehra", designation: "Staff Engineer", organization: "Google", topic: "Scalable System Design", date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), time: "2:00 PM - 3:30 PM", mode: "online", skills: ["System Design", "Scalability", "Cloud"], eligibility: "All students", maxParticipants: 500, registeredCount: 340, status: "published", createdBy: adminUser?._id },
-    { title: "Cybersecurity Trends 2026", speaker: "Mr. Karthik Reddy", designation: "CISO", organization: "TechSecure", topic: "Modern Cybersecurity Threats", date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), time: "11:00 AM - 12:30 PM", mode: "offline", skills: ["Cybersecurity", "Networking", "Risk Assessment"], eligibility: "CS/IT students", maxParticipants: 200, registeredCount: 150, status: "published", createdBy: institutionAdmin?._id }
+    { title: "Cybersecurity Trends 2026", speaker: "Mr. Karthik Reddy", designation: "CISO", organization: "TechSecure", topic: "Modern Cybersecurity Threats", date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), time: "11:00 AM - 12:30 PM", mode: "offline", skills: ["Cybersecurity", "Networking", "Risk Assessment"], eligibility: "CS/IT students", maxParticipants: 200, registeredCount: 150, status: "published", createdBy: institutionAdmin2?._id }
   ];
   for (const gl of guestLectures) {
     const existing = await GuestLecture.findOne({ title: gl.title });
@@ -477,7 +477,7 @@ async function seed() {
 
   const challenges = [
     { title: "Smart India Hackathon 2026 - Problem Statement 42", description: "Build a low-cost air quality monitoring solution using IoT.", organizer: "Ministry of Ayush", theme: "IoT + Environmental Monitoring", startDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 27 * 24 * 60 * 60 * 1000), prize: "₹1,00,000 + internship opportunities", skills: ["IoT", "Python", "Sensors"], eligibility: "UG/PG students", maxTeamSize: 6, registrationDeadline: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id },
-    { title: "Campus2Career AI Challenge", description: "Design an AI-powered career recommendation engine.", organizer: "Campus2Career", theme: "AI + Career Tech", startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000), prize: "₹50,000 + premium subscriptions", skills: ["Python", "Machine Learning", "NLP"], eligibility: "All students", maxTeamSize: 4, registrationDeadline: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id }
+    { title: "Campus2Career AI Challenge", description: "Design an AI-powered career recommendation engine.", organizer: "Campus2Career", theme: "AI + Career Tech", startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000), prize: "₹50,000 + premium subscriptions", skills: ["Python", "Machine Learning", "NLP"], eligibility: "All students", maxTeamSize: 4, registrationDeadline: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin2?._id }
   ];
   for (const ch of challenges) {
     const existing = await InnovationChallenge.findOne({ title: ch.title });
