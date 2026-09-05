@@ -60,6 +60,14 @@ export const studentOnly = (req, res, next) => {
   }
 };
 
+export const academicianOnly = (req, res, next) => {
+  if (req.user && req.user.role === "academician") {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. Academician only." });
+  }
+};
+
 export const institutionOnly = (req, res, next) => {
   if (req.user && (req.user.role === "institution" || req.user.role === "admin")) {
     next();

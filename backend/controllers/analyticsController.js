@@ -609,8 +609,7 @@ export const getStudentSkillGapReport = async (req, res) => {
     for (const o of opportunities) for (const skill of o.requiredSkills || []) bumpDemand(skill, 2);
 
     // Per-student gap aggregation
-    const gapCounts = {}; // gap -> student count (unique)
-    const studentGap = {};
+    const gapCounts = {};
     const byDepartment = {};
     const distributionBuckets = { "0": 0, "1-2": 0, "3-5": 0, "6+": 0 };
     let studentsWithGaps = 0;
@@ -634,12 +633,9 @@ export const getStudentSkillGapReport = async (req, res) => {
         gapsSum += gapsArr.length;
         byDepartment[dept].studentsWithGaps += 1;
         byDepartment[dept].gapsSum += gapsArr.length;
-        studentGap[idStr] = gapsArr;
         for (const g of gapsArr) {
           gapCounts[g] = (gapCounts[g] || 0) + 1;
         }
-      } else {
-        studentGap[idStr] = [];
       }
 
       const bucket = gapsArr.length === 0 ? "0" : gapsArr.length <= 2 ? "1-2" : gapsArr.length <= 5 ? "3-5" : "6+";
