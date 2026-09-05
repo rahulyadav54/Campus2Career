@@ -36,12 +36,12 @@ export default function LiveIndustryProjects() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/collaboration/projects`, {
+      const res = await fetch(`${API_URL}/api/collaborations/projects`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch projects");
       const data = await res.json();
-      setProjects(Array.isArray(data) ? data : data.projects || []);
+      setProjects(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -53,7 +53,7 @@ export default function LiveIndustryProjects() {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${API_URL}/api/collaboration/projects/${id}/apply`,
+        `${API_URL}/api/collaborations/projects/${id}/register`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -74,7 +74,7 @@ export default function LiveIndustryProjects() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/admin/collaboration/projects`, {
+      const res = await fetch(`${API_URL}/api/collaborations/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -110,15 +110,15 @@ export default function LiveIndustryProjects() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       <header>
         <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">
           Industry Engagement
         </p>
-        <h1 className="text-3xl font-bold text-gray-900 mt-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
           Live Industry Projects
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-gray-600 mt-2 text-sm sm:text-base">
           Work on real-world projects from leading companies and gain hands-on experience.
         </p>
       </header>
@@ -126,10 +126,10 @@ export default function LiveIndustryProjects() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
         >
           {showForm ? <X size={16} /> : <Plus size={16} />}
-          {showForm ? "Cancel" : "Post Project"}
+          <span className="hidden sm:inline">{showForm ? "Cancel" : "Post Project"}</span>
         </button>
       </div>
 
@@ -311,59 +311,59 @@ export default function LiveIndustryProjects() {
           <div className="text-gray-500">Loading projects...</div>
         </div>
       ) : (
-        <section className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {projects.map((project) => (
             <article
               key={project._id}
-              className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow"
+              className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 hover:shadow-lg transition-shadow"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <div className="p-2 bg-blue-50 rounded-lg">
-                    <Building2 className="text-blue-600 w-5 h-5" />
+                    <Building2 className="text-blue-600 w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                    <h2 className="font-semibold text-lg text-gray-900">
+                    <h2 className="font-semibold text-base sm:text-lg text-gray-900">
                       {project.title}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
                       {project.company}
                     </p>
                   </div>
                 </div>
-                <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded capitalize">
+                <span className="text-[10px] sm:text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded capitalize">
                   {project.mode}
                 </span>
               </div>
 
-              <p className="text-gray-700 mt-4 text-sm line-clamp-2">
+              <p className="text-gray-700 mt-3 sm:mt-4 text-xs sm:text-sm line-clamp-2">
                 {project.description}
               </p>
 
-              <div className="grid grid-cols-2 gap-2 mt-4 text-sm text-gray-600">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
-                  <Building2 size={14} className="text-gray-400" />
+                  <Building2 size={12} className="text-gray-400" />
                   {project.industry}
                 </div>
                 <div className="flex items-center gap-2">
-                  <DollarSign size={14} className="text-gray-400" />
+                  <DollarSign size={12} className="text-gray-400" />
                   {project.stipend}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-gray-400" />
+                  <Clock size={12} className="text-gray-400" />
                   {project.duration}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar size={14} className="text-gray-400" />
+                  <Calendar size={12} className="text-gray-400" />
                   Due: {new Date(project.deadline).toLocaleDateString()}
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
                 {(project.skills || []).map((skill) => (
                   <span
                     key={skill}
-                    className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded flex items-center gap-1"
+                    className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-50 text-blue-700 rounded flex items-center gap-1"
                   >
                     <Code size={10} />
                     {skill}
@@ -373,7 +373,7 @@ export default function LiveIndustryProjects() {
 
               <button
                 onClick={() => handleApply(project._id)}
-                className="mt-5 w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                className="mt-3 sm:mt-5 w-full px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm sm:text-base"
               >
                 Apply Now
               </button>

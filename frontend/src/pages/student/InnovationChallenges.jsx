@@ -36,12 +36,12 @@ export default function InnovationChallenges() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/collaboration/challenges`, {
+      const res = await fetch(`${API_URL}/api/collaborations/challenges`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Failed to fetch challenges");
       const data = await res.json();
-      setChallenges(Array.isArray(data) ? data : data.challenges || []);
+      setChallenges(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -53,7 +53,7 @@ export default function InnovationChallenges() {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${API_URL}/api/collaboration/challenges/${id}/apply`,
+        `${API_URL}/api/collaborations/challenges/${id}/register`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -63,7 +63,7 @@ export default function InnovationChallenges() {
         const data = await res.json();
         throw new Error(data.message || "Application failed");
       }
-      toast.success("Applied successfully!");
+      toast.success("Registered successfully!");
       fetchChallenges();
     } catch (err) {
       toast.error(err.message);
@@ -74,7 +74,7 @@ export default function InnovationChallenges() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_URL}/api/admin/collaboration/challenges`, {
+      const res = await fetch(`${API_URL}/api/collaborations/challenges`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -122,15 +122,15 @@ export default function InnovationChallenges() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       <header>
         <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">
           Competitions
         </p>
-        <h1 className="text-3xl font-bold text-gray-900 mt-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">
           Innovation Challenges
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-gray-600 mt-2 text-sm sm:text-base">
           Showcase your skills, form teams, and compete for exciting prizes.
         </p>
       </header>
@@ -138,7 +138,7 @@ export default function InnovationChallenges() {
       <div className="flex items-center gap-2">
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
         >
           {showForm ? <X size={16} /> : <Plus size={16} />}
           {showForm ? "Cancel" : "Create Challenge"}
@@ -306,26 +306,26 @@ export default function InnovationChallenges() {
           <div className="text-gray-500">Loading challenges...</div>
         </div>
       ) : (
-        <section className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {challenges.map((challenge) => (
             <article
               key={challenge._id}
-              className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-shadow"
+              className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 hover:shadow-lg transition-shadow"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex gap-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <div className="p-2 bg-yellow-50 rounded-lg">
-                    <Trophy className="text-yellow-600 w-5 h-5" />
+                    <Trophy className="text-yellow-600 w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   <div>
-                    <h2 className="font-semibold text-lg text-gray-900">
+                    <h2 className="font-semibold text-base sm:text-lg text-gray-900">
                       {challenge.title}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">{challenge.theme}</p>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">{challenge.theme}</p>
                   </div>
                 </div>
                 <span
-                  className={`text-xs px-2 py-1 rounded capitalize ${getStatusColor(
+                  className={`text-[10px] sm:text-xs px-2 py-1 rounded capitalize ${getStatusColor(
                     challenge.status
                   )}`}
                 >
@@ -333,25 +333,25 @@ export default function InnovationChallenges() {
                 </span>
               </div>
 
-              <p className="text-gray-700 mt-4 text-sm line-clamp-2">
+              <p className="text-gray-700 mt-3 sm:mt-4 text-xs sm:text-sm line-clamp-2">
                 {challenge.description}
               </p>
 
-              <div className="grid grid-cols-2 gap-2 mt-4 text-sm text-gray-600">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
-                  <Users size={14} className="text-gray-400" />
+                  <Users size={12} className="text-gray-400" />
                   Team size: {challenge.teamSize}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar size={14} className="text-gray-400" />
+                  <Calendar size={12} className="text-gray-400" />
                   Deadline: {new Date(challenge.deadline).toLocaleDateString()}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Award size={14} className="text-gray-400" />
+                  <Award size={12} className="text-gray-400" />
                   {challenge.prize}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Target size={14} className="text-gray-400" />
+                  <Target size={12} className="text-gray-400" />
                   {challenge.applications?.length || 0} teams
                 </div>
               </div>
@@ -364,11 +364,11 @@ export default function InnovationChallenges() {
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2 mt-4">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
                 {(challenge.tags || []).map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded"
+                    className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-100 text-gray-700 rounded"
                   >
                     {tag}
                   </span>
@@ -378,7 +378,7 @@ export default function InnovationChallenges() {
               <button
                 onClick={() => handleApply(challenge._id)}
                 disabled={challenge.status === "closed"}
-                className="mt-5 w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="mt-3 sm:mt-5 w-full px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm sm:text-base disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {challenge.status === "closed"
                   ? "Challenge Closed"
