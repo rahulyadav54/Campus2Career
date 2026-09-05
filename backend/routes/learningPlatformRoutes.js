@@ -1,5 +1,5 @@
 import express from "express";
-import { adminOnly, institutionOnly, staffOnly } from "../middleware/authMiddleware.js";
+import { protect, adminOnly } from "../middleware/authMiddleware.js";
 import { listPlatforms, getPlatform, createPlatform, updatePlatform, deletePlatform } from "../controllers/learningPlatformController.js";
 
 const router = express.Router();
@@ -7,8 +7,8 @@ const router = express.Router();
 router.get("/", listPlatforms);
 router.get("/:id", getPlatform);
 
-router.post("/", staffOnly, createPlatform);
-router.put("/:id", staffOnly, updatePlatform);
-router.delete("/:id", staffOnly, deletePlatform);
+router.post("/", protect, adminOnly, createPlatform);
+router.put("/:id", protect, adminOnly, updatePlatform);
+router.delete("/:id", protect, adminOnly, deletePlatform);
 
 export default router;

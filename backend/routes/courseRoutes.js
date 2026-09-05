@@ -1,5 +1,5 @@
 import express from "express";
-import { protect, adminOnly, staffOnly, studentOnly } from "../middleware/authMiddleware.js";
+import { protect, adminOnly, studentOnly } from "../middleware/authMiddleware.js";
 import {
   listCourses, getCourse, createCourse, updateCourse, deleteCourse,
   enrollCourse, updateProgress, completeCourse, getMyEnrollments, getEnrollment
@@ -18,9 +18,9 @@ router.post("/:courseId/complete", protect, studentOnly, completeCourse);
 router.get("/my/enrollments", protect, studentOnly, getMyEnrollments);
 router.get("/my/enrollments/:courseId", protect, studentOnly, getEnrollment);
 
-// Admin/staff management
-router.post("/", protect, staffOnly, createCourse);
-router.put("/:id", protect, staffOnly, updateCourse);
-router.delete("/:id", protect, staffOnly, deleteCourse);
+// Admin management
+router.post("/", protect, adminOnly, createCourse);
+router.put("/:id", protect, adminOnly, updateCourse);
+router.delete("/:id", protect, adminOnly, deleteCourse);
 
 export default router;
