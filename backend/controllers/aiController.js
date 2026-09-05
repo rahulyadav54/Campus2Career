@@ -365,6 +365,8 @@ export const importResumeFromFile = async (req, res) => {
     student.calculateReputation();
     await student.save();
 
+    const atsScore = calculateAtsScore(student, importedProfile);
+
     res.json({
       success: true,
       message: "Resume imported successfully",
@@ -372,6 +374,7 @@ export const importResumeFromFile = async (req, res) => {
       resumeUrl,
       user: student.getPublicProfile(),
       source: "Campus2Career Resume Importer",
+      atsScore,
     });
   } catch (error) {
     console.error("Error in importResumeFromFile:", error);
@@ -383,6 +386,51 @@ export const importResumeFromFile = async (req, res) => {
       await fs.unlink(req.file.path).catch(() => {});
     }
   }
+};
+
+const calculateAtsScore = (student, importedProfile) => {
+  let score = 0;
+
+  const skillsCount = (student.skills || []).length;
+  const skillScore = Math.min(30, skillsCount * 3);
+  score += skillScore;
+
+  const projectCount = (student.projects || []).length;
+  const experienceCount = (student.experiences || []).length;
+  const expScore = Math.min(25, projectCount * 5 + experienceCount * 5);
+  score += expScore;
+
+  const certCount = (student.certifications || []).length;
+  const certScore = Math.min(15, certCount * 5);
+  score += certScore;
+
+  const profileCompletion = student.profileCompletion || 0;
+  const profileScore = Math.min(20, Math.round((profileCompletion / 100) * 20));
+  score += profileScore;
+
+  const socialLinks = student.socialLinks || {};
+  const filledSocials = Object.values(socialLinks).filter(Boolean).length;
+  const socialScore = Math.min(10, filledSocials * 2);
+  score += socialScore;
+
+  const normalizedScore = Math.min(100, Math.max(0, score));
+
+  let grade = "Poor";
+  if (normalizedScore >= 80) grade = "Excellent";
+  else if (normalizedScore >= 60) grade = "Good";
+  else if (normalizedScore >= 40) grade = "Average";
+
+  return {
+    score: normalizedScore,
+    grade,
+    breakdown: {
+      skills: Math.min(30, skillsCount * 3),
+      experience: Math.min(25, projectCount * 5 + experienceCount * 5),
+      certifications: Math.min(15, certCount * 5),
+      profileCompletion: Math.min(20, Math.round((profileCompletion / 100) * 20)),
+      socialLinks: Math.min(10, filledSocials * 2),
+    },
+  };
 };
 
 // ==========================================

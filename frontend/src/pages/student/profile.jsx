@@ -47,6 +47,9 @@ const Profile = () => {
   const [resumePreview, setResumePreview] = useState("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [showAIResumeModal, setShowAIResumeModal] = useState(false);
+  const [atsFile, setAtsFile] = useState(null);
+  const [atsImporting, setAtsImporting] = useState(false);
+  const [atsResult, setAtsResult] = useState(null);
 
   const avatarOptions = [
     "https://api.dicebear.com/7.x/avataaars/svg?seed=alex",
@@ -289,6 +292,69 @@ const Profile = () => {
     }
   };
 
+  const handleAtsFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setAtsFile(file);
+    setAtsImporting(true);
+    setAtsResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("resume", file);
+
+      const response = await makeAuthenticatedRequest(
+        `${API_URL}/api/ai/import-resume`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {},
+        },
+        navigate
+      );
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        setAtsResult({
+          ...data.data,
+          atsScore: data.atsScore || null,
+          resumeUrl: data.resumeUrl || null,
+        });
+        if (data.resumeUrl) {
+          setResumePreview(data.resumeUrl);
+          setFormData((prev) => ({ ...prev, resumeUrl: data.resumeUrl }));
+        }
+      } else {
+        toast.error(data.message || "Failed to parse resume");
+      }
+    } catch (error) {
+      console.error("ATS import error:", error);
+      toast.error("Failed to import resume");
+    } finally {
+      setAtsImporting(false);
+    }
+  };
+
+  const applyAtsImport = () => {
+    if (!atsResult) return;
+    setFormData((prev) => ({
+      ...prev,
+      skills: Array.isArray(atsResult.skills) ? atsResult.skills : prev.skills,
+      projects: Array.isArray(atsResult.projects) ? atsResult.projects : prev.projects,
+      experiences: Array.isArray(atsResult.experiences) ? atsResult.experiences : prev.experiences,
+      certifications: Array.isArray(atsResult.certifications) ? atsResult.certifications : prev.certifications,
+      description: atsResult.description || prev.description,
+      socialLinks: {
+        ...prev.socialLinks,
+        ...(atsResult.socialLinks || {}),
+      },
+    }));
+    toast.success("Profile updated from resume");
+    setShowAIResumeModal(false);
+    setAtsResult(null);
+    setAtsFile(null);
+  };
+
   if (loading) {
     console.log('Loading state:', loading);
     return (
@@ -343,7 +409,11 @@ const Profile = () => {
             ) : (
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowAIResumeModal(true)}
+                  onClick={() => {
+                    setShowAIResumeModal(true);
+                    setAtsResult(null);
+                    setAtsFile(null);
+                  }}
                   className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 font-medium text-sm flex items-center gap-2 transition-all shadow-md"
                 >
                   <Sparkles size={18} className="text-amber-300 animate-pulse" />
@@ -500,29 +570,154 @@ const Profile = () => {
 
         {showAIResumeModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-lg w-full">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center">
-                  <Sparkles size={18} className="text-white" />
+            <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center">
+                    <Sparkles size={18} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">AI Resume Import</h3>
+                    <p className="text-sm text-gray-500">Auto-fill your profile from resume</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">AI Resume Import</h3>
-                  <p className="text-sm text-gray-500">Quick resume helper</p>
-                </div>
-              </div>
-              <p className="text-gray-600 leading-relaxed">
-                This feature is reserved for the AI import flow. Your profile is safe,
-                and the page will now stay stable instead of crashing. You can still
-                upload your resume from the resume section below.
-              </p>
-              <div className="flex justify-end gap-3 mt-6">
                 <button
-                  onClick={() => setShowAIResumeModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    setShowAIResumeModal(false);
+                    setAtsResult(null);
+                    setAtsFile(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
                 >
-                  Close
+                  ✕
                 </button>
               </div>
+
+              {!atsResult ? (
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center">
+                    <FileText size={40} className="mx-auto text-gray-400 mb-3" />
+                    <p className="text-gray-600 mb-2">Upload your resume to auto-fill your profile</p>
+                    <p className="text-xs text-gray-500 mb-4">Supports PDF, DOC, DOCX (max 5MB)</p>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleAtsFileChange}
+                      className="hidden"
+                      id="ats-resume-input"
+                    />
+                    <label
+                      htmlFor="ats-resume-input"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg cursor-pointer hover:bg-indigo-700"
+                    >
+                      {atsImporting ? "Parsing..." : "Choose Resume"}
+                    </label>
+                    {atsFile && (
+                      <p className="text-sm text-gray-600 mt-2">{atsFile.name}</p>
+                    )}
+                  </div>
+                  {atsImporting && (
+                    <div className="flex items-center justify-center gap-2 text-gray-600">
+                      <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                      Analyzing resume...
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {atsResult.atsScore && (
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-gray-900">ATS Score</h4>
+                        <span className="text-sm font-medium text-gray-600">
+                          {atsResult.atsScore.grade}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                        <div
+                          className="bg-indigo-600 h-3 rounded-full transition-all duration-500"
+                          style={{ width: `${atsResult.atsScore.score}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="font-bold text-gray-900">{atsResult.atsScore.score}/100</span>
+                        <span className="text-gray-500">
+                          Skills: {atsResult.atsScore.breakdown.skills} | Experience: {atsResult.atsScore.breakdown.experience} | Certs: {atsResult.atsScore.breakdown.certifications}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">Skills</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {(atsResult.skills || []).slice(0, 10).map((skill, idx) => (
+                          <span key={idx} className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">Projects</h4>
+                      {(atsResult.projects || []).length > 0 ? (
+                        <ul className="space-y-1 text-sm text-gray-700">
+                          {(atsResult.projects || []).slice(0, 3).map((project, idx) => (
+                            <li key={idx} className="truncate">• {project.title}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-500">No projects detected</p>
+                      )}
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">Experience</h4>
+                      {(atsResult.experiences || []).length > 0 ? (
+                        <ul className="space-y-1 text-sm text-gray-700">
+                          {(atsResult.experiences || []).slice(0, 3).map((exp, idx) => (
+                            <li key={idx} className="truncate">• {exp.company || exp.role}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-500">No experience detected</p>
+                      )}
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">Certifications</h4>
+                      {(atsResult.certifications || []).length > 0 ? (
+                        <ul className="space-y-1 text-sm text-gray-700">
+                          {(atsResult.certifications || []).slice(0, 3).map((cert, idx) => (
+                            <li key={idx} className="truncate">• {cert.name}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-sm text-gray-500">No certifications detected</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <button
+                      onClick={() => {
+                        setShowAIResumeModal(false);
+                        setAtsResult(null);
+                        setAtsFile(null);
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={applyAtsImport}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+                    >
+                      <Sparkles size={16} />
+                      Apply to Profile
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
