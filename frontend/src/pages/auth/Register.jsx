@@ -54,7 +54,7 @@ export default function Register() {
 
       if (data.success) {
         if (data.token) localStorage.setItem("token", data.token);
-        if (data.user) localStorage.setItem("student", JSON.stringify(data.user));
+        if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 
         if (data.user?.status === "pending") {
           toast.success("Account created! Please wait for admin approval.");

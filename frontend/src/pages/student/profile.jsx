@@ -108,7 +108,7 @@ const Profile = () => {
 
       try {
         // Check if this is mentor viewing student profile
-        console.log('Is mentor view:', isMentorView);
+
 
         // Disable editing for mentor view
         if (isMentorView) {
@@ -119,13 +119,13 @@ const Profile = () => {
           ? `${API_URL}/api/mentor/student-profile/${studentId}`
           : `${API_URL}/api/student/profile`;
           
-        console.log('Fetching from endpoint:', endpoint);
+
 
         const res = await makeAuthenticatedRequest(endpoint, {}, navigate);
-        console.log('API response status:', res.status);
+
 
         const data = await res.json();
-        console.log('API response data:', data);
+
         if (data) {
           const updatedData = {
             ...data,
@@ -356,7 +356,7 @@ const Profile = () => {
   };
 
   if (loading) {
-    console.log('Loading state:', loading);
+
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-xl text-gray-600">Loading...</div>
@@ -364,7 +364,7 @@ const Profile = () => {
     );
   }
   
-  console.log('Form data:', formData);
+
 
   return (
     <div className="min-h-screen bg-gray-50">
