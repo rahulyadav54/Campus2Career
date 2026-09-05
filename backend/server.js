@@ -55,6 +55,8 @@ app.use(cors({
       // Any *.vercel.app deployment for this project (with or without hyphen)
       /^https:\/\/campus2career[a-z0-9-]*\.vercel\.app$/.test(origin) ||
       /^https:\/\/campus2-career[a-z0-9-]*\.vercel\.app$/.test(origin) ||
+      // Hostinger custom domain
+      origin === "https://campus2career.zayacodehub.in" ||
       // Render preview URLs
       /^https:\/\/campus2career[a-z0-9-]*\.onrender\.com$/.test(origin)
     ) {
