@@ -14,15 +14,17 @@ export default function LearningPlatforms() {
   const [platforms, setPlatforms] = useState([]);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     apiClient.get("/api/learning-platforms")
       .then((res) => setPlatforms(res.data.data || []))
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
   if (error) return <main className="max-w-6xl mx-auto p-6 text-red-600">{error}</main>;
-  if (!platforms.length) return <main className="max-w-6xl mx-auto p-6 text-gray-500">Loading learning platforms…</main>;
+  if (loading) return <main className="max-w-6xl mx-auto p-6 text-gray-500">Loading learning platforms…</main>;
 
   const filtered = filter === "all" ? platforms : platforms.filter((p) => p.type === filter);
 
