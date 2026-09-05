@@ -313,15 +313,14 @@ fetch(`${API_URL}/api/recommendations/jobs`, {
                 {recommendations[job._id] && (
                   <div className="mb-4">
                     <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium w-fit ${
-                      recommendations[job._id].category === 'Top Match' ? 'bg-green-100 text-green-800' :
-                      recommendations[job._id].category === 'Good Match' ? 'bg-blue-100 text-blue-800' :
-                      recommendations[job._id].category === 'Near Miss' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                      recommendations[job._id].match_score >= 80 ? 'bg-green-100 text-green-800' :
+                      recommendations[job._id].match_score >= 60 ? 'bg-blue-100 text-blue-800' :
+                      recommendations[job._id].match_score >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                      recommendations[job._id].match_score >= 20 ? 'bg-orange-100 text-orange-800' :
+                      'bg-red-100 text-red-800'
                     }`}>
-                      {recommendations[job._id].category === 'Top Match' && <Target className="w-3 h-3" />}
-                      {recommendations[job._id].category === 'Good Match' && <Star className="w-3 h-3" />}
-                      {recommendations[job._id].category === 'Near Miss' && <AlertTriangle className="w-3 h-3" />}
-                      <span>{recommendations[job._id].category}</span>
+                      <Star className="w-3 h-3" />
+                      <span>{recommendations[job._id].match_status} · {recommendations[job._id].match_score}%</span>
                     </div>
                   </div>
                 )}

@@ -1,72 +1,62 @@
 import Job from '../models/JobModel.js';
 import User from '../models/UserModel.js';
+import { calculateJobMatch } from '../services/jobMatchingService.js';
+
+const buildRecommendation = (job, student) => {
+  const { overallScore, skillScore, matchedSkills, missingSkills, matchStatus, breakdown } =
+    calculateJobMatch(student, job);
+
+  return {
+    job_id:        job._id,
+    job_title:     job.title,
+    company:       job.recruiter?.company || job.recruiter?.name || 'Company Name',
+    location:      job.location,
+    match_score:   overallScore,
+    skill_score:   skillScore,
+    matched_skills: matchedSkills,
+    missing_skills: missingSkills,
+    match_status:  matchStatus,
+    breakdown,
+    // legacy field kept for UI badge compatibility
+    category: matchStatus,
+    job_details: {
+      description: job.description,
+      duration:    job.duration,
+      stipend:     job.stipend,
+      type:        job.type,
+    },
+  };
+};
 
 export const getJobRecommendations = async (req, res) => {
   try {
-    
-    const studentId = req.user._id;
-    
-    // Get student profile
-    const student = await User.findById(studentId).select(
-      'skills department specialization preferredLocations remotePref cgpa'
+    const student = await User.findById(req.user._id).select(
+      'skills department specialization preferredLocations cgpa'
     );
-    
-    
-    if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
-    }
+    if (!student) return res.status(404).json({ message: 'Student not found' });
 
-    // Get active approved jobs
-    const jobs = await Job.find({ 
-      isActive: true, 
-      status: 'approved'
-    }).populate('recruiter', 'company name');
-    
+    const jobs = await Job.find({ isActive: true, status: 'approved' })
+      .populate('recruiter', 'company name');
 
-    // Generate recommendations using built-in logic
-    const recommendations = jobs.map(job => {
-      const studentSkills = (student.skills || []).map(s => s.toLowerCase());
-      const jobSkills = (job.skillsRequired || []).map(s => s.toLowerCase());
-      const matchedSkills = studentSkills.filter(s => jobSkills.includes(s));
-      const missingSkills = jobSkills.filter(s => !studentSkills.includes(s));
-      const skillsScore = jobSkills.length > 0 ? (matchedSkills.length / jobSkills.length) * 70 : 35;
-      const locationScore = student.preferredLocations?.includes(job.location) ? 20 : 10;
-      const cgpaScore = student.cgpa >= 6.0 ? 10 : 5;
-      const matchScore = skillsScore + locationScore + cgpaScore;
-      
-      return {
-        job_id: job._id,
-        job_title: job.title,
-        company: job.recruiter?.company || 'Company Name',
-        location: job.location,
-        match_score: Math.round(matchScore * 10) / 10,
-        matched_skills: matchedSkills,
-        missing_skills: missingSkills,
-        category: matchScore >= 80 ? 'Top Match' : matchScore >= 60 ? 'Good Match' : matchScore >= 40 ? 'Near Miss' : 'Not Suitable',
-        job_details: {
-          description: job.description,
-          duration: job.duration,
-          stipend: job.stipend,
-          type: job.type
-        }
-      };
-    }).filter(rec => rec.match_score >= 40).sort((a, b) => b.match_score - a.match_score);
-    
+    const recommendations = jobs
+      .map(job => buildRecommendation(job, student))
+      .filter(rec => rec.match_score > 0)
+      .sort((a, b) => b.match_score - a.match_score);
 
     res.json({
       student_profile: {
-        skills: student.skills,
-        department: student.department,
+        skills:         student.skills,
+        department:     student.department,
         specialization: student.specialization,
-        cgpa: student.cgpa
+        cgpa:           student.cgpa,
       },
       total_jobs_analyzed: jobs.length,
-      recommendations: recommendations,
+      recommendations,
       summary: {
-        top_matches: recommendations.filter(r => r.category === 'Top Match').length,
-        good_matches: recommendations.filter(r => r.category === 'Good Match').length,
-        near_misses: recommendations.filter(r => r.category === 'Near Miss').length
-      }
+        top_matches:  recommendations.filter(r => r.match_score >= 80).length,
+        good_matches: recommendations.filter(r => r.match_score >= 60 && r.match_score < 80).length,
+        near_misses:  recommendations.filter(r => r.match_score >= 40 && r.match_score < 60).length,
+      },
     });
   } catch (error) {
     console.error('Job recommendation error:', error);
@@ -76,56 +66,21 @@ export const getJobRecommendations = async (req, res) => {
 
 export const getJobRecommendationsForStudent = async (req, res) => {
   try {
-    const { studentId } = req.params;
-    
-    // Get student profile
-    const student = await User.findById(studentId).select(
-      'skills department specialization preferredLocations remotePref cgpa name'
+    const student = await User.findById(req.params.studentId).select(
+      'skills department specialization preferredLocations cgpa name'
     );
-    
-    if (!student) {
-      return res.status(404).json({ message: 'Student not found' });
-    }
+    if (!student) return res.status(404).json({ message: 'Student not found' });
 
-    // Get active approved jobs
-    const jobs = await Job.find({ 
-      isActive: true, 
-      status: 'approved'
-    }).populate('recruiter', 'company name');
+    const jobs = await Job.find({ isActive: true, status: 'approved' })
+      .populate('recruiter', 'company name');
 
-    // Generate recommendations using built-in logic
-    const recommendations = jobs.map(job => {
-      const studentSkills = (student.skills || []).map(s => s.toLowerCase());
-      const jobSkills = (job.skillsRequired || []).map(s => s.toLowerCase());
-      const matchedSkills = studentSkills.filter(s => jobSkills.includes(s));
-      const missingSkills = jobSkills.filter(s => !studentSkills.includes(s));
-      const skillsScore = jobSkills.length > 0 ? (matchedSkills.length / jobSkills.length) * 70 : 35;
-      const locationScore = student.preferredLocations?.includes(job.location) ? 20 : 10;
-      const cgpaScore = student.cgpa >= 6.0 ? 10 : 5;
-      const matchScore = skillsScore + locationScore + cgpaScore;
-      
-      return {
-        job_id: job._id,
-        job_title: job.title,
-        company: job.recruiter?.company || 'Company Name',
-        location: job.location,
-        match_score: Math.round(matchScore * 10) / 10,
-        matched_skills: matchedSkills,
-        missing_skills: missingSkills,
-        category: matchScore >= 80 ? 'Top Match' : matchScore >= 60 ? 'Good Match' : matchScore >= 40 ? 'Near Miss' : 'Not Suitable',
-        job_details: {
-          description: job.description,
-          duration: job.duration,
-          stipend: job.stipend,
-          type: job.type
-        }
-      };
-    }).filter(rec => rec.match_score >= 40).sort((a, b) => b.match_score - a.match_score);
+    const recommendations = jobs
+      .map(job => buildRecommendation(job, student))
+      .filter(rec => rec.match_score > 0)
+      .sort((a, b) => b.match_score - a.match_score)
+      .slice(0, 10);
 
-    res.json({
-      student_name: student.name,
-      recommendations: recommendations.slice(0, 10) // Top 10 recommendations
-    });
+    res.json({ student_name: student.name, recommendations });
   } catch (error) {
     console.error('Job recommendation error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
