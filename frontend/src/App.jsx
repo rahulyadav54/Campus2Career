@@ -72,6 +72,7 @@ import LiveIndustryProjects from "./pages/student/LiveIndustryProjects";
 import CollaborationRegistrations from "./pages/student/CollaborationRegistrations";
 import AdminCollaborationManagement from "./pages/admin/AdminCollaborationManagement";
 import LearningPlatforms from "./pages/shared/LearningPlatforms";
+import AdminLearningPlatforms from "./pages/admin/AdminLearningPlatforms";
 import Announcements from "./pages/shared/Announcements";
 
 
@@ -165,6 +166,7 @@ function App() {
           <Route path="analytics/internship-participation" element={<InternshipAnalytics />} />
           <Route path="analytics/student-skill-gaps" element={<StudentSkillGapReport />} />
           <Route path="collaboration" element={<AdminCollaborationManagement />} />
+          <Route path="learning-platforms" element={<AdminLearningPlatforms />} />
         </Route>
 
         <Route path="/institution" element={<ProtectedRoute><DashboardLayout userRole="institution" /></ProtectedRoute>}>

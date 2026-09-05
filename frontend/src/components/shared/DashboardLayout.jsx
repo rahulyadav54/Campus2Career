@@ -233,6 +233,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
         { path: "/admin/analytics/internship-participation", label: "Internship Analytics", icon: ClipboardList },
         { path: "/admin/analytics/student-skill-gaps", label: "Student Skill Gaps", icon: AlertTriangle },
         { path: "/admin/collaboration", label: "Collaboration Management", icon: Presentation },
+        { path: "/admin/learning-platforms", label: "Learning Platforms", icon: Globe },
       ],
     },
     institution: {
