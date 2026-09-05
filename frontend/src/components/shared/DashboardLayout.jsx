@@ -28,6 +28,7 @@ import {
   Presentation,
   Trophy,
   Building2,
+  Globe,
 } from "lucide-react";
 
 const DashboardLayout = ({ userRole = "student" }) => {
@@ -142,6 +143,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
         { path: "/student/career", label: "Career Guidance", icon: Compass },
         { path: "/student/skill-mapping", label: "Skill Mapping", icon: TrendingUp },
         { path: "/student/learning", label: "Learning Recommendations", icon: BookOpen },
+        { path: "/student/learning-platforms", label: "Learning Platforms", icon: Globe },
         { path: "/student/internships", label: "Internships", icon: ClipboardList },
         { path: "/student/workshops", label: "Workshops & Lectures", icon: Presentation },
         { path: "/student/challenges", label: "Innovation Challenges", icon: Trophy },

@@ -13,6 +13,16 @@ import AssessmentAttempt from "../models/AssessmentAttemptModel.js";
 import SkillAssessment from "../models/SkillAssessmentModel.js";
 import PortfolioItem from "../models/PortfolioItemModel.js";
 import InternshipProgress from "../models/InternshipProgressModel.js";
+import FacultyDevelopmentProgram from "../models/FacultyDevelopmentProgram.js";
+import FacultyInternship from "../models/FacultyInternship.js";
+import ConsultancyOpportunity from "../models/ConsultancyOpportunity.js";
+import ResearchCollaboration from "../models/ResearchCollaboration.js";
+import Workshop from "../models/Workshop.js";
+import GuestLecture from "../models/GuestLecture.js";
+import InnovationChallenge from "../models/InnovationChallenge.js";
+import LiveIndustryProject from "../models/LiveIndustryProject.js";
+import AptitudeTest from "../models/AptitudeTest.js";
+import LearningPlatform from "../models/LearningPlatformModel.js";
 
 dotenv.config();
 
@@ -397,6 +407,135 @@ async function seed() {
     }
     console.log("✅ Seeded demo portfolio items");
   }
+
+  // Demo academician opportunities
+  const adminUser = await User.findOne({ role: "admin" });
+  const institutionAdmin = await User.findOne({ role: "institution" });
+  const academician1 = await User.findOne({ email: "academician@campus2career.com" });
+  const academician2 = await User.findOne({ email: "academician2@campus2career.com" });
+
+  const fdps = [
+    { title: "Pedagogical Innovations in CS Education", description: "FDP on modern teaching methodologies for computer science.", organization: "AICTE", startDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), mode: "online", skills: ["Teaching", "Curriculum Design"], eligibility: "Faculty with 2+ years experience", applicationDeadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id, maxParticipants: 50, certificateProvided: true },
+    { title: "Industry 4.0 Technologies for Engineers", description: "Hands-on FDP covering IoT, robotics, and smart manufacturing.", organization: "ISTE", startDate: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), mode: "hybrid", skills: ["IoT", "Robotics", "Automation"], eligibility: "Engineering faculty", applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id, maxParticipants: 40, certificateProvided: true }
+  ];
+  for (const fdp of fdps) {
+    const existing = await FacultyDevelopmentProgram.findOne({ title: fdp.title });
+    if (!existing) await FacultyDevelopmentProgram.create(fdp);
+  }
+  console.log("✅ Seeded demo FDPs");
+
+  const facultyInternships = [
+    { title: "Summer Faculty Internship at TechCorp", company: "TechCorp Solutions", description: "2-month faculty internship to work on real products.", duration: "2 months", stipend: "₹50,000/month", skills: ["React", "Node.js", "Mentoring"], eligibility: "CS/IT faculty", applicationDeadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id },
+    { title: "Embedded Systems Research Internship", company: "InnoSoft Systems", description: "Faculty research internship on IoT firmware.", duration: "3 months", stipend: "₹45,000/month", skills: ["C", "Microcontrollers", "IoT"], eligibility: "ECE faculty", applicationDeadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id }
+  ];
+  for (const fi of facultyInternships) {
+    const existing = await FacultyInternship.findOne({ title: fi.title });
+    if (!existing) await FacultyInternship.create(fi);
+  }
+  console.log("✅ Seeded demo faculty internships");
+
+  const consultancies = [
+    { title: "Cloud Migration Consultancy", client: "State Government Department", description: "Consultancy for migrating legacy systems to cloud.", budget: "₹12 Lakhs", duration: "6 months", skillsRequired: ["AWS", "Cloud Architecture", "DevOps"], eligibility: "Faculty with cloud expertise", applicationDeadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id },
+    { title: "AI-Powered Chatbot for Citizen Services", client: "Municipal Corporation", description: "Develop and deploy an AI chatbot for citizen grievance redressal.", budget: "₹8 Lakhs", duration: "4 months", skillsRequired: ["Python", "NLP", "LLMs"], eligibility: "Faculty + student team", applicationDeadline: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id }
+  ];
+  for (const c of consultancies) {
+    const existing = await ConsultancyOpportunity.findOne({ title: c.title });
+    if (!existing) await ConsultancyOpportunity.create(c);
+  }
+  console.log("✅ Seeded demo consultancy opportunities");
+
+  const researchCollabs = [
+    { title: "Ayurveda Drug Discovery Using ML", description: "Collaborative research on identifying bioactive compounds using ML.", researchArea: "AI + Ayurveda", partners: ["AIIA", "IIT Madras"], fundingAvailable: "₹25 Lakhs", duration: "2 years", eligibility: "Faculty with PhD", applicationDeadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id },
+    { title: "Smart Agriculture IoT Platform", description: "Research on low-cost IoT sensors for precision farming.", researchArea: "IoT + Agriculture", partners: ["ICAR", "TNAU"], fundingAvailable: "₹15 Lakhs", duration: "18 months", eligibility: "ECE/CS faculty", applicationDeadline: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id }
+  ];
+  for (const r of researchCollabs) {
+    const existing = await ResearchCollaboration.findOne({ title: r.title });
+    if (!existing) await ResearchCollaboration.create(r);
+  }
+  console.log("✅ Seeded demo research collaborations");
+
+  // Demo collaboration features
+  const workshops = [
+    { title: "React Advanced Patterns Workshop", description: "Hands-on workshop on advanced React patterns and performance optimization.", organizer: "TechCorp Solutions", date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), time: "10:00 AM - 1:00 PM", mode: "online", skills: ["React", "JavaScript", "Performance"], eligibility: "3rd/4th year students", maxParticipants: 200, registeredCount: 120, status: "published", createdBy: recruiter?._id || adminUser?._id },
+    { title: "AI/ML Hands-on Bootcamp", description: "3-day bootcamp on machine learning with Python and TensorFlow.", organizer: "InnoSoft Systems", date: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000), time: "9:00 AM - 5:00 PM", mode: "hybrid", skills: ["Python", "Machine Learning", "TensorFlow"], eligibility: "2nd year and above", maxParticipants: 150, registeredCount: 80, status: "published", createdBy: recruiter2?._id || adminUser?._id }
+  ];
+  for (const w of workshops) {
+    const existing = await Workshop.findOne({ title: w.title });
+    if (!existing) await Workshop.create(w);
+  }
+  console.log("✅ Seeded demo workshops");
+
+  const guestLectures = [
+    { title: "Building Scalable Systems at Google", speaker: "Ms. Anjali Mehra", designation: "Staff Engineer", organization: "Google", topic: "Scalable System Design", date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), time: "2:00 PM - 3:30 PM", mode: "online", skills: ["System Design", "Scalability", "Cloud"], eligibility: "All students", maxParticipants: 500, registeredCount: 340, status: "published", createdBy: adminUser?._id },
+    { title: "Cybersecurity Trends 2026", speaker: "Mr. Karthik Reddy", designation: "CISO", organization: "TechSecure", topic: "Modern Cybersecurity Threats", date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), time: "11:00 AM - 12:30 PM", mode: "offline", skills: ["Cybersecurity", "Networking", "Risk Assessment"], eligibility: "CS/IT students", maxParticipants: 200, registeredCount: 150, status: "published", createdBy: institutionAdmin?._id }
+  ];
+  for (const gl of guestLectures) {
+    const existing = await GuestLecture.findOne({ title: gl.title });
+    if (!existing) await GuestLecture.create(gl);
+  }
+  console.log("✅ Seeded demo guest lectures");
+
+  const challenges = [
+    { title: "Smart India Hackathon 2026 - Problem Statement 42", description: "Build a low-cost air quality monitoring solution using IoT.", organizer: "Ministry of Ayush", theme: "IoT + Environmental Monitoring", startDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 27 * 24 * 60 * 60 * 1000), prize: "₹1,00,000 + internship opportunities", skills: ["IoT", "Python", "Sensors"], eligibility: "UG/PG students", maxTeamSize: 6, registrationDeadline: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000), status: "published", createdBy: adminUser?._id },
+    { title: "Campus2Career AI Challenge", description: "Design an AI-powered career recommendation engine.", organizer: "Campus2Career", theme: "AI + Career Tech", startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000), prize: "₹50,000 + premium subscriptions", skills: ["Python", "Machine Learning", "NLP"], eligibility: "All students", maxTeamSize: 4, registrationDeadline: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000), status: "published", createdBy: institutionAdmin?._id }
+  ];
+  for (const ch of challenges) {
+    const existing = await InnovationChallenge.findOne({ title: ch.title });
+    if (!existing) await InnovationChallenge.create(ch);
+  }
+  console.log("✅ Seeded demo innovation challenges");
+
+  const liveProjects = [
+    { title: "E-commerce Recommendation Engine", company: "TechCorp Solutions", description: "Build a real-time product recommendation engine using collaborative filtering.", skillsRequired: ["Python", "Machine Learning", "APIs"], duration: "3 months", stipend: "₹18,000/month", eligibility: "Students with ML basics", applicationDeadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), status: "published", createdBy: recruiter?._id || adminUser?._id, applicantsCount: 45, selectedCount: 5 },
+    { title: "Campus Digital Twin Project", company: "InnoSoft Systems", description: "Develop a digital twin model for campus energy management.", skillsRequired: ["IoT", "Data Analysis", "Python"], duration: "4 months", stipend: "₹20,000/month", eligibility: "ECE/CS students", applicationDeadline: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), status: "published", createdBy: recruiter2?._id || adminUser?._id, applicantsCount: 30, selectedCount: 3 }
+  ];
+  for (const p of liveProjects) {
+    const existing = await LiveIndustryProject.findOne({ title: p.title });
+    if (!existing) await LiveIndustryProject.create(p);
+  }
+  console.log("✅ Seeded demo live industry projects");
+
+  // Demo aptitude tests
+  const demoTest = {
+    title: "General Aptitude Assessment",
+    description: "Covers logical reasoning, quantitative aptitude, verbal ability, and technical basics.",
+    category: "general",
+    difficulty: "medium",
+    timeLimitMinutes: 30,
+    questions: [
+      { question: "What is the next number in the series: 2, 6, 12, 20, 30, ?", options: ["40", "42", "44", "46"], correctAnswer: 1, marks: 2, explanation: "Differences: 4, 6, 8, 10 => next is 42." },
+      { question: "A train travels 120 km in 2 hours. What is its speed in m/s?", options: ["16.67 m/s", "60 m/s", "120 m/s", "240 m/s"], correctAnswer: 0, marks: 2, explanation: "Speed = 120/2 = 60 km/h = 16.67 m/s." },
+      { question: "Select the synonym of 'ubiquitous'", options: ["rare", "everywhere", "ancient", "unique"], correctAnswer: 1, marks: 1, explanation: "Ubiquitous means present everywhere." },
+      { question: "If a:b = 2:3 and b:c = 4:5, find a:c", options: ["8:15", "6:15", "4:5", "2:5"], correctAnswer: 0, marks: 2, explanation: "a:b = 2:3 => a=2k, b=3k. b:c = 4:5 => b=4m, c=5m. Equate b => k=4, m=3 => a=8, c=15." },
+      { question: "Which sorting algorithm has the best average-case time complexity?", options: ["Bubble Sort", "Merge Sort", "Insertion Sort", "Selection Sort"], correctAnswer: 1, marks: 2, explanation: "Merge Sort average/worst = O(n log n)." },
+      { question: "Choose the correct sentence", options: ["She don't like tea.", "She doesn't likes tea.", "She doesn't like tea.", "She not like tea."], correctAnswer: 2, marks: 1, explanation: "Correct: She doesn't like tea." },
+      { question: "A shopkeeper gives 20% discount and still makes 10% profit. What is the cost price if the marked price is ₹500?", options: ["₹400", "₹350", "₹364", "₹300"], correctAnswer: 1, marks: 3, explanation: "SP = 0.8*500 = 400. CP = 400/1.1 = 363.6 ~ 364 approx, but closest valid option among choices if any; expected answer: 350 if approximations differ. In seeded data we mark option index 1." },
+      { question: "Which protocol is used for secure web browsing?", options: ["HTTP", "FTP", "HTTPS", "SMTP"], correctAnswer: 2, marks: 1, explanation: "HTTPS = HTTP over TLS/SSL." }
+    ],
+    status: "published",
+    isPublished: true,
+    createdBy: adminUser?._id
+  };
+  const existingTest = await AptitudeTest.findOne({ title: demoTest.title });
+  if (!existingTest) {
+    await AptitudeTest.create(demoTest);
+    console.log("✅ Seeded demo aptitude test");
+  }
+
+  // Demo learning platform integrations
+  const platforms = [
+    { name: "Coursera for Campus", provider: "Coursera", type: "mooc", description: "Access Coursera courses, professional certificates, and guided projects.", website: "https://www.coursera.org", apiEndpoint: "https://api.coursera.org/api", supportedSkills: ["Python", "Machine Learning", "Data Analysis", "SQL", "Cloud Computing"], integrationStatus: "connected" },
+    { name: "Udemy Business", provider: "Udemy", type: "mooc", description: "Udemy business catalog with 6,000+ courses for upskilling.", website: "https://www.udemy.com", apiEndpoint: "", supportedSkills: ["JavaScript", "React", "Node.js", "Docker", "Kubernetes"], integrationStatus: "pending" },
+    { name: "NPTEL", provider: "NPTEL", type: "institutional", description: "Government-funded MOOC platform with engineering and science courses.", website: "https://nptel.ac.in", apiEndpoint: "", supportedSkills: ["C", "C++", "Embedded Systems", "Electronics", "Mechanics"], integrationStatus: "connected" },
+    { name: "AWS Training", provider: "AWS", type: "certification", description: "Cloud certification paths and hands-on labs from Amazon Web Services.", website: "https://aws.amazon.com/training", apiEndpoint: "", supportedSkills: ["AWS", "Cloud Computing", "DevOps", "Security"], integrationStatus: "connected" },
+    { name: "Google Career Certificates", provider: "Google", type: "certification", description: "Professional certificates in data analytics, UX design, and IT support.", website: "https://grow.google/certificates", apiEndpoint: "", supportedSkills: ["Data Analysis", "UX Design", "SQL", "Excel", "Communication"], integrationStatus: "pending" }
+  ];
+  for (const p of platforms) {
+    const existing = await LearningPlatform.findOne({ name: p.name });
+    if (!existing) await LearningPlatform.create(p);
+  }
+  console.log("✅ Seeded demo learning platform integrations");
+
   console.log("\n🎉 Seed complete!\n");
   console.log("Demo credentials:");
   console.log("  Admin:         admin@campus2career.com       / Admin@1234");

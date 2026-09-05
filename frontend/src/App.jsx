@@ -68,6 +68,7 @@ import InnovationChallenges from "./pages/student/InnovationChallenges";
 import LiveIndustryProjects from "./pages/student/LiveIndustryProjects";
 import CollaborationRegistrations from "./pages/student/CollaborationRegistrations";
 import AdminCollaborationManagement from "./pages/admin/AdminCollaborationManagement";
+import LearningPlatforms from "./pages/shared/LearningPlatforms";
 
 
 function App() {
@@ -98,6 +99,7 @@ function App() {
           <Route path="career" element={<CareerGuidance />} />
           <Route path="skill-mapping" element={<SkillMapping />} />
           <Route path="learning" element={<LearningRecommendations />} />
+          <Route path="learning-platforms" element={<LearningPlatforms />} />
           <Route path="internships" element={<Internships />} />
           <Route path="workshops" element={<Workshops />} />
           <Route path="challenges" element={<InnovationChallenges />} />
