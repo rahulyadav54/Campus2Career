@@ -26,6 +26,9 @@ import aiRoutes from "./routes/aiRoutes.js";
 dotenv.config();
 const app = express();
 
+// Trust Render/Vercel reverse proxy so express-rate-limit and req.ip work correctly
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
@@ -37,20 +40,24 @@ app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin) return callback(null, true);
+
+    // Explicit origins from env var (comma-separated)
     const configuredOrigins = (process.env.FRONTEND_URLS || "")
       .split(",")
-      .map((value) => value.trim().replace(/\/$/, ""))
+      .map((v) => v.trim().replace(/\/$/, ""))
       .filter(Boolean);
 
     if (
       origin === "http://localhost:5173" ||
       origin === "http://127.0.0.1:5173" ||
       configuredOrigins.includes(origin) ||
-      origin.match(/^https:\/\/campus2[-]career-[a-z0-9-]+\.vercel\.app$/)
+      // Any *.vercel.app deployment for this project
+      /^https:\/\/campus2career[a-z0-9-]*\.vercel\.app$/.test(origin) ||
+      /^https:\/\/campus2-career[a-z0-9-]*\.vercel\.app$/.test(origin)
     ) {
       return callback(null, true);
     }
-    
+
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true
