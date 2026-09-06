@@ -7,7 +7,26 @@ const generateToken = (id) => {
 };
 
 export const refreshToken = async (req, res) => {
-  res.json({ success: true, token: generateToken(req.user._id) });
+  try {
+    const header = req.headers.authorization || "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+    if (!token) {
+      return res.status(401).json({ message: "No token, not authorized" });
+    }
+
+    // Verify the signature but allow already-expired tokens so a session can
+    // be seamlessly renewed before the user is forced to log in again.
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({ success: true, token: generateToken(user._id) });
+  } catch (err) {
+    return res.status(401).json({ message: "Not authorized, token failed" });
+  }
 };
 
 // @route GET /api/auth/check-email/:email

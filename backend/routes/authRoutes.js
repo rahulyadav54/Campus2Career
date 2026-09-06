@@ -11,7 +11,7 @@ router.get("/check-email/:email", checkEmail);
 router.post("/register-student", validateRegister, registerStudent);
 router.post("/register", validateRegister, register);
 router.post("/login", validateLogin, login);
-router.post("/refresh", protect, refreshToken);
+router.post("/refresh", refreshToken);
 router.get("/profile", protect, getProfile);
 router.put("/update-profile", protect, updateProfile);
 

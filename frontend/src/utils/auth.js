@@ -31,7 +31,7 @@ export const makeAuthenticatedRequest = async (url, options = {}, navigate) => {
     throw new Error('Unable to reach the server. Please check your connection.');
   }
 
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) {
     handleAuthError(navigate, true);
     throw new Error('Authentication failed');
   }
