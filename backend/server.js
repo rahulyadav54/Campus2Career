@@ -31,6 +31,7 @@ import learningPlatformRoutes from "./routes/learningPlatformRoutes.js";
 import mentorshipRoutes from "./routes/mentorshipRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
+import chatHistoryRoutes from "./routes/chatHistoryRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -135,6 +136,7 @@ app.use("/api/learning-platforms", learningPlatformRoutes);
 app.use("/api/mentorship", mentorshipRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/chat-history", chatHistoryRoutes);
 
 // 404 handler for unknown routes
 app.use((req, res) => {
