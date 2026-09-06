@@ -5,6 +5,7 @@ import mammoth from "mammoth";
 import UserModel from "../models/UserModel.js";
 import AssessmentAttemptModel from "../models/AssessmentAttemptModel.js";
 import PortfolioItemModel from "../models/PortfolioItemModel.js";
+import { chatWithNemotron, isNemotronConfigured, NEMOTRON_MODEL_NAME } from "../services/nemotronService.js";
 
 const SKILL_KEYWORDS = [
   "JavaScript",
@@ -171,6 +172,127 @@ const mergeImportedArrays = (existing = [], imported = []) => {
 };
 
 // ==========================================
+// 0. Campus2Career AI Chat (NVIDIA Nemotron)
+// ==========================================
+const CAREER_ADVISOR_SYSTEM_PROMPT = `You are Campus2Career AI Advisor, a helpful career assistant for students, recruiters, and academicians. You provide personalised career guidance, skill recommendations, job search advice, interview preparation tips, resume improvement suggestions, and learning roadmaps. Keep responses concise, actionable, and friendly. If you don't know something, say so rather than guessing. Do not make up factual information about companies or opportunities — always recommend checking the official Campus2Career portal for real-time listings.`;
+
+/**
+ * Build a safe, minimal context object from the authenticated user's profile.
+ * Only includes fields the user is authorised to see — never password, token, or
+ * other users' data.
+ */
+const buildUserContext = (user) => {
+  if (!user) return null;
+  return {
+    name: user.name || "",
+    role: user.role || "student",
+    skills: user.skills || [],
+    interests: user.interests || [],
+    department: user.department || "",
+    year: user.year || "",
+    cgpa: user.cgpa || 0,
+    profileCompletion: user.profileCompletion || 0,
+    readinessScore: user.readinessScore || 0,
+  };
+};
+
+export const chatWithAI = async (req, res) => {
+  try {
+    if (!isNemotronConfigured()) {
+      return res.status(503).json({
+        success: false,
+        message: "AI service is not configured. Please try again later.",
+      });
+    }
+
+    const { message, prompt, context, history } = req.body;
+    const userPrompt = message || prompt;
+
+    if (!userPrompt || typeof userPrompt !== "string" || !userPrompt.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Message is required",
+      });
+    }
+
+    if (userPrompt.length > 4000) {
+      return res.status(400).json({
+        success: false,
+        message: "Message must be 4000 characters or fewer",
+      });
+    }
+
+    const user = req.user;
+    const userContext = buildUserContext(user);
+
+    const messages = [];
+
+    // Convert chat history (if provided) into message objects
+    if (Array.isArray(history)) {
+      for (const msg of history) {
+        if (msg.role === "user" && typeof msg.content === "string") {
+          messages.push({ role: "user", content: msg.content });
+        } else if (msg.role === "assistant" && typeof msg.content === "string") {
+          messages.push({ role: "assistant", content: msg.content });
+        }
+      }
+    }
+
+    // Add the current user message
+    messages.push({ role: "user", content: userPrompt });
+
+    // Optional additional context from the client (e.g. job description, skill gaps)
+    const extraContext = typeof context === "object" && context !== null ? context : null;
+
+    const result = await chatWithNemotron({
+      messages,
+      systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
+      userContext,
+      ...(extraContext ? { userContext: extraContext } : {}),
+    });
+
+    return res.json({
+      success: true,
+      source: "NVIDIA Nemotron",
+      model: NEMOTRON_MODEL_NAME,
+      response: result.response,
+      ...(result.usage ? { usage: result.usage } : {}),
+    });
+  } catch (error) {
+    console.error("AI chat error:", error.message || error);
+
+    // Handle specific NVIDIA API error conditions
+    const errMsg = error.message || "";
+
+    if (errMsg.includes("401") || errMsg.includes("Unauthorized") || errMsg.includes("invalid_api_key")) {
+      return res.status(503).json({
+        success: false,
+        message: "AI service authentication failed. Please contact support.",
+      });
+    }
+
+    if (errMsg.includes("429") || errMsg.includes("rate limit")) {
+      return res.status(429).json({
+        success: false,
+        message: "AI service is rate-limited. Please try again in a moment.",
+      });
+    }
+
+    if (errMsg.includes("timeout")) {
+      return res.status(504).json({
+        success: false,
+        message: "AI request timed out. Please try again with a shorter message.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate AI response. Please try again.",
+    });
+  }
+};
+
+// ==========================================
 // 1. Campus2Career Career Advisor
 // ==========================================
 export const getCareerAdvice = async (req, res) => {
@@ -188,6 +310,37 @@ export const getCareerAdvice = async (req, res) => {
     const profileCompletion = user?.profileCompletion || 0;
     const readinessScore = user?.readinessScore || 0;
 
+    // --- Upgrade: call NVIDIA Nemotron when configured ---
+    if (isNemotronConfigured()) {
+      try {
+        const userContext = {
+          skills: userSkills,
+          skillGaps: userGaps,
+          interests: userInterests,
+          profileCompletion,
+          readinessScore,
+          ...studentContext,
+        };
+
+        const result = await chatWithNemotron({
+          messages: [{ role: "user", content: userPrompt }],
+          systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
+          userContext,
+        });
+
+        return res.json({
+          success: true,
+          source: "NVIDIA Nemotron",
+          model: NEMOTRON_MODEL_NAME,
+          answer: result.response,
+        });
+      } catch (nemotronError) {
+        console.error("Nemotron fallback: AI call failed, using template engine:", nemotronError.message || nemotronError);
+        // Fall through to the template-based fallback below
+      }
+    }
+
+    // --- Fallback: keyword-based template engine (used when Nemotron is not configured) ---
     const lowerPrompt = userPrompt.toLowerCase();
     let adviceText = "";
 
@@ -253,7 +406,7 @@ Based on your query: *"${userPrompt}"*
 
     return res.json({
       success: true,
-      source: "Campus2Career Career Advisor",
+      source: "Campus2Career Career Advisor (template)",
       model: "Profile-Aware Career Guidance",
       answer: adviceText
     });
