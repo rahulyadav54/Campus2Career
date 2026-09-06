@@ -39,6 +39,7 @@ import {
   deactivateOwnAccount,
   deleteOwnAccount,
 } from "../controllers/adminAccountController.js";
+import { startBulkSeed, getBulkSeedStatus } from "../controllers/seedController.js";
 
 const router = express.Router();
 
@@ -53,6 +54,8 @@ router.post("/account/delete", deleteOwnAccount);
 
 // Enhanced placement cell routes
 router.get("/dashboard/stats", getDashboardStats);
+router.post("/seed-bulk", startBulkSeed);
+router.get("/seed-bulk", getBulkSeedStatus);
 router.get("/users/pending", getPendingUsers);
 router.put("/users/:userId/approve", approveUser);
 router.get("/jobs/pending", getPendingJobs);

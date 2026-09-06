@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Users, UserCheck, UserPlus, Briefcase, FileText, Award,
   Clock, CheckCircle, TrendingUp, Calendar, BarChart3,
-  Bell, Shield, ExternalLink,
+  Bell, Shield, ExternalLink, Database,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import apiClient from "../../services/apiClient";
 import { StatCard, StatusBadge, LoadingSkeleton, EmptyState } from "../../components/ui";
 
@@ -20,6 +21,38 @@ const PlacementDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("30d");
+  const [seeding, setSeeding] = useState(false);
+
+  const refreshStats = async () => {
+    const data = await apiClient.get("/api/admin/dashboard/stats");
+    setStats(data);
+  };
+
+  const loadReviewDataset = async () => {
+    try {
+      setSeeding(true);
+      const start = await apiClient.post("/api/admin/seed-bulk", {});
+      toast.success(start.message || "Loading review dataset…");
+      const deadline = Date.now() + 3 * 60 * 1000;
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const status = await apiClient.get("/api/admin/seed-bulk");
+        if (status.error) {
+          throw new Error(status.error);
+        }
+        if (status.done) {
+          toast.success(`Loaded ${status.summary?.jobs || 0} jobs and ${status.summary?.students || 0} students`);
+          await refreshStats();
+          return;
+        }
+      }
+      toast("Dataset is still loading. Refresh this page in a minute.");
+    } catch (err) {
+      toast.error(err.message || "Could not load review dataset");
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -203,6 +236,21 @@ const PlacementDashboard = () => {
                 <div>
                   <div className="font-medium text-green-900">New Announcement</div>
                   <div className="text-xs text-green-600 mt-0.5">Notify students</div>
+                </div>
+              </button>
+              <button
+                onClick={loadReviewDataset}
+                disabled={seeding}
+                className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition text-left disabled:opacity-60 sm:col-span-3"
+              >
+                <Database className="w-5 h-5 text-slate-700" />
+                <div>
+                  <div className="font-medium text-slate-900">
+                    {seeding ? "Loading review dataset…" : "Load review dataset"}
+                  </div>
+                  <div className="text-xs text-slate-600 mt-0.5">
+                    Adds sample students, companies, jobs, courses, and resumes so every section can be tested
+                  </div>
                 </div>
               </button>
             </div>

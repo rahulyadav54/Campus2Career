@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
@@ -367,14 +367,16 @@ async function cleanupPreviousBulk() {
   await LearningPlatform.deleteMany({ name: { $in: EXTRA_PLATFORMS.map((p) => p.name) } });
 }
 
-async function seed() {
-  const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/campus2career";
-  const atlas = mongoUri.includes("mongodb+srv://") || mongoUri.includes(".mongodb.net");
-  await mongoose.connect(mongoUri, {
-    ...(atlas ? { tls: true, family: 4 } : {}),
-    serverSelectionTimeoutMS: 20000
-  });
-  console.log(`✅ Connected to MongoDB (${atlas ? "Atlas" : "local"})`);
+async function seed({ manageConnection = true } = {}) {
+  if (manageConnection) {
+    const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/campus2career";
+    const atlas = mongoUri.includes("mongodb+srv://") || mongoUri.includes(".mongodb.net");
+    await mongoose.connect(mongoUri, {
+      ...(atlas ? { tls: true, family: 4 } : {}),
+      serverSelectionTimeoutMS: 20000
+    });
+    console.log(`✅ Connected to MongoDB (${atlas ? "Atlas" : "local"})`);
+  }
 
   await cleanupPreviousBulk();
   const admin = await ensureAdmin();
@@ -957,24 +959,43 @@ async function seed() {
   }));
   await AssessmentAttempt.insertMany(templateAttemptDocs);
 
-  console.log("\n🎉 Bulk dataset seed complete");
-  console.log(`  Students:     ${students.length}   password ${STUDENT_PASSWORD}`);
-  console.log(`  Sample login: student.001@${EMAIL_DOMAIN}`);
-  console.log(`  Recruiters:   ${recruiterUsers.length}   password ${RECRUITER_PASSWORD}`);
-  console.log(`  Sample login: recruiter.nimbus@${EMAIL_DOMAIN}`);
-  console.log(`  Mentors:      ${mentors.length}   password ${MENTOR_PASSWORD}`);
-  console.log(`  Sample login: mentor.001@${EMAIL_DOMAIN}`);
-  console.log(`  Jobs:         ${jobs.length}`);
-  console.log(`  Applications: ${applications.length}`);
-  console.log(`  Courses:      ${courseDocs.length}`);
-  console.log(`  Resumes:      ${RESUME_DIR}`);
-  console.log(`  Assessments:  ${publishedAssessments.length} company screens`);
+  const summary = {
+    students: students.length,
+    recruiters: recruiterUsers.length,
+    mentors: mentors.length,
+    jobs: jobs.length,
+    applications: applications.length,
+    courses: courseDocs.length,
+    assessments: publishedAssessments.length,
+    sampleStudent: `student.001@${EMAIL_DOMAIN}`,
+    sampleRecruiter: `recruiter.nimbus@${EMAIL_DOMAIN}`,
+    studentPassword: STUDENT_PASSWORD,
+    recruiterPassword: RECRUITER_PASSWORD
+  };
 
-  await mongoose.disconnect();
-  process.exit(0);
+  console.log("\n🎉 Bulk dataset seed complete");
+  console.log(`  Students:     ${summary.students}   password ${STUDENT_PASSWORD}`);
+  console.log(`  Sample login: ${summary.sampleStudent}`);
+  console.log(`  Recruiters:   ${summary.recruiters}   password ${RECRUITER_PASSWORD}`);
+  console.log(`  Sample login: ${summary.sampleRecruiter}`);
+  console.log(`  Mentors:      ${summary.mentors}   password ${MENTOR_PASSWORD}`);
+  console.log(`  Jobs:         ${summary.jobs}`);
+  console.log(`  Applications: ${summary.applications}`);
+  console.log(`  Courses:      ${summary.courses}`);
+  console.log(`  Assessments:  ${summary.assessments}`);
+
+  if (manageConnection) {
+    await mongoose.disconnect();
+  }
+  return summary;
 }
 
-seed().catch((err) => {
-  console.error("❌ Bulk seed failed:", err);
-  process.exit(1);
-});
+export { seed as runBulkSeed };
+
+const isCli = process.argv[1] && fileURLToPath(import.meta.url) === pathToFileURL(path.resolve(process.argv[1])).href;
+if (isCli) {
+  seed().then(() => process.exit(0)).catch((err) => {
+    console.error("❌ Bulk seed failed:", err);
+    process.exit(1);
+  });
+}
