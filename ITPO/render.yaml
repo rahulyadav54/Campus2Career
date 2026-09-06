@@ -5,7 +5,14 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
+    plan: starter
+    region: oregon
+    healthCheckPath: /api/health
     envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET
@@ -24,3 +31,9 @@ services:
     rootDir: recommendation_service
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
