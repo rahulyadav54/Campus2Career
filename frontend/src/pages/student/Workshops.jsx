@@ -11,6 +11,15 @@ import {
   X,
 } from "lucide-react";
 
+const getUserRole = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user?.role || "student";
+  } catch {
+    return "student";
+  }
+};
+
 export default function Workshops() {
   const [activeTab, setActiveTab] = useState("workshops");
   const [workshops, setWorkshops] = useState([]);
@@ -29,6 +38,9 @@ export default function Workshops() {
     capacity: "",
     tags: "",
   });
+
+  const userRole = getUserRole();
+  const canCreate = userRole === "admin" || userRole === "institution";
 
   useEffect(() => {
     fetchData();
@@ -164,13 +176,15 @@ export default function Workshops() {
         >
           Guest Lectures
         </button>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="ml-auto flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
-        >
-          {showForm ? <X size={16} /> : <Plus size={16} />}
-          <span className="hidden sm:inline">{showForm ? "Cancel" : "Create New"}</span>
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="ml-auto flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
+          >
+            {showForm ? <X size={16} /> : <Plus size={16} />}
+            <span className="hidden sm:inline">{showForm ? "Cancel" : "Create New"}</span>
+          </button>
+        )}
       </div>
 
       {showForm && (

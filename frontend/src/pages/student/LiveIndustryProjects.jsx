@@ -11,6 +11,15 @@ import {
   X,
 } from "lucide-react";
 
+const getUserRole = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user?.role || "student";
+  } catch {
+    return "student";
+  }
+};
+
 export default function LiveIndustryProjects() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +36,9 @@ export default function LiveIndustryProjects() {
     mode: "online",
     capacity: "",
   });
+
+  const userRole = getUserRole();
+  const canCreate = userRole === "admin" || userRole === "institution";
 
   useEffect(() => {
     fetchProjects();
@@ -124,13 +136,15 @@ export default function LiveIndustryProjects() {
       </header>
 
       <div className="flex items-center gap-2">
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
-        >
-          {showForm ? <X size={16} /> : <Plus size={16} />}
-          <span className="hidden sm:inline">{showForm ? "Cancel" : "Post Project"}</span>
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
+          >
+            {showForm ? <X size={16} /> : <Plus size={16} />}
+            <span className="hidden sm:inline">{showForm ? "Cancel" : "Post Project"}</span>
+          </button>
+        )}
       </div>
 
       {showForm && (
