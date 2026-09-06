@@ -3,7 +3,7 @@ services:
     name: campus2career-api
     runtime: node
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm ci --prefer-offline --no-audit --progress=false || (npm cache clean --force && npm install)
     startCommand: npm start
     plan: starter
     region: oregon
@@ -25,6 +25,14 @@ services:
         sync: false
       - key: NVIDIA_API_KEY
         sync: false
+      - key: npm_config_fetch_retries
+        value: "5"
+      - key: npm_config_fetch_retry_factor
+        value: "2"
+      - key: npm_config_fetch_retry_maxtimeout
+        value: "60000"
+      - key: npm_config_fetch_retry_mintimeout
+        value: "10000"
   - type: web
     name: campus2career-recommendations
     runtime: python
