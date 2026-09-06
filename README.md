@@ -1,348 +1,288 @@
+# Campus2Career - Enterprise Campus Placement Platform
 
-# Campus2Career - Internship and Training Placement Portal
+A comprehensive full-stack platform for campus placements, skill development, AI career guidance, assessments, and industry-academia collaboration.
 
-A comprehensive web application for managing internship and training placements with AI-powered job recommendations, mentor approval workflows, and modern placement management system.
+## What This Project Actually Does
 
-## 🚀 Project Overview
+Campus2Career is built around **6 real workflows**:
 
-Campus2Career is a full-stack web application designed to streamline the internship and training placement process for educational institutions. It connects students, mentors, recruiters, and administrators in a unified platform with intelligent job matching and comprehensive workflow management.
+1. **Students** build profiles, take assessments, apply to jobs/internships, join workshops/challenges/projects, and get AI career guidance.
+2. **Recruiters** post jobs, manage applications, schedule interviews, create assessments, and shortlist candidates.
+3. **Mentors** approve student applications, track progress, manage internships, and oversee student activity.
+4. **Institutions/Admins** approve jobs/opportunities, manage users, run analytics, oversee collaborations, and configure assessments.
+5. **Academicians** browse faculty programs, apply to opportunities, and track their applications.
+6. **AI Career Advisor** provides persistent, context-aware chat with full markdown rendering and chat history.
 
-## ✨ Key Features
+## Live Stack
 
-### 🎯 AI-Powered Job Recommendations
-- **Smart Matching Algorithm**: 70% skills, 20% location, 10% academic performance
-- **Personalized Recommendations**: Top Match, Good Match, Near Miss categories
-- **Skill Gap Analysis**: Identifies missing skills for career development
-- **Real-time Updates**: Dynamic recommendations based on profile changes
+| Layer | Tech |
+|---|---|
+| Frontend | React 18 + Vite + Tailwind CSS + React Router |
+| Backend | Node.js + Express + MongoDB (Mongoose) |
+| AI | NVIDIA Nemotron via OpenAI-compatible API |
+| Auth | JWT + refresh tokens |
+| File handling | Multer + XLSX + Mammoth |
 
-### 👥 Multi-Role System
-- **Students**: Profile management, job applications, recommendation viewing
-- **Mentors**: Application approval, student monitoring, progress tracking
-- **Recruiters**: Job posting, application management, interview scheduling
-- **Admins**: System oversight, job approval, user management
+## Getting Started
 
-### 📋 Advanced Application Workflow
-- **Three-Stage Process**: Student Apply → Mentor Approve → Recruiter Review
-- **Interview Scheduling**: Comprehensive scheduling with online/offline/phone options
-- **Status Tracking**: Real-time application status updates
-- **Placement Management**: Automatic placement status updates
+### Prerequisites
 
-## 🏗️ Technical Architecture
+- Node.js >= 18
+- MongoDB
+- Python venv (only if running the recommendation service locally)
 
-### Frontend Stack
-- **React 18**: Modern functional components with hooks
-- **Vite**: Fast build tool and development server
-- **Tailwind CSS**: Utility-first CSS framework
-- **Lucide React**: Modern icon library
-- **Axios**: HTTP client for API communication
-- **React Router**: Client-side routing
-- **React Hot Toast**: Notification system
-
-### Backend Stack
-- **Node.js**: JavaScript runtime environment
-- **Express.js**: Web application framework
-- **MongoDB**: NoSQL database with Mongoose ODM
-- **JWT**: JSON Web Token authentication
-- **Bcrypt**: Password hashing
-- **Multer**: File upload handling
-- **CORS**: Cross-origin resource sharing
-
-### AI/ML Components
-- **Python Flask**: Recommendation service
-- **Scikit-learn**: Machine learning algorithms
-- **Pandas**: Data manipulation and analysis
-- **NumPy**: Numerical computing
-
-## 📁 Project Structure
-
-```
-ITPO/
-├── frontend/                 # React frontend application
-│   ├── src/
-│   │   ├── components/      # Reusable UI components
-│   │   │   └── shared/      # Shared components
-│   │   ├── pages/           # Page components
-│   │   │   ├── admin/       # Admin dashboard pages
-│   │   │   ├── auth/        # Authentication pages
-│   │   │   ├── mentor/      # Mentor dashboard pages
-│   │   │   ├── recruiter/   # Recruiter dashboard pages
-│   │   │   └── student/     # Student dashboard pages
-│   │   ├── services/        # API service functions
-│   │   ├── utils/           # Utility functions
-│   │   └── App.jsx          # Main application component
-│   ├── public/              # Static assets
-│   └── package.json         # Frontend dependencies
-├── backend/                 # Node.js backend application
-│   ├── controllers/         # Route controllers
-│   ├── models/              # Database models
-│   ├── routes/              # API routes
-│   ├── middleware/          # Custom middleware
-│   ├── config/              # Configuration files
-│   ├── uploads/             # File upload storage
-│   └── server.js            # Main server file
-├── recommendation_service/   # Python ML service
-│   ├── app.py              # Flask application
-│   └── requirements.txt    # Python dependencies
-└── README.md               # Project documentation
-```
-
-## 🗄️ Database Schema
-
-### User Model
-```javascript
-{
-  name: String,
-  email: String (unique),
-  password: String (hashed),
-  role: ['student', 'mentor', 'recruiter', 'admin'],
-  department: String,
-  year: String,
-  cgpa: Number,
-  skills: [String],
-  isPlaced: Boolean,
-  placementDetails: {
-    company: String,
-    roleOffered: String,
-    package: String,
-    placedAt: Date
-  },
-  assignedMentor: ObjectId,
-  activityLog: [ActivitySchema]
-}
-```
-
-### Job Model
-```javascript
-{
-  title: String,
-  description: String,
-  rolesResponsibilities: String,
-  location: String,
-  skillsRequired: [String],
-  stipend: String,
-  recruiter: ObjectId,
-  isActive: Boolean,
-  status: ['draft', 'pending_approval', 'approved', 'rejected'],
-  applications: [ApplicationSchema]
-}
-```
-
-### Application Model
-```javascript
-{
-  student: ObjectId,
-  job: ObjectId,
-  mentor: ObjectId,
-  recruiter: ObjectId,
-  status: ['pending mentor approval', 'rejected by mentor', 
-           'pending recruiter review', 'rejected by recruiter',
-           'interview scheduled', 'hired'],
-  interviewDate: Date,
-  interviewTime: String,
-  interviewMode: ['online', 'offline', 'phone'],
-  interviewLocation: String,
-  interviewMeetingLink: String,
-  interviewNotes: String
-}
-```
-
-##  Installation & Setup
-
-### Clone the Repository
+### Clone
 
 ```bash
 git clone https://github.com/rahulyadav54/Campus2Career.git
+cd Campus2Career
 ```
 
-### Backend Setup
+### Backend
 
 ```bash
 cd backend
+cp .env.example .env
+# Fill MONGO_URI, JWT_SECRET, and optional AI/email keys
 npm install
-```
-
-Create a `.env` file:
-
-```bash
-MONGO_URI=your_mongo_uri
-JWT_SECRET=your_jwt_secret
-PORT=5000
-```
-
-### Important: Seed Admin Account (First Time Setup)
-
-Before starting the backend server for the first time, you must create an admin user.
-
-### Open the file: backend/scripts/seedAdmin.js
-Update the admin credentials inside the file:
-
-### Run the seed script from the backend/scripts folder:
-
-```bash
-node seedAdmin.js
-```
-
-This will create the admin account in the database.
-
-### Start the backend server:
-
-```bash
+npm run seed:admin
 npm start
 ```
 
-### Frontend Setup
+Default admin credentials are defined in `backend/scripts/seedAdmin.js`.
+
+### Frontend
 
 ```bash
-cd ../frontend
+cd frontend
 npm install
 npm run dev
 ```
 
-### Recommendation Service Setup
+Frontend runs on `http://localhost:5173` by default.
+
+### Recommendation Service (optional)
+
 ```bash
-# Navigate to recommendation service
-cd ../recommendation_service
-
-# Create virtual environment
+cd recommendation_service
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-# Start the service
 python app.py
 ```
 
-## 🔐 Authentication & Authorization
+## Roles
 
-### Role-Based Access Control
-- **JWT Authentication**: Secure token-based authentication
-- **Role Middleware**: Route protection based on user roles
-- **Session Management**: Automatic token refresh and logout
+- `student`
+- `mentor`
+- `recruiter`
+- `admin`
+- `institution`
+- `academician`
 
-### Security Features
-- **Password Hashing**: Bcrypt with salt rounds
-- **Input Validation**: Comprehensive request validation
-- **CORS Configuration**: Secure cross-origin requests
-- **File Upload Security**: Type and size validation
+## Feature Map
 
-## 🤖 AI Recommendation Engine
+### Authentication & Profile
+- Registration / login with role selection
+- Token refresh
+- Profile completion and reputation scoring
+- Resume upload
+- Social links
+- Digital portfolio
 
-### Algorithm Details
-```python
-def calculate_job_match(student, job):
-    weights = {'skills': 0.7, 'location': 0.2, 'cgpa': 0.1}
-    
-    # Skills matching (70% weight)
-    matched_skills = intersection(student_skills, job_skills)
-    skills_score = (matched_skills / total_job_skills) * 100
-    
-    # Location preference (20% weight)
-    location_score = 100 if preferred_location_match else 50
-    
-    # CGPA factor (10% weight)
-    cgpa_score = 100 if cgpa >= 6.0 else scaled_score
-    
-    return weighted_total_score
+### Jobs & Applications
+- Job posting with recruiter approval workflow
+- AI-powered job recommendations
+- Application status tracking
+- Interview scheduling
+- Mentor approval flow
+- Recruiter application management
+- Shortlisting and hiring
+
+### Assessments & Tests
+- Admin/recruiter/institution assessment management
+- Question bank with bulk import (CSV, XLSX, XLS, JSON, DOCX)
+- Assessment templates
+- Timed student assessment attempts
+- Auto-submit on timeout
+- Integrity monitoring (tab switch, blur, fullscreen)
+- Aptitude tests
+- Results and analytics
+
+### AI Career Advisor
+- Full markdown rendering (headings, tables, code, lists)
+- Persistent per-user chat history
+- New chat / delete chat / load previous chats
+- Available as full-page route and floating widget
+- Uses NVIDIA Nemotron backend
+
+### Notifications
+- System notifications
+- Unread count badge
+- Mark as read / mark all read
+
+### Collaboration & Learning
+- Workshops and guest lectures
+- Innovation challenges
+- Live industry projects
+- Collaboration registrations
+- Learning platforms
+- Courses and certificates
+- Skill mapping
+- Learning recommendations
+
+### Analytics
+- Admin analytics
+- Skill demand trends
+- Internship participation
+- Placement readiness
+- Student skill gap reports
+- Recruiter analytics
+
+## Backend API Overview
+
+Base path: `/api`
+
+### Core Routes
+- `/api/auth` — login, register, profile, refresh
+- `/api/jobs` — job CRUD and status toggles
+- `/api/applications` — apply, mentor/recruiter decisions
+- `/api/recommendations` — AI job recommendations
+- `/api/student` — student-specific endpoints
+- `/api/mentor` — mentor approvals, progress, internships
+- `/api/recruiter` — recruiter jobs, applications, history
+- `/api/admin` — approvals, user management, activities, post
+- `/api/institutions` — institution analytics and portfolio verification
+- `/api/opportunities` — faculty programs and academician workflows
+- `/api/portfolio` — student portfolio management
+- `/api/realtime` — notifications and activity feeds
+- `/api/collaborations` — workshops, lectures, challenges, projects
+- `/api/learning-platforms` — external learning providers
+- `/api/courses` — student/enrolled courses
+- `/api/mentorship` — mentor sessions
+- `/api/notifications` — notification center
+- `/api/chat-history` — AI chat persistence
+- `/api/assessment-management` — assessment CRUD, candidates, stats
+- `/api/student-assessments` — student attempts and results
+- `/api/question-bank` — questions, templates, bulk import
+- `/api/ai` — AI chat
+- `/api/aptitude` — aptitude tests
+- `/api/academician-opportunities` — academician opportunity workflows
+- `/api/internship-progress` — internship progress tracking
+
+## Frontend Routes
+
+- `/` — Landing page
+- `/login` — Login
+- `/register` — Student registration
+- `/recruiter/register` — Recruiter registration
+- `/academician/register` — Academician registration
+
+### Student
+- `/student` — Home
+- `/student/profile`
+- `/student/jobs`
+- `/student/recommendations`
+- `/student/assessment`
+- `/student/assessments`
+- `/student/aptitude`
+- `/student/opportunities`
+- `/student/applications`
+- `/student/certificates`
+- `/student/portfolio`
+- `/student/career`
+- `/student/skill-mapping`
+- `/student/learning`
+- `/student/learning-platforms`
+- `/student/internships`
+- `/student/workshops`
+- `/student/challenges`
+- `/student/projects`
+- `/student/collaborations`
+- `/student/announcements`
+- `/student/notifications`
+- `/student/courses`
+- `/student/my-courses`
+
+### Recruiter
+- `/recruiter`
+- `/recruiter/jobs`
+- `/recruiter/create-job`
+- `/recruiter/applications`
+- `/recruiter/students`
+- `/recruiter/history`
+- `/recruiter/analytics`
+- `/recruiter/assessments`
+- `/recruiter/announcements`
+- `/recruiter/notifications`
+
+### Admin
+- `/admin`
+- `/admin/users`
+- `/admin/activities`
+- `/admin/job-verification`
+- `/admin/opportunity-approvals`
+- `/admin/portfolio-verification`
+- `/admin/question-bank`
+- `/admin/assessments`
+- `/admin/pathways`
+- `/admin/analytics`
+- `/admin/collaboration`
+- `/admin/learning-platforms`
+- `/admin/courses`
+- `/admin/notifications`
+
+### Institution
+- `/institution`
+- `/institution/portfolio-verification`
+- `/institution/analytics/skill-demand`
+- `/institution/analytics/internship-participation`
+- `/institution/analytics/placement-readiness`
+- `/institution/assessments`
+- `/institution/notifications`
+
+### Mentor
+- `/mentor`
+- `/mentor/mentees`
+- `/mentor/approvals`
+- `/mentor/progress`
+- `/mentor/history`
+- `/mentor/internships`
+
+### Academician
+- `/academician`
+- `/academician/opportunities`
+- `/academician/applications`
+
+## Environment Variables
+
+```bash
+# Backend
+MONGO_URI=
+JWT_SECRET=
+PORT=5000
+OPENAI_API_KEY=
+OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
+AI_MODEL=nemotron-4-340b-instruct
+FRONTEND_URLS=https://campus2career.zayacodehub.in,https://campus2career-cpe2.onrender.com
+EMAIL_HOST=
+EMAIL_PORT=
+EMAIL_USER=
+EMAIL_PASS=
 ```
 
-### Recommendation Categories
-- **Top Match (80%+)**: Excellent fit with high skill overlap
-- **Good Match (60-79%)**: Good fit with moderate skill match
-- **Near Miss (40-59%)**: Potential fit with skill development
+## Deployment
 
-## 📊 API Documentation
+Backend is deployed on Render. Frontend should be deployed on Vercel or Netlify with `VITE_API_URL` set to the backend URL.
 
-### Authentication Endpoints
-```
-POST /api/auth/register    # User registration
-POST /api/auth/login       # User login
-GET  /api/auth/profile     # Get user profile
-PUT  /api/auth/profile     # Update user profile
-```
+## Contributing
 
-### Job Management Endpoints
-```
-GET    /api/jobs                    # Get all active jobs
-POST   /api/jobs                    # Create new job (recruiter)
-GET    /api/jobs/recruiter          # Get recruiter's jobs
-PUT    /api/jobs/:id/toggle         # Toggle job active status
-DELETE /api/jobs/:id                # Delete job
-```
+1. Create a feature branch
+2. Make changes
+3. Run `npm run build` in frontend
+4. Run `node --check server.js` in backend
+5. Open a pull request
 
-### Application Endpoints
-```
-POST /api/applications/:jobId       # Apply to job
-GET  /api/applications/my           # Get my applications
-PUT  /api/applications/:id/mentor   # Mentor decision
-PUT  /api/applications/:id/recruiter # Recruiter decision
-```
+## License
 
-### Recommendation Endpoints
-```
-GET /api/recommendations/jobs       # Get job recommendations
-GET /api/recommendations/student/:id # Get recommendations for student
-```
-
-
-## 🔄 Workflow Processes
-
-### Student Application Flow
-1. **Browse Jobs**: View AI-recommended and all available jobs
-2. **Apply**: Submit application with one click
-3. **Mentor Review**: Wait for mentor approval
-4. **Recruiter Review**: Application forwarded to recruiter
-5. **Interview**: Schedule and attend interview
-6. **Placement**: Receive hiring decision
-
-### Recruiter Hiring Flow
-1. **Post Job**: Create detailed job posting
-2. **Admin Approval**: Wait for job approval
-3. **Receive Applications**: View mentor-approved applications
-4. **Schedule Interviews**: Set up interviews with candidates
-5. **Make Decisions**: Hire or reject candidates
-6. **Placement Tracking**: Monitor hired students
-
-### Mentor Supervision Flow
-1. **Review Applications**: Evaluate student applications
-2. **Approve/Reject**: Make decisions with feedback
-3. **Monitor Progress**: Track student application status
-4. **Placement Updates**: Receive hiring notifications
-
-
-## 🎯 Future Roadmap
-
-### Phase 1 (Current)
-- ✅ Core functionality implementation
-- ✅ AI-powered job recommendations
-- ✅ Multi-role authentication system
-- ✅ Modern UI/UX design
-
-### Phase 2 (Upcoming)
-- 📧 Email notification system
-- 📊 Advanced analytics dashboard
-- 💬 In-app messaging system
-- 📱 Mobile application
-
-### Phase 3 (Future)
-- 🤖 Advanced AI features
-- 🔗 Third-party integrations
-- 📈 Performance optimization
-- 🌐 Multi-language support
-
-### AdminPanel
-<img width="1920" height="1136" alt="admin-panel" src="https://github.com/user-attachments/assets/f00262bc-af45-4db4-bd6e-12fc4cee13cc" />
-
-### Login
-<img width="1920" height="970" alt="login" src="https://github.com/user-attachments/assets/2f8978b4-dfe6-4f79-825d-2357e18fc8e9" />
-
-### RecruiterPanel
-<img width="1920" height="987" alt="recruiter-1" src="https://github.com/user-attachments/assets/c2c275a2-a7aa-49e7-85d8-43d9f8596b28" />
-
-### MentorPanel
-<img width="1920" height="1036" alt="mentor-1" src="https://github.com/user-attachments/assets/06ec40ec-9a21-45ca-bf8f-bc31f1b8191f" />
-
-### SudentPanel
-<img width="1920" height="970" alt="student-4" src="https://github.com/user-attachments/assets/52b74d60-f536-48e4-8d21-147bdf6aa001" />
-
+ISC
