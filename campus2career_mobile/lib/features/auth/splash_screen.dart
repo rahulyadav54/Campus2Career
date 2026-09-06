@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/storage/secure_storage_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 
@@ -21,13 +22,21 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _decide() async {
     final auth = context.read<AuthProvider>();
-    await Future.delayed(const Duration(milliseconds: 600));
+    final started = DateTime.now();
+    while (auth.status == AuthStatus.unknown &&
+        DateTime.now().difference(started) < const Duration(seconds: 8)) {
+      await Future.delayed(const Duration(milliseconds: 80));
+      if (!mounted) return;
+    }
+    await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
     if (auth.isAuthed) {
       context.go('/home');
-    } else {
-      context.go('/login');
+      return;
     }
+    final seen = await SecureStorageService().readString(SecureStorageKeys.onboardingSeen);
+    if (!mounted) return;
+    context.go(seen == '1' ? '/login' : '/onboarding');
   }
 
   @override
@@ -54,12 +63,11 @@ class _SplashScreenState extends State<SplashScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: const Center(
-                  child: Text('C2C',
-                      style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800)),
+                padding: const EdgeInsets.all(10),
+                child: Image.asset(
+                  'assets/images/app_icon.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.school, color: AppColors.primary, size: 48),
                 ),
               ),
               const SizedBox(height: 18),

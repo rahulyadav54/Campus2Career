@@ -14,6 +14,21 @@ class ApiHelper {
     return _request(() => _client.dio.post(path, data: body, queryParameters: query), parse);
   }
 
+  Future<T> postMultipart<T>(
+    String path, {
+    required String fileField,
+    required String filePath,
+    String? filename,
+    Map<String, String>? fields,
+    T Function(dynamic)? parse,
+  }) async {
+    final form = FormData.fromMap({
+      ...?fields,
+      fileField: await MultipartFile.fromFile(filePath, filename: filename),
+    });
+    return _request(() => _client.dio.post(path, data: form), parse);
+  }
+
   Future<T> put<T>(String path, {dynamic body, T Function(dynamic)? parse}) async {
     return _request(() => _client.dio.put(path, data: body), parse);
   }
@@ -33,9 +48,11 @@ class ApiHelper {
         throw AuthFailure(_extractMessage(res.data));
       }
       final code = res.statusCode ?? 0;
+      if (code == 401 || code == 403) {
+        throw AuthFailure(_extractMessage(res.data));
+      }
       if (code >= 400) {
-        final msg = _extractMessage(res.data) ?? 'Request failed';
-        throw ServerFailure(msg);
+        throw ServerFailure(_extractMessage(res.data));
       }
       final data = res.data;
       if (parse != null) return parse(data);
@@ -43,6 +60,16 @@ class ApiHelper {
     } on DioException catch (e) {
       final err = e.error;
       if (err is AppFailure) throw err;
+      final body = e.response?.data;
+      if (body != null) {
+        throw ServerFailure(_extractMessage(body));
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        throw NetworkFailure();
+      }
       throw ServerFailure();
     } catch (e) {
       if (e is AppFailure) rethrow;
@@ -52,6 +79,18 @@ class ApiHelper {
 
   String _extractMessage(dynamic body) {
     if (body is Map) {
+      final errors = body['errors'];
+      if (errors is List && errors.isNotEmpty) {
+        final first = errors.first;
+        if (first is Map) {
+          final msg = first['msg'] ?? first['message'];
+          if (msg is String && msg.isNotEmpty) return msg;
+        }
+      }
+      if (errors is Map && errors.isNotEmpty) {
+        final first = errors.values.first;
+        if (first is String && first.isNotEmpty) return first;
+      }
       final m = body['message'];
       if (m is String && m.isNotEmpty) return m;
     }

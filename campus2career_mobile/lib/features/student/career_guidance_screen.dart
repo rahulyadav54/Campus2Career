@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/student_service.dart';
+import '../../../widgets/app_drawer.dart';
 import '../../../widgets/state_views.dart';
 
 class CareerGuidanceScreen extends StatefulWidget {
@@ -36,7 +37,9 @@ class _CareerGuidanceScreenState extends State<CareerGuidanceScreen> with Single
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: const ShellMenuButton(),
         title: const Text('Career Guidance'),
         bottom: TabBar(
           controller: _tab,
@@ -261,7 +264,7 @@ class _ResourcesTab extends StatelessWidget {
             subtitle: Text(r['provider']?.toString() ?? r['type']?.toString() ?? '',
                 style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             trailing: url != null ? const Icon(Icons.open_in_new, color: AppColors.textMuted, size: 18) : null,
-            onTap: url != null ? () => _openUrl(context, url!) : null,
+            onTap: url == null ? null : () => _openUrl(context, url),
           ),
         );
       },

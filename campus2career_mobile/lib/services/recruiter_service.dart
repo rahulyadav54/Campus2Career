@@ -42,6 +42,26 @@ class RecruiterService {
     return _parseList(data, (e) => Internship.fromJson(Map<String, dynamic>.from(e)));
   }
 
+  Future<List<Map<String, dynamic>>> fetchApplications() async {
+    try {
+      final data = await _api.get('/recruiter/applications');
+      return _parseList(data, (e) => Map<String, dynamic>.from(e));
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchStudents({String? search}) async {
+    final q = <String, dynamic>{};
+    if (search != null && search.isNotEmpty) q['search'] = search;
+    try {
+      final data = await _api.get('/recruiter/students', query: q.isEmpty ? null : q);
+      return _parseList(data, (e) => Map<String, dynamic>.from(e));
+    } catch (_) {
+      return const [];
+    }
+  }
+
   Future<Map<String, dynamic>> fetchAnalytics() async {
     final data = await _api.get('/recruiter/analytics');
     return Map<String, dynamic>.from(data);
@@ -56,6 +76,15 @@ class RecruiterService {
     if (data is List) return data.map((e) => mapper(Map<String, dynamic>.from(e as Map))).toList();
     if (data is Map && data['data'] is List) {
       return (data['data'] as List).map((e) => mapper(Map<String, dynamic>.from(e as Map))).toList();
+    }
+    if (data is Map && data['applications'] is List) {
+      return (data['applications'] as List).map((e) => mapper(Map<String, dynamic>.from(e as Map))).toList();
+    }
+    if (data is Map && data['students'] is List) {
+      return (data['students'] as List).map((e) => mapper(Map<String, dynamic>.from(e as Map))).toList();
+    }
+    if (data is Map && data['jobs'] is List) {
+      return (data['jobs'] as List).map((e) => mapper(Map<String, dynamic>.from(e as Map))).toList();
     }
     return [];
   }

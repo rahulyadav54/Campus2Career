@@ -7,6 +7,7 @@ class SecureStorageKeys {
   static const userRole = 'c2c_user_role';
   static const userName = 'c2c_user_name';
   static const userEmail = 'c2c_user_email';
+  static const onboardingSeen = 'c2c_onboarding_seen';
 }
 
 /// Token storage backed by [SharedPreferences] (encrypted at OS level on Android via
@@ -32,7 +33,11 @@ class SecureStorageService {
 
   Future<void> clearAll() async {
     final p = await _prefs;
+    final seen = p.getString(SecureStorageKeys.onboardingSeen);
     await p.clear();
+    if (seen != null) {
+      await p.setString(SecureStorageKeys.onboardingSeen, seen);
+    }
   }
 
   Future<void> writeTokens({

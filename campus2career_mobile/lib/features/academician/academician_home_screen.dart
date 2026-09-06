@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/academician_service.dart';
+import '../../../widgets/app_drawer.dart';
 import '../../../widgets/cached_avatar.dart';
 import '../../../widgets/state_views.dart';
 import '../../../providers/auth_provider.dart';
@@ -27,7 +28,7 @@ class _AcademicianHomeScreenState extends State<AcademicianHomeScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
     return Scaffold(
-      appBar: AppBar(title: const Text('Academician Dashboard')),
+      appBar: AppBar(leading: const ShellMenuButton(), title: const Text('Academician Dashboard')),
       body: RefreshIndicator(
         onRefresh: () async => setState(() => _future = context.read<AcademicianService>().fetchDashboard()),
         child: FutureBuilder<Map<String, dynamic>>(

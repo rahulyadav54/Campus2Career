@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_constants.dart';
@@ -11,6 +10,7 @@ import 'core/theme/app_theme.dart';
 import 'navigation/app_router.dart';
 import 'providers/auth_provider.dart';
 import 'services/academician_service.dart';
+import 'services/ai_service.dart';
 import 'services/api_helper.dart';
 import 'services/auth_service.dart';
 import 'services/institution_service.dart';
@@ -49,6 +49,7 @@ class _Campus2CareerAppState extends State<Campus2CareerApp> {
   late final AuthService _authService;
   late final AuthProvider _authProvider;
   late final StudentService _studentService;
+  late final AiService _aiService;
   late final RecruiterService _recruiterService;
   late final AcademicianService _academicianService;
   late final InstitutionService _institutionService;
@@ -66,6 +67,7 @@ class _Campus2CareerAppState extends State<Campus2CareerApp> {
       debugPrint('Bootstrap error: $e');
     }));
     _studentService = StudentService(_apiHelper);
+    _aiService = AiService(_apiHelper);
     _recruiterService = RecruiterService(_apiHelper);
     _academicianService = AcademicianService(_apiHelper);
     _institutionService = InstitutionService(_apiHelper);
@@ -77,7 +79,9 @@ class _Campus2CareerAppState extends State<Campus2CareerApp> {
     return MultiProvider(
       providers: [
         Provider<ApiHelper>.value(value: _apiHelper),
+        Provider<AuthService>.value(value: _authService),
         Provider<StudentService>.value(value: _studentService),
+        Provider<AiService>.value(value: _aiService),
         Provider<RecruiterService>.value(value: _recruiterService),
         Provider<AcademicianService>.value(value: _academicianService),
         Provider<InstitutionService>.value(value: _institutionService),
@@ -87,13 +91,9 @@ class _Campus2CareerAppState extends State<Campus2CareerApp> {
         title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
+        darkTheme: AppTheme.light(),
+        themeMode: ThemeMode.light,
         routerConfig: _router,
-        builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
-            child: child ?? const SizedBox.shrink(),
-          );
-        },
       ),
     );
   }

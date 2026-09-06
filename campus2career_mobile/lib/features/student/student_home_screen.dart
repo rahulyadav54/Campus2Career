@@ -7,7 +7,10 @@ import '../../../models/job_recommendation.dart';
 import '../../../models/skill.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../services/student_service.dart';
+import '../../../widgets/app_drawer.dart';
 import '../../../widgets/cached_avatar.dart';
+import '../../../widgets/responsive.dart';
+import '../../../widgets/sign_out_action.dart';
 import '../../../widgets/state_views.dart';
 
 class StudentHomeScreen extends StatefulWidget {
@@ -45,10 +48,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const ShellMenuButton(),
         title: const Text('Home'),
         actions: [
           IconButton(
               icon: const Icon(Icons.notifications_outlined), onPressed: () => context.push('/notifications')),
+          const SignOutIconButton(),
         ],
       ),
       body: RefreshIndicator(
@@ -341,7 +346,7 @@ class _JobRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                       const SizedBox(width: 6),
-                      Text('${rec.location ?? "—"}',
+                      Text(rec.location ?? "—",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
@@ -448,15 +453,28 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actions = [
-      ('Skill Assessment', Icons.assignment_turned_in, '/assessments'),
-      ('Job Recommendations', Icons.star, '/recommendations'),
-      ('Career Guidance', Icons.account_tree_outlined, '/career'),
+      ('AI Advisor', Icons.auto_awesome, '/career-advisor'),
+      ('Interview', Icons.record_voice_over_outlined, '/interview-prep'),
+      ('Resume', Icons.upload_file, '/resume-import'),
+      ('Assessments', Icons.assignment_turned_in, '/assessments'),
+      ('Jobs for you', Icons.star, '/recommendations'),
+      ('Career', Icons.account_tree_outlined, '/career'),
       ('Applications', Icons.folder_open, '/applications'),
-      ('Opportunity Hub', Icons.explore_outlined, '/opportunities'),
-      ('My Courses', Icons.book_outlined, '/my-courses'),
-      ('My Learning', Icons.menu_book, '/my-learning'),
-      ('Portfolio', Icons.folder_shared, '/portfolio'),
+      ('Opportunities', Icons.explore_outlined, '/opportunities'),
+      ('Courses', Icons.book_outlined, '/my-courses'),
+      ('Explore', Icons.school_outlined, '/courses'),
+      ('Platforms', Icons.public, '/learning-platforms'),
+      ('Aptitude', Icons.psychology_outlined, '/aptitude-tests'),
+      ('Certificates', Icons.workspace_premium_outlined, '/certificates'),
+      ('Portfolio', Icons.folder_shared_outlined, '/portfolio'),
+      ('Workshops', Icons.cast_for_education, '/workshops'),
+      ('Challenges', Icons.emoji_events_outlined, '/challenges'),
+      ('Projects', Icons.precision_manufacturing_outlined, '/projects'),
+      ('Collab', Icons.groups_outlined, '/collaborations'),
+      ('Skills', Icons.trending_up, '/skill-mapping'),
+      ('News', Icons.campaign_outlined, '/announcements'),
     ];
+    final cols = AppLayout.gridCount(context, compact: 3, medium: 4, expanded: 6);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -469,8 +487,8 @@ class _QuickActions extends StatelessWidget {
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 3,
-              childAspectRatio: 2.8,
+              crossAxisCount: cols,
+              childAspectRatio: 1.05,
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               children: actions

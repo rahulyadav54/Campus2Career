@@ -7,4 +7,8 @@ void main() {
     expect(c.apiBaseUrl, contains('onrender.com'));
     expect(c.isProduction, isTrue);
   });
+
+  test('debug default API is the live Render backend', () {
+    expect(AppConfig.development.apiBaseUrl, contains('onrender.com'));
+  });
 }

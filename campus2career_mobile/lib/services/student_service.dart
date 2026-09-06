@@ -1,4 +1,4 @@
-import '../core/constants/app_constants.dart';
+import '../core/utils/listing_search.dart';
 import '../models/job.dart';
 import '../models/internship.dart';
 import '../models/application.dart';
@@ -16,12 +16,34 @@ class StudentService {
   StudentService(this._api);
 
   Future<List<Job>> fetchJobs({int page = 1, String? search, String? location, String? type}) async {
-    final q = <String, dynamic>{'page': page, 'limit': AppConstants.defaultPageSize};
-    if (search != null && search.isNotEmpty) q['search'] = search;
-    if (location != null && location.isNotEmpty) q['location'] = location;
-    if (type != null && type.isNotEmpty) q['type'] = type;
-    final data = await _api.get('/jobs', query: q);
-    return _parseList(data, (e) => Job.fromJson(Map<String, dynamic>.from(e)));
+    final data = await _api.get('/jobs', query: {'status': 'approved'});
+    var jobs = _parseList(data, (e) => Job.fromJson(Map<String, dynamic>.from(e)));
+    if (type != null && type.isNotEmpty) {
+      final needle = type.toLowerCase();
+      jobs = jobs.where((j) {
+        final blob = '${j.type ?? ''} ${j.title} ${j.description ?? ''}'.toLowerCase();
+        return blob.contains(needle);
+      }).toList();
+    }
+    if (location != null && location.isNotEmpty) {
+      final loc = location.toLowerCase();
+      jobs = jobs.where((j) => (j.location ?? '').toLowerCase().contains(loc)).toList();
+    }
+    if (search != null && search.trim().isNotEmpty) {
+      jobs = jobs
+          .where((j) => listingMatchesQuery(
+                query: search,
+                title: j.title,
+                description: j.description,
+                location: j.location,
+                company: j.companyName ?? j.company,
+                type: j.type,
+                stipend: j.stipend,
+                skills: j.requiredSkills,
+              ))
+          .toList();
+    }
+    return jobs;
   }
 
   Future<List<JobRecommendation>> fetchRecommendedJobs() async {
@@ -105,19 +127,133 @@ class StudentService {
 
   Future<Job> fetchJobDetail(String id) async {
     final data = await _api.get('/jobs/$id');
-    return Job.fromJson(Map<String, dynamic>.from(data));
+    if (data is Map && data['job'] is Map) {
+      return Job.fromJson(Map<String, dynamic>.from(data['job']));
+    }
+    return Job.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Future<bool> hasAppliedToJob(String jobId) async {
+    final apps = await fetchMyApplications();
+    return apps.any((a) => a.jobId == jobId && a.isOpen);
+  }
+
+  Future<Map<String, dynamic>> fetchStudentProfile() async {
+    try {
+      final data = await _api.get('/student/profile');
+      if (data is Map) return Map<String, dynamic>.from(data);
+    } catch (_) {}
+    final data = await _api.get('/auth/profile');
+    if (data is Map && data['user'] is Map) return Map<String, dynamic>.from(data['user']);
+    return data is Map ? Map<String, dynamic>.from(data) : {};
+  }
+
+  Future<Map<String, dynamic>> updateStudentProfile(Map<String, dynamic> body) async {
+    final data = await _api.put('/student/update-profile', body: body);
+    if (data is Map && data['user'] is Map) return Map<String, dynamic>.from(data['user']);
+    return data is Map ? Map<String, dynamic>.from(data) : body;
   }
 
   Future<List<Internship>> fetchInternships({int page = 1, String? search}) async {
-    final q = <String, dynamic>{'page': page, 'limit': AppConstants.defaultPageSize, 'type': 'internship'};
-    if (search != null && search.isNotEmpty) q['search'] = search;
-    final data = await _api.get('/opportunities', query: q);
-    if (data is Map && data['opportunities'] is List) {
-      return (data['opportunities'] as List)
-          .map((e) => Internship.fromJson(Map<String, dynamic>.from(e)))
+    final allJobs = await fetchJobs(page: page);
+    final internJobs = allJobs.where((j) {
+      return looksLikeInternship(title: j.title, type: j.type, description: j.description);
+    }).toList();
+    final source = internJobs.isNotEmpty ? internJobs : allJobs;
+    var mapped = source
+        .map((j) => Internship(
+              id: j.id,
+              title: j.title,
+              company: j.company,
+              companyName: j.companyName,
+              description: j.description,
+              location: j.location,
+              mode: j.mode,
+              stipend: j.salaryMin,
+              requiredSkills: j.requiredSkills,
+              deadline: j.deadline,
+              createdAt: j.createdAt,
+            ))
+        .toList();
+    if (search != null && search.trim().isNotEmpty) {
+      mapped = mapped
+          .where((it) => listingMatchesQuery(
+                query: search,
+                title: it.title,
+                description: it.description,
+                location: it.location,
+                company: it.companyName ?? it.company,
+                stipend: it.stipend?.toString(),
+                skills: it.requiredSkills,
+              ))
           .toList();
     }
-    return _parseList(data, (e) => Internship.fromJson(Map<String, dynamic>.from(e)));
+    if (mapped.isNotEmpty) return mapped;
+    final data = await _api.get('/opportunities', query: {'type': 'internship'});
+    var opportunities = _parseList(data, (e) => Internship.fromJson(Map<String, dynamic>.from(e)));
+    if (search != null && search.trim().isNotEmpty) {
+      opportunities = opportunities
+          .where((it) => listingMatchesQuery(
+                query: search,
+                title: it.title,
+                description: it.description,
+                location: it.location,
+                company: it.companyName ?? it.company,
+                skills: it.requiredSkills,
+              ))
+          .toList();
+    }
+    return opportunities;
+  }
+
+  Future<List<Map<String, dynamic>>> fetchCollaborationList(String type) async {
+    try {
+      final data = await _api.get('/collaborations/$type');
+      return _parseList(data, (e) => Map<String, dynamic>.from(e));
+    } catch (_) {
+      final data = await _api.get('/collaboration/$type');
+      return _parseList(data, (e) => Map<String, dynamic>.from(e));
+    }
+  }
+
+  Future<void> registerCollaboration(String type, String id, {Map<String, dynamic>? body}) async {
+    try {
+      await _api.post('/collaborations/$type/$id/register', body: body ?? {});
+    } catch (_) {
+      await _api.post('/collaboration/$type/$id/register', body: body ?? {});
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchMyCollaborations() async {
+    dynamic data;
+    try {
+      data = await _api.get('/collaborations/my-collaborations');
+    } catch (_) {
+      data = await _api.get('/collaboration/my-collaborations');
+    }
+    if (data is Map && data['data'] is Map) return Map<String, dynamic>.from(data['data']);
+    if (data is Map) return Map<String, dynamic>.from(data);
+    return {};
+  }
+
+  Future<List<Map<String, dynamic>>> fetchInternshipProgress() async {
+    final data = await _api.get('/internship-progress/me');
+    if (data is Map && data['records'] is List) {
+      return (data['records'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    }
+    return _parseList(data, (e) => Map<String, dynamic>.from(e));
+  }
+
+  Future<void> createInternshipProgress(Map<String, dynamic> body) async {
+    await _api.post('/internship-progress', body: body);
+  }
+
+  Future<void> addInternshipWeeklyUpdate(String id, Map<String, dynamic> body) async {
+    await _api.post('/internship-progress/$id/weekly-update', body: body);
+  }
+
+  Future<void> completeInternshipProgress(String id, Map<String, dynamic> body) async {
+    await _api.post('/internship-progress/$id/complete', body: body);
   }
 
   Future<List<Application>> fetchMyApplications({String? type}) async {
@@ -181,6 +317,11 @@ class StudentService {
   Future<List<LearningResource>> fetchLearningPlatforms({String? category}) async {
     final q = category != null ? {'category': category} : null;
     final data = await _api.get('/learning-platforms', query: q);
+    if (data is Map && data['platforms'] is List) {
+      return (data['platforms'] as List)
+          .map((e) => LearningResource.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
     return _parseList(data, (e) => LearningResource.fromJson(Map<String, dynamic>.from(e)));
   }
 
@@ -245,6 +386,11 @@ class StudentService {
     }
     if (data is Map && data['opportunities'] is List) {
       return (data['opportunities'] as List)
+          .map((e) => mapper(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    }
+    if (data is Map && data['jobs'] is List) {
+      return (data['jobs'] as List)
           .map((e) => mapper(Map<String, dynamic>.from(e as Map)))
           .toList();
     }

@@ -7,7 +7,7 @@ class AppConfig {
   final bool enableLogging;
   final bool enableCache;
 
-  const AppConfig._({
+  const AppConfig({
     required this.flavor,
     required this.name,
     required this.apiBaseUrl,
@@ -15,15 +15,25 @@ class AppConfig {
     required this.enableCache,
   });
 
-  static const development = AppConfig._(
+  AppConfig copyWith({bool? enableLogging}) {
+    return AppConfig(
+      flavor: flavor,
+      name: name,
+      apiBaseUrl: apiBaseUrl,
+      enableLogging: enableLogging ?? this.enableLogging,
+      enableCache: enableCache,
+    );
+  }
+
+  static const development = AppConfig(
     flavor: AppFlavor.development,
     name: 'Campus2Career (Dev)',
-    apiBaseUrl: 'http://10.0.2.2:5000',
+    apiBaseUrl: 'https://campus2career-cpe2.onrender.com',
     enableLogging: true,
     enableCache: true,
   );
 
-  static const staging = AppConfig._(
+  static const staging = AppConfig(
     flavor: AppFlavor.staging,
     name: 'Campus2Career (Staging)',
     apiBaseUrl: 'https://campus2career-cpe2.onrender.com',
@@ -31,7 +41,7 @@ class AppConfig {
     enableCache: true,
   );
 
-  static const production = AppConfig._(
+  static const production = AppConfig(
     flavor: AppFlavor.production,
     name: 'Campus2Career',
     apiBaseUrl: 'https://campus2career-cpe2.onrender.com',

@@ -60,9 +60,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final s = await _auth.login(email, password, role: role);
-      _session = s;
-      _user = s.user;
-      _status = AuthStatus.authenticated;
+      _applySession(s);
       return true;
     } on AppFailure catch (f) {
       _error = f.message;
@@ -76,16 +74,48 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> completeRegistration(dynamic data) async {
+    try {
+      final s = await _auth.sessionFromRegister(data);
+      _applySession(s);
+      notifyListeners();
+      return true;
+    } on AppFailure catch (f) {
+      _error = f.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void _applySession(AuthSession s) {
+    _session = s;
+    _user = s.user;
+    _status = AuthStatus.authenticated;
+    _error = null;
+  }
+
   Future<void> logout() async {
+    _session = null;
+    _user = null;
+    _error = null;
+    _busy = false;
+    _status = AuthStatus.unauthenticated;
+    notifyListeners();
     try {
       await _auth.logout();
     } catch (e) {
       debugPrint('Logout error: $e');
     }
-    _session = null;
-    _user = null;
-    _status = AuthStatus.unauthenticated;
-    notifyListeners();
+  }
+
+  Future<void> refreshProfile() async {
+    try {
+      final fresh = await _auth.fetchProfile();
+      _user = fresh;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('refreshProfile: $e');
+    }
   }
 
   void clearError() {

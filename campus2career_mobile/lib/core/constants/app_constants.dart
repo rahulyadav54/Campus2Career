@@ -2,8 +2,8 @@ class AppConstants {
   static const String appName = 'Campus2Career';
   static const String tagline = 'Academia • Industry • Students';
   static const String packageId = 'com.zayacodehub.campus2career';
-  static const String appVersion = '1.0.0';
-  static const int appBuild = 1;
+  static const String appVersion = '1.0.3';
+  static const int appBuild = 4;
 
   static const String supportEmail = 'supportt@hamrolearning.com';
   static const String supportPhone = '+91 7033399183';

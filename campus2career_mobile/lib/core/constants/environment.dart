@@ -3,11 +3,21 @@ import 'package:flutter/services.dart';
 import 'app_config.dart';
 
 class Environment {
-  static const AppFlavor _flavor = bool.fromEnvironment('dart.vm.product')
-      ? AppFlavor.production
-      : bool.fromEnvironment('STAGING') ? AppFlavor.staging : AppFlavor.development;
-
-  static AppConfig get config => AppConfig.fromFlavor(_flavor);
+  static AppConfig get config {
+    const override = String.fromEnvironment('API_BASE_URL');
+    if (override.isNotEmpty) {
+      return AppConfig(
+        flavor: AppFlavor.development,
+        name: 'Campus2Career (Custom)',
+        apiBaseUrl: override,
+        enableLogging: true,
+        enableCache: true,
+      );
+    }
+    // Debug APKs must hit the live API. 10.0.2.2 only works on an emulator
+    // with a local backend. Override with --dart-define=API_BASE_URL=...
+    return AppConfig.production.copyWith(enableLogging: kDebugMode);
+  }
 
   static Future<void> setPreferredOrientations() async {
     await SystemChrome.setPreferredOrientations([

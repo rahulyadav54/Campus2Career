@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/application.dart';
 import '../../../services/student_service.dart';
+import '../../../widgets/app_drawer.dart';
 import '../../../widgets/state_views.dart';
 
 class ApplicationsScreen extends StatefulWidget {
@@ -38,7 +39,9 @@ class _ApplicationsScreenState extends State<ApplicationsScreen> with SingleTick
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: const ShellMenuButton(),
         title: const Text('My Applications'),
         bottom: TabBar(
           controller: _tab,

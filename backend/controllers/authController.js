@@ -104,7 +104,8 @@ export const registerStudent = async (req, res) => {
       rollNo, 
       cgpa: parseFloat(cgpa),
       skills: skills || [],
-      role: "student"
+      role: "student",
+      status: "active",
     });
     await user.save();
 
@@ -217,7 +218,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email: String(email).toLowerCase().trim() }).select("+password");
     
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });

@@ -12,9 +12,9 @@ class ApiClient {
     final config = Environment.config;
     final dio = Dio(BaseOptions(
       baseUrl: config.apiPrefix,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 20),
-      sendTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 45),
+      receiveTimeout: const Duration(seconds: 45),
+      sendTimeout: const Duration(seconds: 45),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -68,7 +68,7 @@ class _AuthInterceptor extends Interceptor {
         final code = e.response?.statusCode ?? 0;
         final body = e.response?.data;
         final message = _extractMessage(body) ?? 'Request failed';
-        if (code == 401) return AuthFailure(message);
+        if (code == 401 || code == 403) return AuthFailure(message);
         if (code == 404) return NotFoundFailure(message);
         if (code == 400) {
           return ValidationFailure(message, details: _extractDetails(body), statusCode: code);

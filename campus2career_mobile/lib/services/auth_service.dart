@@ -1,3 +1,4 @@
+import '../core/errors/failures.dart';
 import '../core/storage/secure_storage_service.dart';
 import '../models/auth_session.dart';
 import '../models/user.dart';
@@ -10,12 +11,30 @@ class AuthService {
   AuthService(this._api, this._storage);
 
   Future<AuthSession> login(String email, String password, {String? role}) async {
-    final body = {'email': email.trim(), 'password': password};
-    if (role != null && role.isNotEmpty) body['role'] = role;
+    final body = {
+      'email': email.trim().toLowerCase(),
+      'password': password,
+    };
     final data = await _api.post('/auth/login', body: body);
-    final session = AuthSession.fromJson(Map<String, dynamic>.from(data));
+    return _sessionFromResponse(data);
+  }
+
+  Future<AuthSession> sessionFromRegister(dynamic data) {
+    return _sessionFromResponse(data);
+  }
+
+  Future<AuthSession> _sessionFromResponse(dynamic data) async {
+    final map = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+    final session = AuthSession.fromJson(map);
+    if (session.accessToken.isEmpty) {
+      throw AuthFailure('Account created, but sign-in is not available yet.');
+    }
     await _persist(session);
     return session;
+  }
+
+  Future<void> forgotPassword(String email) async {
+    await _api.post('/auth/forgot-password', body: {'email': email.trim().toLowerCase()});
   }
 
   Future<User> fetchProfile() async {
@@ -32,6 +51,9 @@ class AuthService {
   }
 
   Future<void> logout() async {
+    try {
+      await _api.post('/auth/logout', body: {});
+    } catch (_) {}
     await _storage.clearAll();
   }
 

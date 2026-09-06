@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../services/recruiter_service.dart';
+import '../../../widgets/app_drawer.dart';
 import '../../../widgets/cached_avatar.dart';
 import '../../../widgets/state_views.dart';
+import '../../../widgets/sign_out_action.dart';
 import '../../../providers/auth_provider.dart';
 
 class RecruiterHomeScreen extends StatefulWidget {
@@ -28,9 +30,11 @@ class _RecruiterHomeScreenState extends State<RecruiterHomeScreen> {
     final user = context.watch<AuthProvider>().user;
     return Scaffold(
       appBar: AppBar(
+        leading: const ShellMenuButton(),
         title: const Text('Recruiter Dashboard'),
         actions: [
           IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () => context.push('/notifications')),
+          const SignOutIconButton(),
         ],
       ),
       body: RefreshIndicator(
@@ -97,6 +101,20 @@ class _RecruiterHomeScreenState extends State<RecruiterHomeScreen> {
                         title: const Text('Post internship'),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () => context.push('/recruiter/internships'),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.folder_open, color: AppColors.primary),
+                        title: const Text('Applications'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/recruiter/applications'),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.people_outline, color: AppColors.primary),
+                        title: const Text('Students'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push('/recruiter/students'),
                       ),
                       const Divider(height: 1),
                       ListTile(

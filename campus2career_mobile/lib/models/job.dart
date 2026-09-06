@@ -11,6 +11,7 @@ class Job {
   final num? salaryMax;
   final List<String> requiredSkills;
   final List<String> niceToHave;
+  final String? stipend;
   final String? experience;
   final String? deadline;
   final DateTime? createdAt;
@@ -27,6 +28,7 @@ class Job {
     this.type,
     this.salaryMin,
     this.salaryMax,
+    this.stipend,
     this.requiredSkills = const [],
     this.niceToHave = const [],
     this.experience,
@@ -40,20 +42,33 @@ class Job {
       id: (j['_id'] ?? j['id']).toString(),
       title: (j['title'] ?? '').toString(),
       description: j['description'] as String?,
-      company: j['company']?.toString(),
-      companyName: (j['companyName'] ?? j['company']?['name'] ?? j['recruiter']?['company'] ?? j['recruiter']?['name'])?.toString(),
+      company: j['company'] is String ? j['company'] as String : null,
+      companyName: _companyName(j),
       location: j['location']?.toString(),
       mode: j['mode']?.toString() ?? j['workMode']?.toString(),
       type: j['type']?.toString(),
-      salaryMin: j['salaryMin'] as num? ?? j['salary']?['min'] as num?,
-      salaryMax: j['salaryMax'] as num? ?? j['salary']?['max'] as num?,
-      requiredSkills: _toStringList(j['requiredSkills']),
+      salaryMin: j['salaryMin'] as num? ?? (j['salary'] is Map ? j['salary']['min'] as num? : null),
+      salaryMax: j['salaryMax'] as num? ?? (j['salary'] is Map ? j['salary']['max'] as num? : null),
+      stipend: j['stipend']?.toString(),
+      requiredSkills: _toStringList(j['skillsRequired'] ?? j['requiredSkills']),
       niceToHave: _toStringList(j['niceToHave'] ?? j['preferredSkills']),
       experience: j['experience']?.toString(),
       deadline: j['deadline']?.toString() ?? j['applyDeadline']?.toString(),
       createdAt: j['createdAt'] != null ? DateTime.tryParse(j['createdAt'].toString()) : null,
       raw: j,
     );
+  }
+
+  static String? _companyName(Map<String, dynamic> j) {
+    if (j['companyName'] != null) return j['companyName'].toString();
+    final company = j['company'];
+    if (company is Map) return (company['name'] ?? company['displayName'])?.toString();
+    if (company is String && company.isNotEmpty) return company;
+    final recruiter = j['recruiter'];
+    if (recruiter is Map) {
+      return (recruiter['company'] ?? recruiter['name'])?.toString();
+    }
+    return null;
   }
 
   static List<String> _toStringList(dynamic v) {

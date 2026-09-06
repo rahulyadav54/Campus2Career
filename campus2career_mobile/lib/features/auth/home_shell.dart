@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/app_drawer.dart';
 import 'package:flutter/services.dart';
 
 class HomeShell extends StatefulWidget {
@@ -14,6 +15,7 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   static const _studentNav = [
     _NavItem('Home', Icons.dashboard_outlined, Icons.dashboard, '/home'),
     _NavItem('Jobs', Icons.work_outline, Icons.work, '/jobs'),
@@ -103,34 +105,47 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    if (!auth.isAuthed) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8FAFC),
+        body: SizedBox.expand(),
+      );
+    }
     final items = _itemsFor(auth.role);
     final location = GoRouterState.of(context).uri.toString();
-    final index = _indexFromLocation(location);
+    final index = _indexFromLocation(location).clamp(0, items.length - 1);
 
-    return PopScope(
+    return HomeShellScope(
+      openDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      child: PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         await _onWillPop();
       },
       child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: const Color(0xFFF8FAFC),
+        drawer: const AppDrawer(),
+        drawerEnableOpenDragGesture: true,
         body: widget.child,
         bottomNavigationBar: Container(
           decoration: const BoxDecoration(
             border: Border(top: BorderSide(color: AppColors.border)),
           ),
-          child: BottomNavigationBar(
-            currentIndex: index,
-            onTap: (i) => context.go(items[i].route),
-            items: items
-                .map((n) => BottomNavigationBarItem(
+          child: NavigationBar(
+            selectedIndex: index,
+            onDestinationSelected: (i) => context.go(items[i].route),
+            destinations: items
+                .map((n) => NavigationDestination(
                       icon: Icon(n.icon),
-                      activeIcon: Icon(n.activeIcon),
+                      selectedIcon: Icon(n.activeIcon),
                       label: n.label,
                     ))
                 .toList(),
           ),
         ),
+      ),
       ),
     );
   }

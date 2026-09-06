@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/learning_resource.dart';
 import '../../../services/student_service.dart';
+import '../../../widgets/app_drawer.dart';
 import '../../../widgets/state_views.dart';
 
 class LearningScreen extends StatefulWidget {
@@ -43,6 +44,7 @@ class _LearningScreenState extends State<LearningScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const ShellMenuButton(),
         title: Text(widget.autoSkills != null ? 'Recommended for your skill gaps' : 'Learning Hub'),
       ),
       body: RefreshIndicator(

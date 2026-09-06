@@ -1,17 +1,24 @@
-# campus2career_mobile
+# Campus2Career Android (native API client)
 
-Campus2Career mobile client
+Flutter Android app that talks to the Campus2Career **REST API**. It does not load the Vercel website.
 
-## Getting Started
+Requires **Flutter 3.24+ / Dart 3.5+** (stable). The Dart constraint is `>=3.5.0 <4.0.0`.
 
-This project is a starting point for a Flutter application.
+## Run
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+cd campus2career_mobile
+flutter pub get
+flutter run
+```
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Production API: `https://campus2career-cpe2.onrender.com`  
+Local emulator API: `http://10.0.2.2:5000`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Check live student APIs
+
+```bash
+dart run tool/verify_live_api.dart
+```
+
+Optional env: `C2C_EMAIL`, `C2C_PASSWORD` (defaults try the demo student).
