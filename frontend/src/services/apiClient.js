@@ -6,11 +6,16 @@ const MAX_RETRIES = 2;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const getHeaders = (extra = {}) => ({
-  "Content-Type": "application/json",
-  ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
-  ...extra
-});
+const getHeaders = (extra = {}, isFormData = false) => {
+  const headers = {
+    ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
+    ...extra
+  };
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+  return headers;
+};
 
 const fetchWithTimeout = (url, options, timeout = DEFAULT_TIMEOUT) => {
   const controller = new AbortController();
@@ -20,8 +25,9 @@ const fetchWithTimeout = (url, options, timeout = DEFAULT_TIMEOUT) => {
 
 const request = async (method, path, body = null, { retries = MAX_RETRIES, timeout = DEFAULT_TIMEOUT } = {}) => {
   const url = `${API_URL}${path}`;
+  const isFormData = body instanceof FormData;
   const options = { method };
-  if (body instanceof FormData) {
+  if (isFormData) {
     options.body = body;
   } else if (body) {
     options.body = JSON.stringify(body);
@@ -30,7 +36,7 @@ const request = async (method, path, body = null, { retries = MAX_RETRIES, timeo
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetchWithTimeout(url, { ...options, headers: getHeaders() }, timeout);
+      const res = await fetchWithTimeout(url, { ...options, headers: getHeaders({}, isFormData) }, timeout);
       const data = await res.json().catch(() => ({}));
       if (res.status === 401 && !refreshed && path !== "/api/auth/refresh") {
         refreshed = await refreshSession();
