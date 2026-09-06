@@ -10,7 +10,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { API_URL } from "../../config/api";
-import AIChatbot from "../AIChatbot";
 import { Avatar, RoleBadge } from "../ui";
 
 const roleNavConfig = {
@@ -386,9 +385,6 @@ const DashboardLayout = ({ userRole = "student" }) => {
           <Outlet />
         </main>
       </div>
-
-      {/* AI Chatbot (floating, shown on dashboard pages) */}
-      <AIChatbot />
     </div>
   );
 };

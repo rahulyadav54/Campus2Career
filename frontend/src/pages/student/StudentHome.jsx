@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import apiClient from "../../services/apiClient";
-import CareerAdvisorChat from "../../components/CareerAdvisorChat";
 import { StatCard, LoadingSkeleton, EmptyState } from "../../components/ui";
 
 const StudentHome = () => {
@@ -27,7 +26,7 @@ const StudentHome = () => {
           apiClient.get("/api/recommendations/jobs"),
         ]);
 
-        const profile = profileRes.status === "fulfilled" ? profileRes.value : null;
+        const profile = profileRes.status === "fulfilled" ? (profileRes.value?.user || profileRes.value) : null;
         const applications = appsRes.status === "fulfilled" ? (Array.isArray(appsRes.value) ? appsRes.value : appsRes.value?.applications || []) : [];
         const jobs = jobsRes.status === "fulfilled" ? jobsRes.value : [];
         const enrollments = coursesRes.status === "fulfilled" ? (Array.isArray(coursesRes.value) ? coursesRes.value : coursesRes.value?.enrollments || []) : [];
@@ -383,20 +382,6 @@ const StudentHome = () => {
               </button>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* AI Career Guidance Section */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-lg font-semibold text-gray-900">AI Career Guidance</h2>
-        </div>
-        <p className="text-sm text-gray-500 mb-3">
-          Ask the AI advisor about career paths, skill gaps, learning roadmaps, or placement preparation.
-        </p>
-        <div className="h-[400px]">
-          <CareerAdvisorChat />
         </div>
       </div>
     </div>

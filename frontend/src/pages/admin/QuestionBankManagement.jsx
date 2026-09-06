@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, BookOpen, ClipboardList } from "lucide-react";
+import { Plus, Trash2, BookOpen, ClipboardList, Upload, Download, FileSpreadsheet } from "lucide-react";
 import apiClient from "../../services/apiClient";
 
 const emptyQuestion = { text: "", category: "technical", skill: "", type: "mcq", difficulty: "medium", marks: 1, options: [{ text: "", isCorrect: true }, { text: "", isCorrect: false }, { text: "", isCorrect: false }, { text: "", isCorrect: false }] };
@@ -12,6 +12,8 @@ export default function QuestionBankManagement() {
   const [qForm, setQForm] = useState(emptyQuestion);
   const [tForm, setTForm] = useState(emptyTemplate);
   const [message, setMessage] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
   const loadAll = () => Promise.all([
     apiClient.get("/api/question-bank/questions"),
@@ -51,6 +53,33 @@ export default function QuestionBankManagement() {
     } catch (err) { setMessage(err.message); }
   };
 
+  const downloadTemplate = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/question-bank/questions/template`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+      if (!res.ok) throw new Error("Failed to download template");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = "question-import-template.csv"; a.click(); URL.revokeObjectURL(url);
+    } catch (e) { setMessage(e.message); }
+  };
+
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await apiClient.post("/api/question-bank/questions/import", formData, { headers: { "Content-Type": "multipart/form-data" } });
+      setImportResult(res);
+      setMessage(`Imported ${res.imported} questions`);
+      loadAll();
+    } catch (e) { setMessage(e.message); }
+    setImporting(false);
+    e.target.value = "";
+  };
+
   const updateOption = (idx, field, value) => {
     const opts = qForm.options.map((o, i) => {
       if (field === "isCorrect") return { ...o, isCorrect: i === idx };
@@ -79,6 +108,30 @@ export default function QuestionBankManagement() {
 
       {tab === "questions" && (
         <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <label className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium cursor-pointer hover:bg-indigo-700">
+              <Upload size={16} /> Import Questions
+              <input type="file" accept=".csv,.xlsx,.xls,.json,.docx" className="hidden" onChange={handleImport} disabled={importing} />
+            </label>
+            <button onClick={downloadTemplate} className="inline-flex items-center gap-2 px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">
+              <FileSpreadsheet size={16} /> Download CSV Template
+            </button>
+            {importing && <span className="text-sm text-gray-500">Importing...</span>}
+          </div>
+          {importResult && (
+            <div className="bg-white border rounded-xl p-4 text-sm space-y-1">
+              <p className="font-medium">Import complete</p>
+              <p className="text-gray-600">Imported: {importResult.imported}</p>
+              {importResult.duplicates > 0 && <p className="text-amber-600">Duplicates skipped: {importResult.duplicates}</p>}
+              {importResult.invalid?.length > 0 && <p className="text-red-600">Invalid rows: {importResult.invalid.length}</p>}
+              {importResult.invalid?.length > 0 && (
+                <div className="max-h-40 overflow-y-auto text-xs text-red-700 bg-red-50 rounded p-2">
+                  {importResult.invalid.map((err, i) => <div key={i}>Row {err.row}: {err.errors.join(", ")}</div>)}
+                </div>
+              )}
+            </div>
+          )}
+
           <form onSubmit={saveQuestion} className="bg-white border rounded-xl p-5 space-y-4">
             <h2 className="font-semibold text-gray-900">Add Question</h2>
             <textarea required value={qForm.text} onChange={(e) => setQForm({ ...qForm, text: e.target.value })}

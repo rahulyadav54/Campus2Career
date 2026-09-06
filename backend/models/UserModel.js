@@ -140,16 +140,22 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 
 // 🔑 Calculate profile completion automatically
 userSchema.methods.calculateProfileCompletion = function () {
-    let fieldsCompleted = 0;
-    let totalFields = 5; // CGPA, skills, projects, experiences, social links
+    const fields = [
+        this.name, this.email, this.phone, this.department, this.year,
+        this.rollNo, this.cgpa, this.description, this.course, this.specialization
+    ];
+    const arrays = [this.skills, this.projects, this.experiences];
+    const socialValues = Object.values(this.socialLinks || {}).filter(Boolean);
 
-    if (this.cgpa && this.cgpa > 0) fieldsCompleted++;
-    if (this.skills && this.skills.length > 0) fieldsCompleted++;
-    if (this.projects && this.projects.length > 0) fieldsCompleted++;
-    if (this.experiences && this.experiences.length > 0) fieldsCompleted++;
-    if (this.socialLinks && (this.socialLinks.linkedin || this.socialLinks.github || this.socialLinks.portfolio)) fieldsCompleted++;
+    const basicFields = fields.filter(Boolean).length;
+    const arrayFields = arrays.filter((arr) => arr && arr.length > 0).length;
+    const socialCount = socialValues.length > 0 ? 1 : 0;
+    const resumeCount = this.resumeUrl ? 1 : 0;
 
-    this.profileCompletion = Math.round((fieldsCompleted / totalFields) * 100);
+    const total = 10 + 3 + 1 + 1;
+    const completed = basicFields + arrayFields + socialCount + resumeCount;
+
+    this.profileCompletion = Math.round((completed / total) * 100);
     return this.profileCompletion;
 };
 

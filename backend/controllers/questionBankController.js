@@ -1,6 +1,60 @@
 import { Question, AssessmentTemplate } from "../models/QuestionBankModel.js";
 import AssessmentAttempt from "../models/AssessmentAttemptModel.js";
 import User from "../models/UserModel.js";
+import { parseQuestionFile, QUESTION_IMPORT_COLUMNS } from "../services/questionImportService.js";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const importStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = "uploads/questions";
+    if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1E9);
+    cb(null, `question-import-${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const importFileFilter = (req, file, cb) => {
+  const allowed = /csv|xlsx|xls|json|docx|doc/;
+  const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+  const mime = allowed.test(file.mimetype) || file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (ext || mime) return cb(null, true);
+  cb(new Error("Unsupported file type. Allowed: CSV, XLSX, XLS, JSON, DOCX"));
+};
+
+export const importUpload = multer({ storage: importStorage, fileFilter: importFileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
+
+export const importQuestions = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "Please upload a file" });
+    const buffer = fs.readFileSync(req.file.path);
+    const result = parseQuestionFile(buffer, req.file.originalname);
+    if (!result.valid.length) return res.status(400).json({ message: "No valid questions found", details: result.invalid });
+    await Question.insertMany(result.valid.map((q) => ({ ...q, createdBy: req.user._id, isActive: true })));
+    fs.unlinkSync(req.file.path);
+    res.json({ message: `Imported ${result.valid.length} questions`, imported: result.valid.length, invalid: result.invalid, duplicates: result.duplicates });
+  } catch (error) {
+    if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(500).json({ message: "Failed to import questions", error: error.message });
+  }
+};
+
+export const downloadImportTemplate = async (req, res) => {
+  try {
+    const csv = `question,type,category,skill,difficulty,option1,option2,option3,option4,correctAnswer,marks,negativeMarks,explanation
+"What does HTML stand for?","mcq","technical","HTML","easy","Hyper Text Markup Language","High Text Machine Language","Hyper Tool Multi Language","Hyper Transfer Markup Language","A","2","0","HTML stands for HyperText Markup Language."
+"React is a JavaScript library.","true_false","technical","React","easy","True","False","","","A","1","0","React is a JS library by Meta."`;
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=question-import-template.csv");
+    res.send(csv);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to generate template", error: error.message });
+  }
+};
 
 // Admin: create question
 export const createQuestion = async (req, res) => {

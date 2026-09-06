@@ -2,7 +2,8 @@ import express from "express";
 import { protect, adminOnly, studentOnly } from "../middleware/authMiddleware.js";
 import {
   createQuestion, listQuestions, updateQuestion, deleteQuestion,
-  createTemplate, listTemplates, startAttempt, submitAttempt, getAttemptHistory
+  createTemplate, listTemplates, startAttempt, submitAttempt, getAttemptHistory,
+  importQuestions, importUpload
 } from "../controllers/questionBankController.js";
 
 const router = express.Router();
@@ -13,6 +14,8 @@ router.post("/questions", adminOnly, createQuestion);
 router.get("/questions", adminOnly, listQuestions);
 router.put("/questions/:id", adminOnly, updateQuestion);
 router.delete("/questions/:id", adminOnly, deleteQuestion);
+router.post("/questions/import", adminOnly, importUpload.single("file"), importQuestions);
+router.get("/questions/template", adminOnly, downloadImportTemplate);
 
 // Admin: assessment templates
 router.post("/templates", adminOnly, createTemplate);

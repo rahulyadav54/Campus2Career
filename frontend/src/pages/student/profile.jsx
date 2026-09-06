@@ -135,7 +135,7 @@ const Profile = () => {
               ? data.experiences
               : [],
             profileCompletion: calculateProfileCompletion(data),
-            reputationPoints: calculateProfileCompletion(data),
+            reputationPoints: calculateReputation(data),
           };
           setFormData((prev) => ({ ...prev, ...updatedData }));
           if (data.resumeUrl) setResumePreview(data.resumeUrl);
@@ -223,7 +223,7 @@ const Profile = () => {
         const updatedData = {
           ...data.user,
           profileCompletion: calculateProfileCompletion(data.user),
-          reputationPoints: calculateProfileCompletion(data.user),
+          reputationPoints: calculateReputation(data.user),
           resumeUrl: resumePreview || data.user.resumeUrl,
         };
         setFormData(updatedData);
@@ -257,10 +257,38 @@ const Profile = () => {
     const socialCount = socialLinks.length > 0 ? 1 : 0;
     const resumeCount = data.resumeUrl ? 1 : 0;
 
-    const total = 10 + 3 + 1 + 1; // 10 basic + 3 arrays + 1 social + 1 resume
+    const total = 10 + 3 + 1 + 1;
     const completed = basicFields + arrayFields + socialCount + resumeCount;
 
     return Math.round((completed / total) * 100);
+  };
+
+  const calculateReputation = (data) => {
+    let points = 0;
+    const cgpa = Number(data.cgpa) || 0;
+    if (cgpa >= 9) points += 50;
+    else if (cgpa >= 8) points += 40;
+    else if (cgpa >= 7) points += 30;
+    else if (cgpa >= 6) points += 20;
+    else points += 10;
+
+    const skills = Array.isArray(data.skills) ? data.skills : [];
+    points += skills.length * 5;
+    if (skills.length > 5) points += 10;
+
+    const projects = Array.isArray(data.projects) ? data.projects : [];
+    points += projects.length * 20;
+    if (projects.length > 3) points += 15;
+
+    const experiences = Array.isArray(data.experiences) ? data.experiences : [];
+    experiences.forEach((exp) => {
+      points += 30;
+      if (exp.currentlyWorking) points += 10;
+    });
+
+    if ((data.profileCompletion || 0) === 100) points += 25;
+
+    return points;
   };
 
   const handleResumeChange = async (e) => {

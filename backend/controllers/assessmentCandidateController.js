@@ -104,29 +104,39 @@ const evaluateAttempt = async (attemptId) => {
 
 export const getMyAssessments = async (req, res, next) => {
   try {
-    const candidates = await AssessmentCandidate.find({ candidate: req.user._id })
-      .populate("assessment", "name description durationMinutes startDate endDate passingScore maxAttempts status config questions")
-      .populate("job", "title")
-      .sort({ createdAt: -1 })
+    const publishedAssessments = await Assessment.find({ status: "published" })
+      .populate("questions", "text type category skill difficulty marks negativeMarks options correctAnswerText explanation tags timeLimit")
       .lean();
 
-    const assessments = candidates.map((c) => {
-      const a = c.assessment;
-      const now = new Date();
-      const isStarted = c.status === "started" || c.status === "in_progress" || c.status === "submitted" || c.status === "evaluated";
+    const candidateDocs = await AssessmentCandidate.find({ candidate: req.user._id, assessment: { $in: publishedAssessments.map((a) => a._id) } }).lean();
+    const candidateMap = new Map(candidateDocs.map((c) => [c.assessment.toString(), c]));
+
+    const now = new Date();
+    const assessments = publishedAssessments.map((a) => {
+      const candidate = candidateMap.get(a._id.toString());
+      const isStarted = candidate && ["started", "in_progress", "submitted", "evaluated"].includes(candidate.status);
       const isPastEnd = a.endDate && new Date(a.endDate) < now;
       const isBeforeStart = a.startDate && new Date(a.startDate) > now;
-      const canStart = a.status === "published" && !isPastEnd && !isBeforeStart && c.attemptsCount < a.maxAttempts && !isStarted;
+      const attemptsCount = candidate ? candidate.attemptsCount : 0;
+      const canStart = a.status === "published" && !isPastEnd && !isBeforeStart && attemptsCount < a.maxAttempts && !isStarted;
 
       return {
-        ...c,
-        assessment: {
-          ...a,
-          canStart,
-          isPastEnd,
-          isBeforeStart,
-          attemptsLeft: a.maxAttempts - c.attemptsCount,
-        },
+        _id: candidate ? candidate._id : `virtual-${a._id}`,
+        assessment: a,
+        canStart,
+        isPastEnd,
+        isBeforeStart,
+        attemptsLeft: a.maxAttempts - attemptsCount,
+        candidate: candidate ? {
+          name: candidate.name,
+          email: candidate.email,
+          status: candidate.status,
+          attemptsCount: candidate.attemptsCount,
+          startedAt: candidate.startedAt,
+          submittedAt: candidate.submittedAt,
+        } : null,
+        status: candidate ? candidate.status : "invited",
+        attemptsCount,
       };
     });
 
@@ -145,8 +155,16 @@ export const startAssessment = async (req, res, next) => {
     if (assessment.startDate && new Date(assessment.startDate) > now) return res.status(400).json({ message: "Assessment has not started yet" });
     if (assessment.endDate && new Date(assessment.endDate) < now) return res.status(400).json({ message: "Assessment has ended" });
 
-    const candidate = await AssessmentCandidate.findOne({ assessment: assessment._id, candidate: req.user._id });
-    if (!candidate) return res.status(403).json({ message: "You are not invited to this assessment" });
+    let candidate = await AssessmentCandidate.findOne({ assessment: assessment._id, candidate: req.user._id });
+    if (!candidate) {
+      candidate = await AssessmentCandidate.create({
+        assessment: assessment._id,
+        candidate: req.user._id,
+        status: "invited",
+        attemptsCount: 0,
+      });
+    }
+
     if (candidate.attemptsCount >= assessment.maxAttempts) return res.status(400).json({ message: "Maximum attempts reached" });
 
     const existingAttempt = await AssessmentAttempt.findOne({ assessment: assessment._id, student: req.user._id, status: "in_progress" });
