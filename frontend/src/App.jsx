@@ -17,6 +17,7 @@ import Approvals from "./pages/mentor/Approvals";
 import Progress from "./pages/mentor/Progress";
 import MentorHistory from "./pages/mentor/History";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProfile from "./pages/admin/AdminProfile";
 import PlacementDashboard from "./pages/admin/PlacementDashboard";
 import UserApprovals from "./pages/admin/UserApprovals";
 import JobVerification from "./pages/admin/JobVerification";
