@@ -360,7 +360,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
                   >
                     <div className="p-3">
                       <button
-                        onClick={() => navigate("/student/profile")}
+                        onClick={() => navigate(`/${userRole}/profile`)}
                         className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
                       >
                         Profile

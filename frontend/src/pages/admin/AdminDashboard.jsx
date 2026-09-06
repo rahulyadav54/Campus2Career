@@ -10,7 +10,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { API_URL } from "../../config/api";
+import apiClient from "../../services/apiClient";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({});
@@ -22,14 +22,7 @@ const AdminDashboard = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${API_URL}/api/admin/dashboard`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const data = await response.json();
+      const data = await apiClient.get("/api/admin/dashboard");
       if (data.success) {
         setStats(data.data);
       }

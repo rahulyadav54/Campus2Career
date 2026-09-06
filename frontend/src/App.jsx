@@ -184,6 +184,7 @@ function App() {
           <Route path="learning-platforms" element={<AdminLearningPlatforms />} />
           <Route path="courses" element={<AdminCourses />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="profile" element={<AdminProfile />} />
         </Route>
 
         <Route path="/institution" element={<ProtectedRoute><DashboardLayout userRole="institution" /></ProtectedRoute>}>
