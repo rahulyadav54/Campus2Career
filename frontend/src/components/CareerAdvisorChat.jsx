@@ -159,6 +159,14 @@ export default function CareerAdvisorChat() {
   }, []);
 
   useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
@@ -328,7 +336,7 @@ export default function CareerAdvisorChat() {
   );
 
   return (
-    <div className="bg-white flex flex-col h-screen w-full">
+    <div className="bg-white flex flex-col h-screen w-full overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         {showSidebar && (
