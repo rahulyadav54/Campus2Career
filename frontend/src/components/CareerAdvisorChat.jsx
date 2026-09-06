@@ -52,7 +52,6 @@ function CodeBlock({ children, className, ...props }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // fallback
       const ta = document.createElement("textarea");
       ta.value = text;
       document.body.appendChild(ta);
@@ -141,7 +140,7 @@ function MarkdownContent({ text, animate }) {
   );
 }
 
-export default function CareerAdvisorChat() {
+export default function CareerAdvisorChat({ fullscreen = false }) {
   const [messages, setMessages] = useState([
     {
       sender: "ai",
@@ -171,7 +170,7 @@ export default function CareerAdvisorChat() {
 
     try {
       const res = await apiClient.post("/api/ai/chat", { prompt: textToSend }, { timeout: 60000 });
-      const aiReply = res?.response || res?.answer || "I'm sorry, I couldn't process that. Please try asking again.";
+      const aiReply = res?.response || res?.answer || "I'm sorry, I couldn't process that. Please try again.";
       const rawSource = res?.source || "";
       const source = /nemotron|nvidia/i.test(rawSource) ? "Campus2Career AI Advisor" : rawSource || "Campus2Career AI Advisor";
 
@@ -191,7 +190,13 @@ export default function CareerAdvisorChat() {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 flex flex-col h-[620px] sm:h-[640px] max-w-4xl mx-auto overflow-hidden">
+    <div
+      className={`bg-white flex flex-col ${
+        fullscreen
+          ? "fixed inset-0 z-50"
+          : "rounded-2xl shadow-lg border border-slate-200 h-[620px] sm:h-[640px] max-w-4xl mx-auto overflow-hidden"
+      }`}
+    >
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 text-white p-4 sm:p-5 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -231,8 +236,8 @@ export default function CareerAdvisorChat() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-white">
-        <div className="max-w-3xl mx-auto p-4 sm:p-5 space-y-5">
+      <div className={`flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-white ${fullscreen ? "p-4 sm:p-6" : "p-4 sm:p-5"}`}>
+        <div className={`mx-auto space-y-5 ${fullscreen ? "max-w-4xl" : "max-w-3xl"}`}>
           <AnimatePresence>
             {messages.map((msg, i) => (
               <motion.div
@@ -299,23 +304,25 @@ export default function CareerAdvisorChat() {
           e.preventDefault();
           handleSend();
         }}
-        className="p-4 bg-white border-t border-slate-200 flex items-end gap-3 flex-shrink-0"
+        className={`bg-white border-t border-slate-200 flex items-end gap-3 flex-shrink-0 ${fullscreen ? "p-4 sm:p-6" : "p-4"}`}
       >
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask AI about skills, Data Science, Web Dev, roadmaps, or placement tips..."
-          className="flex-1 border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-all min-h-[52px]"
-        />
-        <button
-          type="submit"
-          disabled={loading || !input.trim()}
-          className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white px-5 py-3 rounded-2xl font-medium text-sm flex items-center gap-2 transition-all shadow-md flex-shrink-0 min-h-[52px]"
-        >
-          <span className="hidden sm:inline">Ask AI</span>
-          <Send className="w-4 h-4" />
-        </button>
+        <div className={`mx-auto w-full flex items-end gap-3 ${fullscreen ? "max-w-4xl" : ""}`}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask AI about skills, Data Science, Web Dev, roadmaps, or placement tips..."
+            className="flex-1 border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-all min-h-[52px]"
+          />
+          <button
+            type="submit"
+            disabled={loading || !input.trim()}
+            className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white px-5 py-3 rounded-2xl font-medium text-sm flex items-center gap-2 transition-all shadow-md flex-shrink-0 min-h-[52px]"
+          >
+            <span className="hidden sm:inline">Ask AI</span>
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
       </form>
     </div>
   );
