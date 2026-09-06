@@ -7,6 +7,8 @@ export const Avatar = ({ src, name, size = "md", className, fallbackClassName })
     md: "w-10 h-10",
     lg: "w-12 h-12",
     xl: "w-16 h-16",
+    "2xl": "w-24 h-24",
+    "3xl": "w-28 h-28",
   };
 
   const fallbackText = name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "U";

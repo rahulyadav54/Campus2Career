@@ -5,12 +5,13 @@ import {
   Target, Compass, TrendingUp, Activity, Calendar, MessageSquare,
   Settings, HelpCircle, LogOut, Menu, X, Bell, ChevronDown, Search,
   ClipboardList, GraduationCap, Trophy, Building2, Globe, Presentation,
-  Megaphone, Shield, Users as UsersIcon, UserPlus
+  Megaphone, Shield, UserPlus, User, KeyRound
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { API_URL } from "../../config/api";
-import { Avatar, RoleBadge } from "../ui";
+import { Avatar } from "../ui";
+import { applyAppearance, readLocalPreferences } from "../../utils/adminPreferences";
 
 const roleNavConfig = {
   student: {
@@ -82,6 +83,10 @@ const roleNavConfig = {
         { label: "Activity Monitor", icon: Activity, path: "/admin/activities" },
         { label: "Collaborations", icon: Building2, path: "/admin/collaboration" },
         { label: "Notifications", icon: Bell, path: "/admin/notifications" },
+      ]},
+      { group: "Account", items: [
+        { label: "Profile", icon: User, path: "/admin/profile" },
+        { label: "Settings", icon: Settings, path: "/admin/settings" },
       ]},
     ],
   },
@@ -155,8 +160,11 @@ const roleNavConfig = {
 };
 
 const DashboardLayout = ({ userRole = "student" }) => {
+  const prefs = readLocalPreferences();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    Boolean(prefs.appearance?.sidebarCollapsed || prefs.dashboard?.sidebarBehavior === "collapsed")
+  );
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [userData, setUserData] = useState(null);
@@ -185,6 +193,19 @@ const DashboardLayout = ({ userRole = "student" }) => {
   }, []);
 
   useEffect(() => {
+    applyAppearance(readLocalPreferences().appearance);
+  }, []);
+
+  useEffect(() => {
+    if (userRole !== "admin") return;
+    const dest = readLocalPreferences().dashboard?.defaultLandingPage;
+    if (!dest || dest === "/admin" || dest === "/admin/dashboard") return;
+    if (location.pathname === "/admin" || location.pathname === "/admin/dashboard") {
+      navigate(dest, { replace: true });
+    }
+  }, [userRole, location.pathname, navigate]);
+
+  useEffect(() => {
     const fetchUnread = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -202,13 +223,23 @@ const DashboardLayout = ({ userRole = "student" }) => {
   }, []);
 
   // ===== Fixed logout =====
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    setProfileDropdown(false);
+    const token = localStorage.getItem("token");
+    try {
+      if (token) {
+        await fetch(`${API_URL}/api/auth/logout`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch {
+      /* still clear the local session */
+    }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     toast.success("Logged out successfully");
-    navigate("/login", { replace: true });
-    // Force scroll to top
-    window.scrollTo(0, 0);
+    window.location.replace("/login");
   };
 
   return (
@@ -302,7 +333,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
       </aside>
 
       {/* Mobile header + main content */}
-      <div className="flex-1 lg:ml-[260px]">
+      <div className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "lg:ml-16" : "lg:ml-[260px]"}`}>
         {/* Topbar */}
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6">
           {/* Left: mobile menu + title */}
@@ -342,10 +373,10 @@ const DashboardLayout = ({ userRole = "student" }) => {
                 onClick={() => setProfileDropdown(!profileDropdown)}
                 className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <Avatar name={userData?.name || "User"} size="sm" />
+                <Avatar src={userData?.profileImage} name={userData?.name || "User"} size="sm" />
                 <div className="hidden sm:block text-left">
                   <p className="text-sm font-medium text-gray-900">{userData?.name || "User"}</p>
-                  <RoleBadge role={userData?.role || userRole} />
+                  <p className="text-[11px] text-gray-500">{userRole === "admin" ? "Administrator" : (userData?.role || userRole)}</p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-500" />
               </button>
@@ -356,24 +387,47 @@ const DashboardLayout = ({ userRole = "student" }) => {
                     initial={{ opacity: 0, y: -10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-30"
+                    className="absolute right-0 mt-2 w-60 bg-white border border-gray-200 rounded-xl shadow-lg z-30"
                   >
-                    <div className="p-3">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{userData?.name || "User"}</p>
+                      <p className="text-xs text-gray-500">{userRole === "admin" ? "Administrator" : (userData?.role || userRole)}</p>
+                    </div>
+                    <div className="p-2">
                       <button
-                        onClick={() => navigate(`/${userRole}/profile`)}
-                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                        onClick={() => { setProfileDropdown(false); navigate(`/${userRole}/profile`); }}
+                        className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
                       >
-                        Profile
+                        <User size={16} /> My Profile
                       </button>
-                      <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
-                        Settings
+                      <button
+                        onClick={() => { setProfileDropdown(false); navigate(userRole === "admin" ? "/admin/settings" : `/${userRole}/profile`); }}
+                        className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                      >
+                        <Settings size={16} /> Settings
                       </button>
+                      {userRole === "admin" && (
+                        <>
+                          <button
+                            onClick={() => { setProfileDropdown(false); navigate("/admin/settings?section=security"); }}
+                            className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                          >
+                            <KeyRound size={16} /> Security
+                          </button>
+                          <button
+                            onClick={() => { setProfileDropdown(false); navigate("/admin/settings?section=notifications"); }}
+                            className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                          >
+                            <Bell size={16} /> Notifications
+                          </button>
+                        </>
+                      )}
                       <div className="border-t border-gray-200 my-2"></div>
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                        className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
                       >
-                        Log Out
+                        <LogOut size={16} /> Log Out
                       </button>
                     </div>
                   </motion.div>
@@ -384,7 +438,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
         </header>
 
         {/* Main content */}
-        <main className="p-5 lg:p-6">
+        <main className={`p-5 lg:p-6 admin-main-pad ${readLocalPreferences().appearance?.compactLayout ? "lg:p-4" : ""}`}>
           <Outlet />
         </main>
       </div>

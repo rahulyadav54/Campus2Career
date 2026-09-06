@@ -85,6 +85,11 @@ export default function Login() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              <div className="flex items-center justify-end mt-2">
+                <Link to="/forgot-password" className="text-sm text-indigo-600 hover:text-indigo-700">
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             <button

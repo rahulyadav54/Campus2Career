@@ -82,6 +82,8 @@ import MyCourses from "./pages/student/MyCourses";
 import AdminCourses from "./pages/admin/AdminCourses";
 import Announcements from "./pages/shared/Announcements";
 import Notifications from "./pages/shared/Notifications";
+import AdminSettings from "./pages/admin/AdminSettings";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 
 
 function App() {
@@ -91,6 +93,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/recruiter/register" element={<RecruiterRegistration />} />
         <Route path="/academician/register" element={<AcademicianRegistration />} />
         
@@ -163,7 +166,7 @@ function App() {
           <Route path="notifications" element={<Notifications />} />
         </Route>
         
-        <Route path="/admin" element={<ProtectedRoute><DashboardLayout userRole="admin" /></ProtectedRoute>}>
+        <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><DashboardLayout userRole="admin" /></ProtectedRoute>}>
           <Route index element={<PlacementDashboard />} />
           <Route path="dashboard" element={<PlacementDashboard />} />
           <Route path="user-approvals" element={<UserApprovals />} />
@@ -186,6 +189,7 @@ function App() {
           <Route path="courses" element={<AdminCourses />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="profile" element={<AdminProfile />} />
+          <Route path="settings" element={<AdminSettings />} />
         </Route>
 
         <Route path="/institution" element={<ProtectedRoute><DashboardLayout userRole="institution" /></ProtectedRoute>}>

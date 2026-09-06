@@ -4,6 +4,9 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import { applyAppearance, readLocalPreferences } from './utils/adminPreferences'
+
+applyAppearance(readLocalPreferences().appearance)
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

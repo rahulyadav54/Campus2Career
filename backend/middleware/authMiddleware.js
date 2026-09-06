@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/UserModel.js";
+import AuthSession from "../models/AuthSession.js";
 
 export const protect = async (req, res, next) => {
   let token;
@@ -16,6 +17,31 @@ export const protect = async (req, res, next) => {
 
       if (!req.user) {
         return res.status(404).json({ message: "User not found" });
+      }
+
+      if (req.user.isActive === false) {
+        return res.status(403).json({ message: "Account is deactivated" });
+      }
+
+      if (decoded.tv !== undefined && decoded.tv !== req.user.tokenVersion) {
+        return res.status(401).json({ message: "Session expired. Please login again." });
+      }
+
+      if (decoded.sid) {
+        const session = await AuthSession.findOne({
+          sessionId: decoded.sid,
+          user: req.user._id,
+          revokedAt: null,
+        });
+        if (!session) {
+          return res.status(401).json({ message: "Session expired. Please login again." });
+        }
+        req.sessionId = decoded.sid;
+        const stale = Date.now() - new Date(session.lastActiveAt).getTime() > 5 * 60 * 1000;
+        if (stale) {
+          session.lastActiveAt = new Date();
+          session.save().catch(() => {});
+        }
       }
 
       next();

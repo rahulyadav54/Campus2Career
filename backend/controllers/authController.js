@@ -1,9 +1,34 @@
 import User from "../models/UserModel.js";
-import NotificationService from "../services/notificationService.js";
+import AuthSession from "../models/AuthSession.js";
+import AuditService from "../services/auditService.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { clientIp } from "../utils/userAgent.js";
 
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
+const generateToken = (id, extras = {}) => {
+  return jwt.sign({ id, ...extras }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" });
+};
+
+const issueSessionToken = async (user, req) => {
+  const sessionId = crypto.randomUUID();
+  await AuthSession.create({
+    user: user._id,
+    sessionId,
+    userAgent: req.get("User-Agent") || "",
+    ipAddress: clientIp(req),
+    lastActiveAt: new Date(),
+  });
+  return generateToken(user._id, { sid: sessionId, tv: user.tokenVersion || 0 });
+};
+
+const passwordMeetsPolicy = (password = "") => {
+  return (
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /\d/.test(password) &&
+    /[^A-Za-z0-9]/.test(password)
+  );
 };
 
 export const refreshToken = async (req, res) => {
@@ -23,7 +48,7 @@ export const refreshToken = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.json({ success: true, token: generateToken(user._id) });
+    return res.json({ success: true, token: generateToken(user._id, { sid: decoded.sid, tv: user.tokenVersion || 0 }) });
   } catch (err) {
     return res.status(401).json({ message: "Not authorized, token failed" });
   }
@@ -83,7 +108,7 @@ export const registerStudent = async (req, res) => {
     });
     await user.save();
 
-    const token = generateToken(user._id);
+    const token = await issueSessionToken(user, req);
 
     res.status(201).json({
       success: true,
@@ -163,7 +188,7 @@ export const register = async (req, res) => {
     const user = new User(userData);
     await user.save();
 
-    const token = generateToken(user._id);
+    const token = await issueSessionToken(user, req);
 
     res.status(201).json({
       success: true,
@@ -202,6 +227,10 @@ export const login = async (req, res) => {
       return res.status(403).json({ message: "Account pending approval" });
     }
 
+    if (user.isActive === false) {
+      return res.status(403).json({ message: "Account is deactivated" });
+    }
+
     const isMatch = await user.comparePassword(password);
     
     if (!isMatch) {
@@ -213,9 +242,11 @@ export const login = async (req, res) => {
     user.activityLog.push({ action: 'Logged in', date: new Date() });
     await user.save();
 
+    await AuditService.logLogin(user._id, req, true);
+
     res.status(200).json({
       success: true,
-      token: generateToken(user._id),
+      token: await issueSessionToken(user, req),
       role: user.role,
       user: user.getPublicProfile(),
     });
@@ -253,9 +284,10 @@ export const updateProfile = async (req, res) => {
 
     // List of fields that can be updated
     const allowedFields = [
-      'name', 'phone', 'department', 'year', 'cgpa', 
-      'description', 'skills', 'socialLinks', 'projects', 
-      'experiences', 'course', 'specialization', 'backlogs'
+      'name', 'phone', 'department', 'year', 'cgpa',
+      'description', 'skills', 'socialLinks', 'projects',
+      'experiences', 'course', 'specialization', 'backlogs',
+      'designation', 'employeeId'
     ];
 
     // Update only allowed fields
@@ -288,30 +320,12 @@ export const updateProfile = async (req, res) => {
     try {
       // Add activity log
       user.activityLog.push({ action: 'Updated profile', date: new Date() });
-      
-      // Save the updated user
       await user.save();
+      await AuditService.logProfileUpdated(user._id, Object.keys(req.body), req);
 
-      // Send back the updated user data
       res.json({
         message: "Profile updated successfully",
-        user: {
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          department: user.department,
-          year: user.year,
-          rollNo: user.rollNo,
-          cgpa: user.cgpa,
-          description: user.description,
-          skills: user.skills,
-          socialLinks: user.socialLinks,
-          projects: user.projects,
-          experiences: user.experiences,
-          course: user.course,
-          specialization: user.specialization,
-          backlogs: user.backlogs
-        }
+        user: user.getPublicProfile(),
       });
     } catch (saveError) {
       console.error('Error saving user:', saveError);
@@ -337,3 +351,148 @@ export const updateProfile = async (req, res) => {
     });
   }
 };
+
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword, signOutOtherDevices } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current password and new password are required" });
+    }
+    if (confirmPassword !== undefined && confirmPassword !== newPassword) {
+      return res.status(400).json({ message: "New password and confirmation do not match" });
+    }
+    if (!passwordMeetsPolicy(newPassword)) {
+      return res.status(400).json({
+        message: "Password must be at least 8 characters and include uppercase, lowercase, number, and special character",
+      });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const matches = await user.comparePassword(currentPassword);
+    if (!matches) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = newPassword;
+    user.activityLog.push({ action: "Password changed", date: new Date() });
+    if (signOutOtherDevices) {
+      user.tokenVersion = (user.tokenVersion || 0) + 1;
+    }
+    await user.save();
+
+    if (signOutOtherDevices) {
+      await AuthSession.updateMany(
+        { user: user._id, revokedAt: null },
+        { $set: { revokedAt: new Date() } }
+      );
+    }
+
+    await AuditService.logSecurityEvent(user._id, "password_changed", { signOutOtherDevices: !!signOutOtherDevices }, req, "high");
+
+    const token = signOutOtherDevices
+      ? await issueSessionToken(user, req)
+      : generateToken(user._id, { sid: req.sessionId, tv: user.tokenVersion });
+
+    res.json({
+      success: true,
+      message: "Password updated successfully",
+      token,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to change password", error: err.message });
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    if (req.sessionId) {
+      await AuthSession.updateOne(
+        { sessionId: req.sessionId, user: req.user._id },
+        { $set: { revokedAt: new Date() } }
+      );
+    }
+    req.user.activityLog.push({ action: "Logged out", date: new Date() });
+    await req.user.save();
+    await AuditService.logLogout(req.user._id, req);
+    res.json({ success: true, message: "Logged out" });
+  } catch (err) {
+    res.status(500).json({ message: "Logout failed", error: err.message });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const email = String(req.body.email || "").toLowerCase().trim();
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const user = await User.findOne({ email });
+    if (user) {
+      const raw = crypto.randomBytes(32).toString("hex");
+      user.resetPasswordToken = crypto.createHash("sha256").update(raw).digest("hex");
+      user.resetPasswordExpire = new Date(Date.now() + 60 * 60 * 1000);
+      await user.save({ validateBeforeSave: false });
+    }
+
+    const emailConfigured = Boolean(process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS);
+    res.json({
+      success: true,
+      message: emailConfigured
+        ? "If an account exists for that email, password reset instructions have been sent."
+        : "If an account exists for that email, a reset was recorded. Outbound email is not configured on this server, so no message was sent. Contact a platform administrator.",
+      emailConfigured,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Unable to process password reset", error: err.message });
+  }
+};
+
+export const listSessions = async (req, res) => {
+  try {
+    const sessions = await AuthSession.find({ user: req.user._id, revokedAt: null }).sort({ lastActiveAt: -1 });
+    res.json({
+      success: true,
+      sessions: sessions.map((s) => ({
+        id: s.sessionId,
+        userAgent: s.userAgent,
+        ipAddress: s.ipAddress || null,
+        lastActiveAt: s.lastActiveAt,
+        createdAt: s.createdAt,
+        current: s.sessionId === req.sessionId,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load sessions", error: err.message });
+  }
+};
+
+export const revokeSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    if (sessionId === req.sessionId) {
+      return res.status(400).json({ message: "Use log out to end the current session" });
+    }
+    const session = await AuthSession.findOne({ sessionId, user: req.user._id, revokedAt: null });
+    if (!session) return res.status(404).json({ message: "Session not found" });
+    session.revokedAt = new Date();
+    await session.save();
+    await AuditService.logSecurityEvent(req.user._id, "session_revoked", { sessionId }, req, "medium");
+    res.json({ success: true, message: "Session revoked" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to revoke session", error: err.message });
+  }
+};
+
+export const revokeOtherSessions = async (req, res) => {
+  try {
+    const filter = { user: req.user._id, revokedAt: null };
+    if (req.sessionId) filter.sessionId = { $ne: req.sessionId };
+    const result = await AuthSession.updateMany(filter, { $set: { revokedAt: new Date() } });
+    await AuditService.logSecurityEvent(req.user._id, "sessions_revoked", { count: result.modifiedCount }, req, "high");
+    res.json({ success: true, message: "Signed out of other devices", revoked: result.modifiedCount });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to sign out other devices", error: err.message });
+  }
+};
+

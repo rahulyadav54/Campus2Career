@@ -30,10 +30,26 @@ import {
   getStudentSkillGapReport
 } from "../controllers/analyticsController.js";
 import { getAllPosts, createPost, updatePost, deletePost, getPostHistory } from "../controllers/postController.js";
+import {
+  getAccountOverview,
+  updateAdminSettings,
+  uploadAdminAvatar,
+  avatarUpload,
+  getAdminActivityLog,
+  deactivateOwnAccount,
+  deleteOwnAccount,
+} from "../controllers/adminAccountController.js";
 
 const router = express.Router();
 
 router.use(protect, adminOnly);
+
+router.get("/account", getAccountOverview);
+router.put("/account/settings", updateAdminSettings);
+router.post("/account/avatar", avatarUpload.single("avatar"), uploadAdminAvatar);
+router.get("/account/activity", getAdminActivityLog);
+router.post("/account/deactivate", deactivateOwnAccount);
+router.post("/account/delete", deleteOwnAccount);
 
 // Enhanced placement cell routes
 router.get("/dashboard/stats", getDashboardStats);

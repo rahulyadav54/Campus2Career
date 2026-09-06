@@ -158,3 +158,51 @@
     transition: all 0.2s ease-in-out;
   }
 }
+
+html.dark {
+  --color-text-primary: 210 40% 96%;
+  --color-text-secondary: 215 20% 75%;
+  --color-text-tertiary: 215 16% 65%;
+  --color-bg: 222 47% 8%;
+  --color-bg-alt: 222 47% 11%;
+  --color-bg-card: 217 33% 14%;
+  --color-bg-muted: 217 33% 17%;
+  --color-border: 217 19% 27%;
+  --color-border-hover: 215 16% 40%;
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+html.dark .bg-white { background-color: #1e293b; }
+html.dark .bg-gray-50 { background-color: #0f172a; }
+html.dark .bg-gray-100 { background-color: #1e293b; }
+html.dark .text-gray-900 { color: #f8fafc; }
+html.dark .text-gray-800 { color: #e2e8f0; }
+html.dark .text-gray-700 { color: #cbd5e1; }
+html.dark .text-gray-600 { color: #94a3b8; }
+html.dark .text-gray-500 { color: #94a3b8; }
+html.dark .text-gray-400 { color: #64748b; }
+html.dark .border-gray-200 { border-color: #334155; }
+html.dark .border-gray-300 { border-color: #475569; }
+html.dark .hover\:bg-gray-50:hover { background-color: #1e293b; }
+html.dark .hover\:bg-gray-100:hover { background-color: #334155; }
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+html[data-animations="off"] * {
+  animation: none !important;
+  transition: none !important;
+}
+
+html[data-compact="true"] .admin-main-pad {
+  padding: 1rem;
+}

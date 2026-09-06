@@ -31,7 +31,12 @@ const userSchema = new mongoose.Schema({
     },
 
     phone: { type: String },
+    phoneVerified: { type: Boolean, default: false },
     department: { type: String, default: "" }, // ✅ kept only once
+    employeeId: { type: String, default: "", trim: true, maxlength: 40 },
+    tokenVersion: { type: Number, default: 0 },
+    twoFactorEnabled: { type: Boolean, default: false },
+    adminSettings: { type: mongoose.Schema.Types.Mixed, default: {} },
     year: { type: String },
     rollNo: { type: String, unique: true, sparse: true },
     description: { type: String, maxlength: 500, default: "" },
@@ -210,6 +215,7 @@ userSchema.methods.getPublicProfile = function () {
     delete obj.password;
     delete obj.resetPasswordToken;
     delete obj.resetPasswordExpire;
+    delete obj.tokenVersion;
     return obj;
 };
 
