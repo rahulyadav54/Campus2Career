@@ -21,7 +21,11 @@ const fetchWithTimeout = (url, options, timeout = DEFAULT_TIMEOUT) => {
 const request = async (method, path, body = null, { retries = MAX_RETRIES, timeout = DEFAULT_TIMEOUT } = {}) => {
   const url = `${API_URL}${path}`;
   const options = { method };
-  if (body) options.body = JSON.stringify(body);
+  if (body instanceof FormData) {
+    options.body = body;
+  } else if (body) {
+    options.body = JSON.stringify(body);
+  }
   let refreshed = false;
 
   for (let attempt = 0; attempt <= retries; attempt++) {

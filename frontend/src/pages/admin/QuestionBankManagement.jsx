@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Trash2, BookOpen, ClipboardList, Upload, Download, FileSpreadsheet } from "lucide-react";
+import { API_URL } from "../../config/api";
 import apiClient from "../../services/apiClient";
 
 const emptyQuestion = { text: "", category: "technical", skill: "", type: "mcq", difficulty: "medium", marks: 1, options: [{ text: "", isCorrect: true }, { text: "", isCorrect: false }, { text: "", isCorrect: false }, { text: "", isCorrect: false }] };

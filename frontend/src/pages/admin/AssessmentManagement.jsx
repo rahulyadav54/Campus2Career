@@ -86,6 +86,8 @@ export default function AssessmentManagement() {
     try { await apiClient.put("/api/assessment-management/settings", settingsForm); toast.success("Settings saved"); fetchSettings(); } catch (e) { toast.error(e.message); }
   };
 
+  const getHeaders = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` });
+
   const downloadTemplate = async () => {
     try {
       const res = await fetch(`${API_URL}/api/assessment-management/template/download`, { headers: getHeaders() });
@@ -95,8 +97,6 @@ export default function AssessmentManagement() {
       const a = document.createElement("a"); a.href = url; a.download = "assessment_questions_template.csv"; a.click(); URL.revokeObjectURL(url);
     } catch (e) { toast.error(e.message); }
   };
-
-  const getHeaders = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` });
 
   if (selectedAssessment) {
     return (
