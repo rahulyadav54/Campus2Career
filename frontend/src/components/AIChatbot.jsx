@@ -35,11 +35,11 @@ export default function AIChatbot() {
     setLoading(true);
 
     try {
-      const data = await apiClient.post("/api/career/ai/chat", {
+      const data = await apiClient.post("/api/ai/chat", {
         message: userMsg,
         history: updated.slice(1, -1), // exclude greeting + current msg
       });
-      setMessages([...updated, { role: "assistant", content: data.reply }]);
+      setMessages([...updated, { role: "assistant", content: data.response }]);
     } catch (err) {
       setMessages([...updated, { role: "assistant", content: `Sorry, I couldn't connect to the AI service. ${err.message}` }]);
     } finally {
@@ -68,7 +68,7 @@ export default function AIChatbot() {
             </div>
             <div>
               <p className="text-white font-semibold text-sm">AI Career Advisor</p>
-              <p className="text-indigo-200 text-xs">Powered by Gemini · Knows your profile</p>
+              <p className="text-indigo-200 text-xs">Powered by NVIDIA Nemotron · Knows your profile</p>
             </div>
           </div>
 

@@ -1,237 +1,160 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Campus2Career Global Design System
+   ============================================================ */
+
 :root {
-  --primary-color: #2563eb; /* indigo-600 */
-  --primary-dark: #1e40af; /* indigo-800 */
-  --secondary-color: #facc15; /* yellow-400 */
-  --text-dark: #1f2937; /* gray-800 */
-  --text-light: #6b7280; /* gray-500 */
-  --bg-light: #f9fafb; /* gray-50 */
+  /* ===== Brand Palette ===== */
+  --color-primary: 135 80% 45%;
+  --color-primary-hover: 128 70% 40%;
+  --color-primary-soft: 140 90% 95%;
+  --color-primary-strong: 135 80% 35%;
 
-  --pmss1-primary: #1a73e8; /* Google indigo */
-  --pmss1-secondary: #2e2e2e; /* Charcoal Black */
-  --pmss1-background: #ffffff; /* White */
-  --pmss1-accent: #f5f7fa; /* Light Grey */
-  --pmss1-highlight: #34a853; /* Green */
+  --color-accent: 250 70% 55%;
+  --color-accent-soft: 250 80% 95%;
 
-  /* 🎨 Palette 2: Classic & Elegant */
-  --pmss2-primary: #0047ab; /* Royal indigo */
-  --pmss2-secondary: #ffd700; /* Golden Yellow */
-  --pmss2-background: #fafafa; /* Off-White */
-  --pmss2-text: #1f2937; /* Dark Slate */
-  --pmss2-accent: #d1d5db; /* Light Grey */
+  /* ===== Neutrals ===== */
+  --color-text-primary: 222 47% 11%;
+  --color-text-secondary: 221 39% 31%;
+  --color-text-tertiary: 221 39% 50%;
 
-  --pmss-primary: #6d28d9; /* Purple */
-  --pmss-secondary: #f97316; /* Orange */
-  --pmss-background: #ffffff;
-  --pmss-text: #1e293b;
-  --pmss-accent: #f3f4f6;
+  --color-bg: 0 0% 100%;
+  --color-bg-alt: 220 31% 98%;
+  --color-bg-card: 0 0% 100%;
+  --color-bg-muted: 220 30% 95%;
+
+  --color-border: 220 30% 92%;
+  --color-border-hover: 220 30% 82%;
+
+  /* ===== Semantic ===== */
+  --color-success: 150 60% 45%;
+  --color-success-bg: 150 70% 95%;
+  --color-warning: 38 100% 50%;
+  --color-warning-bg: 38 90% 95%;
+  --color-danger: 0 80% 60%;
+  --color-danger-bg: 0 80% 95%;
+  --color-info: 199 95% 55%;
+  --color-info-bg: 199 90% 95%;
+
+  /* ===== Layout ===== */
+  --sidebar-width: 260px;
+  --sidebar-width-collapsed: 72px;
+  --topbar-height: 64px;
+
+  /* ===== Shadows ===== */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.06);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.06);
+
+  /* ===== Borders / Radii ===== */
+  --radius-sm: 0.375rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-full: 9999px;
+
+  /* ===== Typography ===== */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-input:focus,
-button:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-}
+/* ===== Base ===== */
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: hsl(var(--color-bg-alt));
+    color: hsl(var(--color-text-primary));
+    line-height: 1.6;
+  }
 
-/* Modern Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
+  input:focus,
+  button:focus,
+  textarea:focus,
+  select:focus {
+    outline: none;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-@keyframes fadeInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
+  html {
+    scroll-behavior: smooth;
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-  to {
-    opacity: 1;
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
-}
-
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--color-border));
+    border-radius: var(--radius-full);
   }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes gradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--color-border-hover));
   }
 }
 
-@keyframes spinSlow {
-  from {
-    transform: rotate(0deg);
+/* ===== Components ===== */
+@layer components {
+  .bg-primary { background-color: hsl(var(--color-primary)); }
+  .text-primary { color: hsl(var(--color-primary)); }
+  .border-primary { border-color: hsl(var(--color-primary)); }
+
+  .bg-accent { background-color: hsl(var(--color-accent)); }
+  .text-accent { color: hsl(var(--color-accent)); }
+
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md font-medium
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+           disabled:pointer-events-none disabled:opacity-50 transition-colors;
   }
-  to {
-    transform: rotate(360deg);
+  .btn-primary {
+    @apply bg-violet-600 text-white hover:bg-violet-700 focus-visible:ring-violet-600;
   }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px);
+  .btn-secondary {
+    @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus-visible:ring-gray-500;
   }
-  50% {
-    transform: translateY(-10px);
+  .btn-sm { @apply px-2.5 py-1.5 text-xs; }
+  .btn-md { @apply px-3 py-2 text-sm; }
+  .btn-lg { @apply px-4 py-2.5 text-sm font-medium; }
+
+  .card {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
   }
-}
 
-/* Animation Classes */
-.animate-fade-in-up {
-  animation: fadeInUp 0.8s ease-out forwards;
-}
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
 
-.animate-fade-in-right {
-  animation: fadeInRight 0.8s ease-out forwards;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
-}
-
-.animate-bounce-in {
-  animation: bounceIn 0.8s ease-out forwards;
-}
-
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient 3s ease infinite;
-}
-
-.animate-spin-slow {
-  animation: spinSlow 20s linear infinite;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(45deg, #4f46e5, #7c3aed);
-  border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(45deg, #3730a3, #5b21b6);
-}
-
-/* Grid pattern background */
-.bg-grid-pattern {
-  background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
-/* Hover effects */
-.hover-lift {
-  transition: all 0.3s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Glass morphism effect */
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Counter animation */
-.counter {
-  transition: all 0.3s ease;
-}
-
-/* Responsive text */
-@media (max-width: 640px) {
-  .animate-fade-in-up {
-    animation-duration: 0.6s;
+  .skeleton {
+    @apply relative overflow-hidden bg-gray-200 rounded;
+  }
+  .skeleton::after {
+    content: "";
+    @apply absolute inset-0 rounded;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
   }
 }
 
-/* Loading states */
-.loading {
-  position: relative;
-  overflow: hidden;
-}
-
-.loading::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: loading 1.5s infinite;
-}
-
-@keyframes loading {
-  0% {
-    left: -100%;
+/* ===== Utilities ===== */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
   }
-  100% {
-    left: 100%;
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .transition-smooth {
+    transition: all 0.2s ease-in-out;
   }
 }

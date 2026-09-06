@@ -190,8 +190,8 @@ export default function CareerAdvisorChat() {
     setLoading(true);
 
     try {
-      const res = await apiClient.post("/api/ai/career-advisor", { prompt: textToSend });
-      const aiReply = res?.answer || "I'm sorry, I couldn't process that. Please try asking again.";
+      const res = await apiClient.post("/api/ai/chat", { prompt: textToSend });
+      const aiReply = res?.response || res?.answer || "I'm sorry, I couldn't process that. Please try asking again.";
       const source = res?.source || "Campus2Career AI Engine";
 
       setMessages((prev) => [...prev, { sender: "ai", text: aiReply, source }]);
@@ -223,7 +223,7 @@ export default function CareerAdvisorChat() {
                 Smart Automation
               </span>
             </h3>
-            <p className="text-xs text-blue-100">Powered by Gemini AI Engine & Skill Mapping</p>
+            <p className="text-xs text-blue-100">Powered by NVIDIA Nemotron AI Engine & Skill Mapping</p>
           </div>
         </div>
         <button
