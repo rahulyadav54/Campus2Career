@@ -5,7 +5,7 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
-      envVars:
+    envVars:
       - key: MONGO_URI
         sync: false
       - key: JWT_SECRET
@@ -14,9 +14,9 @@ services:
         sync: false
       - key: BACKEND_URL
         sync: false
-      - key: NVIDIA_API_KEY
-        sync: false
       - key: GEMINI_API_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
         sync: false
   - type: web
     name: campus2career-recommendations

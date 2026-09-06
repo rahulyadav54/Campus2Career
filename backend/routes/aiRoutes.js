@@ -1,5 +1,5 @@
 import express from "express";
-import { getCareerAdvice, parseResumeAI, calculateReadinessScore, importResumeFromFile } from "../controllers/aiController.js";
+import { getCareerAdvice, parseResumeAI, calculateReadinessScore, importResumeFromFile, chatWithAI } from "../controllers/aiController.js";
 import { protect, studentOnly } from "../middleware/authMiddleware.js";
 import multer from "multer";
 import path from "path";
@@ -33,6 +33,9 @@ const aiUpload = multer({
 
 // AI Career Advisor chatbot endpoint (public - no auth required for demo)
 router.post("/career-advisor", getCareerAdvice);
+
+// AI chat endpoint (authenticated, powered by NVIDIA Nemotron)
+router.post("/chat", protect, chatWithAI);
 
 // AI Resume Parser endpoint
 router.post("/parse-resume", protect, parseResumeAI);
