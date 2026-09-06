@@ -11,7 +11,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { API_URL } from "../../config/api";
 import { Avatar } from "../ui";
-import { applyAppearance, readLocalPreferences } from "../../utils/adminPreferences";
+import ThemeToggle from "../ThemeToggle";
+import { readLocalPreferences } from "../../utils/adminPreferences";
 
 const roleNavConfig = {
   student: {
@@ -193,10 +194,6 @@ const DashboardLayout = ({ userRole = "student" }) => {
   }, []);
 
   useEffect(() => {
-    applyAppearance(readLocalPreferences().appearance);
-  }, []);
-
-  useEffect(() => {
     if (userRole !== "admin") return;
     const dest = readLocalPreferences().dashboard?.defaultLandingPage;
     if (!dest || dest === "/admin" || dest === "/admin/dashboard") return;
@@ -363,6 +360,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
 
           {/* Right: notifications + profile */}
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <button onClick={() => navigate(`/${userRole}/notifications`)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors relative">
               <Bell size={18} />
               {unreadNotifications > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{unreadNotifications}</span>}

@@ -29,7 +29,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+    <div className="auth-shell min-h-screen flex items-center justify-center p-4">
       <Link to="/login" className="absolute top-6 left-6 flex items-center gap-2 text-gray-600 hover:text-gray-900">
         <ArrowLeft size={20} /> Back to login
       </Link>

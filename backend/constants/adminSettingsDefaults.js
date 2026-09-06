@@ -1,6 +1,6 @@
 export const ADMIN_SETTINGS_DEFAULTS = {
   appearance: {
-    theme: "system",
+    theme: "light",
     sidebarCollapsed: false,
     compactLayout: false,
     enableAnimations: true,

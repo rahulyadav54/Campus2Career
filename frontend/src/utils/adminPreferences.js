@@ -1,8 +1,10 @@
+import { applyTheme } from "./theme";
+
 const STORAGE_KEY = "c2c-admin-preferences";
 
 export const defaultAdminPreferences = {
   appearance: {
-    theme: "system",
+    theme: "light",
     sidebarCollapsed: false,
     compactLayout: false,
     enableAnimations: true,
@@ -33,18 +35,16 @@ export const readLocalPreferences = () => {
 
 export const writeLocalPreferences = (prefs) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  applyAppearance(prefs.appearance || defaultAdminPreferences.appearance);
-};
-
-export const resolveTheme = (theme = "system") => {
-  if (theme === "dark") return "dark";
-  if (theme === "light") return "light";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  const appearance = prefs.appearance || defaultAdminPreferences.appearance;
+  document.documentElement.dataset.compact = appearance.compactLayout ? "true" : "false";
+  document.documentElement.dataset.animations = appearance.enableAnimations === false ? "off" : "on";
 };
 
 export const applyAppearance = (appearance = {}) => {
-  const theme = resolveTheme(appearance.theme);
-  document.documentElement.classList.toggle("dark", theme === "dark");
+  if (appearance.theme) {
+    localStorage.setItem("c2c-theme", appearance.theme);
+    applyTheme(appearance.theme);
+  }
   document.documentElement.dataset.compact = appearance.compactLayout ? "true" : "false";
   document.documentElement.dataset.animations = appearance.enableAnimations === false ? "off" : "on";
 };

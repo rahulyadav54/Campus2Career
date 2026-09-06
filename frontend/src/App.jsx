@@ -1,4 +1,6 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { applyTheme } from "./utils/theme";
 import { Toaster } from 'react-hot-toast';
 import Landing from "./pages/Landing";
 import RegisterPage from "./pages/auth/Register";
@@ -86,9 +88,18 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 
 
+function ThemeSync() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    applyTheme(undefined, pathname);
+  }, [pathname]);
+  return null;
+}
+
 function App() {
   return (
     <>
+      <ThemeSync />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/register" element={<RegisterPage />} />

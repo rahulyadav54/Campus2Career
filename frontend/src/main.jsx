@@ -4,9 +4,12 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
-import { applyAppearance, readLocalPreferences } from './utils/adminPreferences'
+import { applyTheme } from './utils/theme'
 
-applyAppearance(readLocalPreferences().appearance)
+if (localStorage.getItem("c2c-theme") === "system") {
+  localStorage.setItem("c2c-theme", "light");
+}
+applyTheme()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

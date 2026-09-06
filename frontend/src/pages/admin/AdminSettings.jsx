@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { API_URL } from "../../config/api";
 import { makeAuthenticatedRequest } from "../../utils/auth";
 import { applyAppearance, passwordChecks, passwordScore, writeLocalPreferences } from "../../utils/adminPreferences";
+import { setStoredTheme } from "../../utils/theme";
 import { Card, EmptyState, LoadingSkeleton } from "../../components/ui";
 import { formatRelativeDate } from "../../lib/utils";
 import { Eye, EyeOff } from "lucide-react";
@@ -103,7 +104,6 @@ const AdminSettings = () => {
       setAccount(data);
       setSettings(data.settings);
       writeLocalPreferences(data.settings);
-      applyAppearance(data.settings?.appearance);
     } catch {
       toast.error("Failed to load settings");
     } finally {
@@ -352,6 +352,7 @@ const AppearancePanel = ({ settings, setSettings, saveSettings, saving }) => {
     const next = { ...settings, appearance: { ...appearance, ...patch } };
     setSettings(next);
     applyAppearance(next.appearance);
+    if (patch.theme) setStoredTheme(patch.theme);
   };
   return (
     <Card title="Appearance" description="Theme applies to your admin workspace on this browser after save.">
