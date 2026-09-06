@@ -183,6 +183,16 @@ const startServer = async () => {
   try {
     await connectDB();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+    const Job = (await import("./models/JobModel.js")).default;
+    const approvedJobs = await Job.countDocuments({ status: "approved", isActive: true });
+    if (approvedJobs < 5) {
+      console.log(`Auto-seeding review dataset (approved jobs: ${approvedJobs})`);
+      const { runBulkSeed } = await import("./scripts/seedBulkDataset.js");
+      runBulkSeed({ manageConnection: false })
+        .then((summary) => console.log("Auto-seed complete:", summary))
+        .catch((err) => console.error("Auto-seed failed:", err));
+    }
   } catch (error) {
     console.error("❌ Backend startup stopped:", error.message);
     process.exitCode = 1;
