@@ -41,6 +41,7 @@ const roleNavConfig = {
       ]},
       { group: "Community", items: [
         { label: "Announcements", icon: Megaphone, path: "/student/announcements" },
+        { label: "Notifications", icon: Bell, path: "/student/notifications" },
         { label: "Workshops & Lectures", icon: Presentation, path: "/student/workshops" },
         { label: "Innovation Challenges", icon: Trophy, path: "/student/challenges" },
         { label: "Live Industry Projects", icon: Building2, path: "/student/projects" },
@@ -81,6 +82,7 @@ const roleNavConfig = {
       { group: "Activity", items: [
         { label: "Activity Monitor", icon: Activity, path: "/admin/activities" },
         { label: "Collaborations", icon: Building2, path: "/admin/collaboration" },
+        { label: "Notifications", icon: Bell, path: "/admin/notifications" },
       ]},
     ],
   },
@@ -103,6 +105,7 @@ const roleNavConfig = {
         { label: "Analytics", icon: TrendingUp, path: "/recruiter/analytics" },
         { label: "Announcements", icon: Megaphone, path: "/recruiter/announcements" },
         { label: "Assessments", icon: FileText, path: "/recruiter/assessments" },
+        { label: "Notifications", icon: Bell, path: "/recruiter/notifications" },
       ]},
     ],
   },
@@ -118,6 +121,7 @@ const roleNavConfig = {
         { label: "Progress", icon: TrendingUp, path: "/mentor/progress" },
         { label: "History", icon: Calendar, path: "/mentor/history" },
         { label: "Internships", icon: Briefcase, path: "/mentor/internships" },
+        { label: "Notifications", icon: Bell, path: "/mentor/notifications" },
       ]},
     ],
   },
@@ -128,6 +132,7 @@ const roleNavConfig = {
         { label: "Dashboard", icon: BarChart3, path: "/academician" },
         { label: "Faculty Programs", icon: GraduationCap, path: "/academician/opportunities" },
         { label: "My Applications", icon: FileText, path: "/academician/applications" },
+        { label: "Notifications", icon: Bell, path: "/academician/notifications" },
       ]},
     ],
   },
@@ -144,6 +149,7 @@ const roleNavConfig = {
         { label: "Placement Readiness", icon: Target, path: "/institution/analytics/placement-readiness" },
         { label: "Student Skill Gaps", icon: Activity, path: "/institution/analytics/student-skill-gaps" },
         { label: "Assessments", icon: FileText, path: "/institution/assessments" },
+        { label: "Notifications", icon: Bell, path: "/institution/notifications" },
       ]},
     ],
   },
@@ -155,6 +161,7 @@ const DashboardLayout = ({ userRole = "student" }) => {
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [userData, setUserData] = useState(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -176,6 +183,23 @@ const DashboardLayout = ({ userRole = "student" }) => {
     };
 
     fetchUser();
+  }, []);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await fetch(`${API_URL}/api/notifications/me/unread-count`, { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadNotifications(data.unreadCount || 0);
+        }
+      } catch { /* silent */ }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // ===== Fixed logout =====
@@ -306,8 +330,9 @@ const DashboardLayout = ({ userRole = "student" }) => {
 
           {/* Right: notifications + profile */}
           <div className="flex items-center gap-2">
-            <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <button onClick={() => navigate(`/${userRole}/notifications`)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors relative">
               <Bell size={18} />
+              {unreadNotifications > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{unreadNotifications}</span>}
             </button>
 
             <div className="relative">

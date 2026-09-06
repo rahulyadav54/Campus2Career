@@ -192,6 +192,19 @@ class NotificationService {
       throw error;
     }
   }
+
+  // Mark all notifications as read for a user
+  static async markAllAsRead(userId) {
+    try {
+      await Notification.updateMany(
+        { recipient: userId, isRead: false },
+        { isRead: true }
+      );
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      throw error;
+    }
+  }
 }
 
 export default NotificationService;

@@ -80,6 +80,7 @@ import CourseDetail from "./pages/student/CourseDetail";
 import MyCourses from "./pages/student/MyCourses";
 import AdminCourses from "./pages/admin/AdminCourses";
 import Announcements from "./pages/shared/Announcements";
+import Notifications from "./pages/shared/Notifications";
 
 
 function App() {
@@ -117,6 +118,7 @@ function App() {
           <Route path="projects" element={<LiveIndustryProjects />} />
           <Route path="collaborations" element={<CollaborationRegistrations />} />
           <Route path="announcements" element={<Announcements />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="courses" element={<StudentCourses />} />
           <Route path="courses/:id" element={<CourseDetail />} />
           <Route path="my-courses" element={<MyCourses />} />
@@ -157,6 +159,7 @@ function App() {
           <Route path="analytics" element={<RecruitmentAnalytics />} />
           <Route path="assessments" element={<AssessmentManagement />} />
           <Route path="announcements" element={<Announcements />} />
+          <Route path="notifications" element={<Notifications />} />
         </Route>
         
         <Route path="/admin" element={<ProtectedRoute><DashboardLayout userRole="admin" /></ProtectedRoute>}>
@@ -180,6 +183,7 @@ function App() {
           <Route path="collaboration" element={<AdminCollaborationManagement />} />
           <Route path="learning-platforms" element={<AdminLearningPlatforms />} />
           <Route path="courses" element={<AdminCourses />} />
+          <Route path="notifications" element={<Notifications />} />
         </Route>
 
         <Route path="/institution" element={<ProtectedRoute><DashboardLayout userRole="institution" /></ProtectedRoute>}>
@@ -190,6 +194,7 @@ function App() {
           <Route path="analytics/internship-participation" element={<InstitutionInternshipAnalytics />} />
           <Route path="analytics/placement-readiness" element={<InstitutionPlacementReadiness />} />
           <Route path="assessments" element={<AssessmentManagement />} />
+          <Route path="notifications" element={<Notifications />} />
         </Route>
 
         <Route path="*" element={<UnderDevelopment />} />
