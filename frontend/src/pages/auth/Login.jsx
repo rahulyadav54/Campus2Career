@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Eye, EyeOff, Sparkles } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { loginUser, handleApiError } from "../../services/auth";
 
@@ -45,8 +45,8 @@ export default function Login() {
 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-xl mb-3">
-            <Sparkles className="w-6 h-6 text-indigo-600" />
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-xl mb-3 overflow-hidden">
+            <img src="/campus2career-icon.png" alt="Campus2Career" className="w-8 h-8 object-cover rounded-lg" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
           <p className="text-sm text-gray-500">Sign in to your Campus2Career account</p>

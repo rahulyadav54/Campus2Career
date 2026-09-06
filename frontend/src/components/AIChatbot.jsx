@@ -288,8 +288,8 @@ export default function AIChatbot() {
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
+          <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <img src="/campus2career-icon.png" alt="Campus2Career" className="w-6 h-6 object-cover rounded-full" />
           </div>
           <div>
             <p className="font-semibold text-sm sm:text-base leading-tight">AI Career Advisor</p>
@@ -452,10 +452,14 @@ export default function AIChatbot() {
       {/* Floating toggle button */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-110 overflow-hidden p-0"
         title="AI Career Advisor"
       >
-        {open ? <X size={22} /> : <MessageCircle size={22} />}
+        {open ? (
+          <X size={22} className="relative z-10" />
+        ) : (
+          <img src="/campus2career-icon.png" alt="Campus2Career" className="w-9 h-9 object-cover rounded-full" />
+        )}
       </button>
 
       {/* Fullscreen chat window */}

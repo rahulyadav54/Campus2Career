@@ -354,7 +354,10 @@ export default function CareerAdvisorChat() {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <p className="font-semibold text-sm text-gray-900">AI Career Advisor</p>
+            <div className="flex items-center gap-2">
+              <img src="/campus2career-icon.png" alt="Campus2Career" className="w-6 h-6 rounded object-cover" />
+              <p className="font-semibold text-sm text-gray-900">AI Career Advisor</p>
+            </div>
           </div>
 
           {/* Desktop sidebar toggle */}
@@ -364,21 +367,21 @@ export default function CareerAdvisorChat() {
               className="p-2 bg-white border border-gray-200 rounded-lg shadow-sm text-gray-600 hover:bg-gray-50 transition-colors"
               title="Toggle Chat History"
             >
-              <Menu className="w-4 h-4" />
+              <img src="/campus2career-icon.png" alt="Campus2Career" className="w-4 h-4 rounded object-cover" />
             </button>
           </div>
 
-          {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 text-white p-4 sm:p-5 flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
-              </div>
-              <div>
-                <h3 className="font-bold text-base sm:text-lg leading-tight">AI Skill & Career Advisor</h3>
-                <p className="text-[11px] sm:text-xs text-indigo-100 mt-0.5">Personalised guidance based on your skills and profile</p>
-              </div>
-            </div>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 text-white p-4 sm:p-5 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <img src="/campus2career-icon.png" alt="Campus2Career" className="w-8 h-8 object-cover rounded-full" />
+          </div>
+          <div>
+            <h3 className="font-bold text-base sm:text-lg leading-tight">AI Skill & Career Advisor</h3>
+            <p className="text-[11px] sm:text-xs text-indigo-100 mt-0.5">Personalised guidance based on your skills and profile</p>
+          </div>
+        </div>
             <button
               onClick={() => setMessages([messages[0]])}
               className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0"

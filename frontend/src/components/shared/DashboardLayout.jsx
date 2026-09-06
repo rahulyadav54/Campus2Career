@@ -236,9 +236,12 @@ const DashboardLayout = ({ userRole = "student" }) => {
           {/* Logo / Title */}
           <div className="h-16 px-4 flex items-center justify-between border-b border-gray-200">
             {!sidebarCollapsed && (
-              <span className="text-xl font-bold text-gray-900">Campus2Career</span>
+              <div className="flex items-center gap-2">
+                <img src="/campus2career-icon.png" alt="Campus2Career" className="w-8 h-8 rounded-lg object-cover" />
+                <span className="text-xl font-bold text-gray-900">Campus2Career</span>
+              </div>
             )}
-            {sidebarCollapsed && <span className="text-xl font-bold text-indigo-600">C2C</span>}
+            {sidebarCollapsed && <img src="/campus2career-icon.png" alt="C2C" className="w-8 h-8 rounded-lg object-cover mx-auto" />}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="hidden lg:block p-1 rounded-md text-gray-500 hover:bg-gray-100"

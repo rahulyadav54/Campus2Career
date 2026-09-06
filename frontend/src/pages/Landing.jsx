@@ -193,6 +193,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
+              <img src="/campus2career-icon.png" alt="Campus2Career" className="h-8 w-8 rounded-lg object-cover" />
               <span className="text-xl font-bold text-gray-900 tracking-tight">Campus2Career</span>
               <span className="text-xs text-gray-500 font-medium px-2 py-1 bg-gray-100 rounded">Enterprise</span>
             </div>
