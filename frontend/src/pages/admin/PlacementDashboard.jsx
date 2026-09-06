@@ -41,7 +41,7 @@ const PlacementDashboard = () => {
           throw new Error(status.error);
         }
         if (status.done) {
-          toast.success(`Loaded ${status.summary?.jobs || 0} jobs and ${status.summary?.students || 0} students`);
+          toast.success(`Loaded ${status.summary?.jobs || 0} jobs onto the main portal`);
           await refreshStats();
           return;
         }
@@ -246,10 +246,10 @@ const PlacementDashboard = () => {
                 <Database className="w-5 h-5 text-slate-700" />
                 <div>
                   <div className="font-medium text-slate-900">
-                    {seeding ? "Loading review dataset…" : "Load review dataset"}
+                    {seeding ? "Loading jobs onto the portal…" : "Load jobs onto the main portal"}
                   </div>
                   <div className="text-xs text-slate-600 mt-0.5">
-                    Adds sample students, companies, jobs, courses, and resumes so every section can be tested
+                    Adds companies, approved jobs, and courses visible to every student account
                   </div>
                 </div>
               </button>

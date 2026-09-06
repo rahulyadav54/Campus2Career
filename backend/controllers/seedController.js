@@ -1,4 +1,4 @@
-import { runBulkSeed } from "../scripts/seedBulkDataset.js";
+import { runPortalCatalogSeed } from "../scripts/seedPortalCatalog.js";
 
 const seedState = {
   running: false,
@@ -10,14 +10,14 @@ const seedState = {
 };
 
 const runInBackground = () => {
-  runBulkSeed({ manageConnection: false })
+  runPortalCatalogSeed()
     .then((summary) => {
       seedState.summary = summary;
       seedState.done = true;
       seedState.error = null;
     })
     .catch((error) => {
-      console.error("Bulk seed failed:", error);
+      console.error("Portal catalog seed failed:", error);
       seedState.error = error.message || "Seed failed";
       seedState.done = false;
     })
@@ -34,7 +34,7 @@ export const getBulkSeedStatus = async (_req, res) => {
 export const startBulkSeed = async (_req, res) => {
   if (seedState.running) {
     return res.status(202).json({
-      message: "Review dataset is already loading.",
+      message: "Portal catalog is already loading.",
       ...seedState,
     });
   }
@@ -47,7 +47,7 @@ export const startBulkSeed = async (_req, res) => {
   seedState.finishedAt = null;
 
   res.status(202).json({
-    message: "Loading review dataset into the live database. Open Job Openings in about a minute.",
+    message: "Loading jobs, companies, and courses onto the main portal for every student.",
     running: true,
     startedAt: seedState.startedAt,
   });
