@@ -37,6 +37,7 @@ import RecruiterHistory from "./pages/recruiter/History";
 import JobApplications from "./pages/recruiter/JobApplications";
 import UnderDevelopment from "./pages/UnderDevelopment";
 import SkillAssessment from "./pages/student/SkillAssessment";
+import StudentAssessments from "./pages/student/StudentAssessments";
 import AptitudeTests from "./pages/student/AptitudeTests";
 import AptitudeTestAttempt from "./pages/student/AptitudeTestAttempt";
 import AptitudeResults from "./pages/student/AptitudeResults";
@@ -55,6 +56,7 @@ import InstitutionInternshipAnalytics from "./pages/institution/InstitutionInter
 import InstitutionPlacementReadiness from "./pages/institution/InstitutionPlacementReadiness";
 import AdminPortfolioVerification from "./pages/admin/PortfolioVerification";
 import QuestionBankManagement from "./pages/admin/QuestionBankManagement";
+import AssessmentManagement from "./pages/admin/AssessmentManagement";
 import AdminPathways from "./pages/admin/AdminPathways";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import SkillDemandAnalytics from "./pages/admin/SkillDemandAnalytics";
@@ -97,6 +99,7 @@ function App() {
           <Route path="jobs" element={<JobOpenings />} />
           <Route path="recommendations" element={<JobRecommendations />} />
           <Route path="assessment" element={<SkillAssessment />} />
+          <Route path="assessments" element={<StudentAssessments />} />
           <Route path="aptitude" element={<AptitudeTests />} />
           <Route path="aptitude/:testId" element={<AptitudeTestAttempt />} />
           <Route path="aptitude/results/:attemptId" element={<AptitudeResults />} />
@@ -152,6 +155,7 @@ function App() {
           <Route path="job/:jobId/applications" element={<JobApplications />} />
           <Route path="history" element={<RecruiterHistory />} />
           <Route path="analytics" element={<RecruitmentAnalytics />} />
+          <Route path="assessments" element={<AssessmentManagement />} />
           <Route path="announcements" element={<Announcements />} />
         </Route>
         
@@ -167,6 +171,7 @@ function App() {
           <Route path="post" element={<AdminPostSection />} />
           <Route path="portfolio-verification" element={<AdminPortfolioVerification />} />
           <Route path="question-bank" element={<QuestionBankManagement />} />
+          <Route path="assessments" element={<AssessmentManagement />} />
           <Route path="pathways" element={<AdminPathways />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="analytics/skill-demand-trends" element={<SkillDemandAnalytics />} />
@@ -184,6 +189,7 @@ function App() {
           <Route path="analytics/skill-demand" element={<InstitutionSkillDemandAnalytics />} />
           <Route path="analytics/internship-participation" element={<InstitutionInternshipAnalytics />} />
           <Route path="analytics/placement-readiness" element={<InstitutionPlacementReadiness />} />
+          <Route path="assessments" element={<AssessmentManagement />} />
         </Route>
 
         <Route path="*" element={<UnderDevelopment />} />
