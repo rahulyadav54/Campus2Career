@@ -190,9 +190,10 @@ export default function CareerAdvisorChat() {
     setLoading(true);
 
     try {
-      const res = await apiClient.post("/api/ai/chat", { prompt: textToSend });
+      const res = await apiClient.post("/api/ai/chat", { prompt: textToSend }, { timeout: 60000 });
       const aiReply = res?.response || res?.answer || "I'm sorry, I couldn't process that. Please try asking again.";
-      const source = res?.source || "Campus2Career AI Engine";
+      const rawSource = res?.source || "";
+      const source = /nemotron|nvidia/i.test(rawSource) ? "Campus2Career AI Advisor" : rawSource || "Campus2Career AI Advisor";
 
       setMessages((prev) => [...prev, { sender: "ai", text: aiReply, source }]);
     } catch (err) {
@@ -210,20 +211,15 @@ export default function CareerAdvisorChat() {
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-xl border border-blue-100 flex flex-col h-[620px] max-w-4xl mx-auto overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 text-white p-5 px-6 flex items-center justify-between">
+    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 flex flex-col h-[620px] max-w-4xl mx-auto overflow-hidden">
+      <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 text-white p-5 px-6 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
             <Sparkles className="w-5 h-5 text-amber-300 animate-pulse" />
           </div>
           <div>
-            <h3 className="font-bold text-lg leading-tight flex items-center space-x-2">
-              <span>AI Skill & Career Advisor</span>
-              <span className="text-[10px] bg-amber-400 text-blue-950 font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Smart Automation
-              </span>
-            </h3>
-            <p className="text-xs text-blue-100">Powered by NVIDIA Nemotron AI Engine & Skill Mapping</p>
+            <h3 className="font-bold text-lg leading-tight">AI Skill & Career Advisor</h3>
+            <p className="text-xs text-indigo-100 mt-0.5">Personalised guidance based on your skills and profile</p>
           </div>
         </div>
         <button
@@ -236,16 +232,16 @@ export default function CareerAdvisorChat() {
         </button>
       </div>
 
-      <div className="bg-blue-50/60 border-b border-blue-100 p-3 px-4 flex items-center space-x-2 overflow-x-auto">
-        <span className="text-xs font-semibold text-blue-900 flex-shrink-0 flex items-center">
-          <ChevronRight className="w-3.5 h-3.5 text-blue-600" /> Prompts:
+      <div className="bg-slate-50 border-b border-slate-200 p-3 px-4 flex items-center space-x-2 overflow-x-auto">
+        <span className="text-xs font-semibold text-slate-700 flex-shrink-0 flex items-center">
+          <ChevronRight className="w-3.5 h-3.5 text-indigo-600" /> Prompts:
         </span>
         {SUGGESTED_PROMPTS.map((promptText, idx) => (
           <button
             key={idx}
             onClick={() => handleSend(promptText)}
             disabled={loading}
-            className="text-xs bg-white hover:bg-blue-600 hover:text-white text-blue-800 border border-blue-200 rounded-full px-3 py-1 font-medium transition-all shadow-sm flex-shrink-0"
+            className="text-xs bg-white hover:bg-indigo-600 hover:text-white text-slate-700 border border-slate-200 rounded-full px-3 py-1 font-medium transition-all shadow-sm flex-shrink-0"
           >
             {promptText}
           </button>
@@ -265,7 +261,7 @@ export default function CareerAdvisorChat() {
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${
                 msg.sender === "user"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-indigo-600 text-white"
                   : "bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md"
               }`}
             >
@@ -322,12 +318,12 @@ export default function CareerAdvisorChat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask AI about skills, Data Science, Web Dev, roadmaps, or placement tips..."
-          className="flex-1 border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-all min-h-[52px]"
+          className="flex-1 border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-all min-h-[52px]"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 text-white px-5 py-3 rounded-2xl font-medium text-sm flex items-center space-x-2 transition-all shadow-md flex-shrink-0 min-h-[52px]"
+          className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white px-5 py-3 rounded-2xl font-medium text-sm flex items-center space-x-2 transition-all shadow-md flex-shrink-0 min-h-[52px]"
         >
           <span>Ask AI</span>
           <Send className="w-4 h-4" />

@@ -37,8 +37,8 @@ export default function AIChatbot() {
     try {
       const data = await apiClient.post("/api/ai/chat", {
         message: userMsg,
-        history: updated.slice(1, -1), // exclude greeting + current msg
-      });
+        history: updated.slice(Math.max(1, updated.length - 7), -1), // last few exchanges only for context
+      }, { timeout: 60000 });
       setMessages([...updated, { role: "assistant", content: data.response }]);
     } catch (err) {
       setMessages([...updated, { role: "assistant", content: `Sorry, I couldn't connect to the AI service. ${err.message}` }]);
@@ -68,7 +68,7 @@ export default function AIChatbot() {
             </div>
             <div>
               <p className="text-white font-semibold text-sm">AI Career Advisor</p>
-              <p className="text-indigo-200 text-xs">Powered by NVIDIA Nemotron · Knows your profile</p>
+              <p className="text-indigo-200 text-xs">Personalised to your profile</p>
             </div>
           </div>
 

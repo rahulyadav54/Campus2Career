@@ -18,7 +18,7 @@ const fetchWithTimeout = (url, options, timeout = DEFAULT_TIMEOUT) => {
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(id));
 };
 
-const request = async (method, path, body = null, retries = MAX_RETRIES) => {
+const request = async (method, path, body = null, { retries = MAX_RETRIES, timeout = DEFAULT_TIMEOUT } = {}) => {
   const url = `${API_URL}${path}`;
   const options = { method };
   if (body) options.body = JSON.stringify(body);
@@ -26,7 +26,7 @@ const request = async (method, path, body = null, retries = MAX_RETRIES) => {
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetchWithTimeout(url, { ...options, headers: getHeaders() });
+      const res = await fetchWithTimeout(url, { ...options, headers: getHeaders() }, timeout);
       const data = await res.json().catch(() => ({}));
       if (res.status === 401 && !refreshed && path !== "/api/auth/refresh") {
         refreshed = await refreshSession();
@@ -40,6 +40,13 @@ const request = async (method, path, body = null, retries = MAX_RETRIES) => {
       }
       return data;
     } catch (err) {
+      // Surface timeouts/aborts immediately instead of retrying (retrying a
+      // timed-out request only makes the user wait longer).
+      if (err.name === "AbortError") {
+        const timeoutErr = new Error(`Request timed out (${timeout}ms)`);
+        timeoutErr.status = 408;
+        throw timeoutErr;
+      }
       const isRetryable = !err.status || err.status >= 500;
       if (attempt < retries && isRetryable) {
         await sleep(500 * (attempt + 1));
@@ -51,11 +58,11 @@ const request = async (method, path, body = null, retries = MAX_RETRIES) => {
 };
 
 export const apiClient = {
-  get: (path) => request("GET", path),
-  post: (path, body) => request("POST", path, body),
-  put: (path, body) => request("PUT", path, body),
-  patch: (path, body) => request("PATCH", path, body),
-  delete: (path) => request("DELETE", path)
+  get: (path, config) => request("GET", path, null, config),
+  post: (path, body, config) => request("POST", path, body, config),
+  put: (path, body, config) => request("PUT", path, body, config),
+  patch: (path, body, config) => request("PATCH", path, body, config),
+  delete: (path, config) => request("DELETE", path, null, config)
 };
 
 export default apiClient;

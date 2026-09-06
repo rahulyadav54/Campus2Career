@@ -11,14 +11,14 @@ const getClient = () => {
   return new OpenAI({
     baseURL: NEMOTRON_BASE_URL,
     apiKey,
-    timeout: 30000,
+    timeout: 45000,
   });
 };
 
 const DEFAULT_OPTIONS = {
-  temperature: 0.7,
+  temperature: 0.6,
   topP: 0.95,
-  maxTokens: 2048,
+  maxTokens: 1024,
 };
 
 export const chatWithNemotron = async ({

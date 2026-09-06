@@ -5,7 +5,7 @@ import mammoth from "mammoth";
 import UserModel from "../models/UserModel.js";
 import AssessmentAttemptModel from "../models/AssessmentAttemptModel.js";
 import PortfolioItemModel from "../models/PortfolioItemModel.js";
-import { chatWithNemotron, isNemotronConfigured, NEMOTRON_MODEL_NAME } from "../services/nemotronService.js";
+import { chatWithNemotron, isNemotronConfigured } from "../services/nemotronService.js";
 
 const SKILL_KEYWORDS = [
   "JavaScript",
@@ -253,8 +253,7 @@ export const chatWithAI = async (req, res) => {
 
     return res.json({
       success: true,
-      source: "NVIDIA Nemotron",
-      model: NEMOTRON_MODEL_NAME,
+      source: "Campus2Career AI Advisor",
       response: result.response,
       ...(result.usage ? { usage: result.usage } : {}),
     });
@@ -330,8 +329,7 @@ export const getCareerAdvice = async (req, res) => {
 
         return res.json({
           success: true,
-          source: "NVIDIA Nemotron",
-          model: NEMOTRON_MODEL_NAME,
+          source: "Campus2Career AI Advisor",
           answer: result.response,
         });
       } catch (nemotronError) {
