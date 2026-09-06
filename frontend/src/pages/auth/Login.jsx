@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { loginUser, handleApiError } from "../../services/auth";
 
 export default function Login() {
@@ -24,8 +24,8 @@ export default function Login() {
       localStorage.setItem("token", data.token);
       if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
 
-      toast.success("Login successful!");
-      setTimeout(() => navigate(`/${data.role}`), 500);
+      toast.success("Login successful!", { duration: 6000 });
+      setTimeout(() => navigate(`/${data.role}`), 400);
     } catch (err) {
       toast.error(handleApiError(err));
     } finally {
@@ -117,8 +117,6 @@ export default function Login() {
           </div>
         </div>
       </div>
-
-      <Toaster position="top-center" />
     </div>
   );
 }

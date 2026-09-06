@@ -1,5 +1,5 @@
 import express from "express";
-import { getCareerAdvice, parseResumeAI, calculateReadinessScore, importResumeFromFile, chatWithAI } from "../controllers/aiController.js";
+import { getCareerAdvice, parseResumeAI, calculateReadinessScore, importResumeFromFile, chatWithAI, extractChatFile } from "../controllers/aiController.js";
 import { protect, studentOnly } from "../middleware/authMiddleware.js";
 import multer from "multer";
 import path from "path";
@@ -31,11 +31,23 @@ const aiUpload = multer({
   }
 });
 
+const chatFileUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = /pdf|docx|txt|md|csv/;
+    const ext = path.extname(file.originalname || "").toLowerCase().replace(".", "");
+    if (allowed.test(ext) || String(file.mimetype || "").startsWith("text/")) return cb(null, true);
+    cb(new Error("Only PDF, DOCX, TXT, MD, and CSV files are allowed"));
+  },
+});
+
 // AI Career Advisor chatbot endpoint (public - no auth required for demo)
 router.post("/career-advisor", getCareerAdvice);
 
 // AI chat endpoint (authenticated, powered by NVIDIA Nemotron)
 router.post("/chat", protect, chatWithAI);
+router.post("/chat-file", protect, chatFileUpload.single("file"), extractChatFile);
 
 // AI Resume Parser endpoint
 router.post("/parse-resume", protect, parseResumeAI);

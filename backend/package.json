@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "debug": "node start-debug.js",
     "seed:demo": "node scripts/seedDemo.js",
+    "seed:bulk": "node scripts/seedBulkDataset.js",
     "seed:admin": "node scripts/seedAdmin.js"
   },
   "dependencies": {

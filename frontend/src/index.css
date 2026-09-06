@@ -156,8 +156,14 @@
     to { opacity: 1; }
   }
 
-  .transition-smooth {
-    transition: all 0.2s ease-in-out;
+  .typing-caret::after {
+    content: "▍";
+    margin-left: 2px;
+    color: #4f46e5;
+    animation: caret-blink 1s step-end infinite;
+  }
+  @keyframes caret-blink {
+    50% { opacity: 0; }
   }
 }
 

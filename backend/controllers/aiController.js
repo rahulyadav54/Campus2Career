@@ -205,7 +205,7 @@ export const chatWithAI = async (req, res) => {
       });
     }
 
-    const { message, prompt, context, history } = req.body;
+    const { message, prompt, context, history, attachments } = req.body;
     const userPrompt = message || prompt;
 
     if (!userPrompt || typeof userPrompt !== "string" || !userPrompt.trim()) {
@@ -215,10 +215,23 @@ export const chatWithAI = async (req, res) => {
       });
     }
 
-    if (userPrompt.length > 4000) {
+    let combinedPrompt = userPrompt.trim();
+    if (Array.isArray(attachments)) {
+      const blocks = attachments
+        .filter((item) => item && typeof item.text === "string" && item.text.trim())
+        .slice(0, 3)
+        .map((item) => {
+          const name = String(item.filename || "attachment").slice(0, 80);
+          const body = String(item.text).slice(0, 8000);
+          return `\n\n---\nAttached file: ${name}\n${body}`;
+        });
+      combinedPrompt += blocks.join("");
+    }
+
+    if (combinedPrompt.length > 24000) {
       return res.status(400).json({
         success: false,
-        message: "Message must be 4000 characters or fewer",
+        message: "Message plus attachments is too large",
       });
     }
 
@@ -239,7 +252,7 @@ export const chatWithAI = async (req, res) => {
     }
 
     // Add the current user message
-    messages.push({ role: "user", content: userPrompt });
+    messages.push({ role: "user", content: combinedPrompt });
 
     // Optional additional context from the client (e.g. job description, skill gaps)
     const extraContext = typeof context === "object" && context !== null ? context : null;
@@ -287,6 +300,55 @@ export const chatWithAI = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to generate AI response. Please try again.",
+    });
+  }
+};
+
+export const extractChatFile = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const name = req.file.originalname || "attachment";
+    const ext = path.extname(name).toLowerCase();
+    const mime = req.file.mimetype || "";
+    let text = "";
+
+    if ([".txt", ".md", ".csv"].includes(ext) || mime.startsWith("text/")) {
+      text = req.file.buffer.toString("utf8");
+    } else if (ext === ".pdf" || mime === "application/pdf") {
+      const parser = new PDFParse({ data: req.file.buffer });
+      try {
+        const parsed = await parser.getText();
+        text = parsed.text || "";
+      } finally {
+        await parser.destroy().catch(() => {});
+      }
+    } else if (ext === ".docx" || mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      const parsed = await mammoth.extractRawText({ buffer: req.file.buffer });
+      text = parsed.value || "";
+    } else {
+      return res.status(400).json({
+        message: "Supported files: PDF, DOCX, TXT, MD, and CSV",
+      });
+    }
+
+    text = String(text || "").replace(/\u0000/g, "").trim().slice(0, 12000);
+    if (!text) {
+      return res.status(400).json({ message: "Could not extract readable text from that file" });
+    }
+
+    return res.json({
+      success: true,
+      filename: name,
+      text,
+      chars: text.length,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to read file",
+      error: error.message,
     });
   }
 };
