@@ -3,7 +3,7 @@ import { protect, adminOnly, studentOnly } from "../middleware/authMiddleware.js
 import {
   createQuestion, listQuestions, updateQuestion, deleteQuestion,
   createTemplate, listTemplates, startAttempt, submitAttempt, getAttemptHistory,
-  importQuestions, importUpload
+  importQuestions, importUpload, downloadImportTemplate
 } from "../controllers/questionBankController.js";
 
 const router = express.Router();
