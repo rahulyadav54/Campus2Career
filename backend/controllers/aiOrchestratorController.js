@@ -21,7 +21,7 @@ export const orchestrateCareerRequest = async (req, res) => {
       user: req.user,
       payload: {
         ...payload,
-        targetRole: targetRole || payload.targetRole || "Data Analyst",
+        targetRole: targetRole || payload.targetRole || "",
         action: payload.action || payload.intent || "career_planning",
         intent: payload.intent || payload.action || "career_planning",
       },
@@ -44,7 +44,7 @@ export const getMyCareerMission = async (req, res) => {
     const mission = await CareerMission.findOne({ student: req.user._id, isActive: true }).sort({ updatedAt: -1 }).lean();
     if (!mission) {
       const student = await User.findById(req.user._id).select("skills targetRole interests profileCompletion skillProfile");
-      const generated = buildCareerMission(student?.toObject?.() || {}, student?.targetRole || "Data Analyst");
+      const generated = buildCareerMission(student?.toObject?.() || {}, student?.targetRole || "");
       return res.json({ success: true, mission: generated, created: false });
     }
     return res.json({ success: true, mission, created: true });
@@ -63,7 +63,7 @@ export const generateCareerMissionForStudent = async (req, res) => {
       return res.status(404).json({ success: false, message: "Student not found" });
     }
 
-    const mission = buildCareerMission(student.toObject(), targetRole || student.targetRole || "Data Analyst");
+    const mission = buildCareerMission(student.toObject(), targetRole || student.targetRole || "");
     const saved = await CareerMission.findOneAndUpdate(
       { student: student._id },
       { $set: { ...mission, student: student._id, lastAnalyzedAt: new Date() } },
@@ -108,7 +108,7 @@ export const getResumeIntelligence = async (req, res) => {
   try {
     const student = await User.findById(req.user._id).select("skills targetRole certifications projects name");
     if (!student) return res.status(404).json({ success: false, message: "Student not found" });
-    const targetRole = String(req.query.targetRole || student.targetRole || "Data Analyst").trim();
+    const targetRole = String(req.query.targetRole || student.targetRole || "").trim();
     const analysis = analyzeResumeForRole(student.toObject(), targetRole, "Python, SQL, dashboarding, reporting, and stakeholder communication");
     return res.json({ success: true, analysis });
   } catch (error) {
@@ -120,7 +120,7 @@ export const getMockInterviewPlan = async (req, res) => {
   try {
     const student = await User.findById(req.user._id).select("skills targetRole name");
     if (!student) return res.status(404).json({ success: false, message: "Student not found" });
-    const targetRole = String(req.query.targetRole || student.targetRole || "Data Analyst").trim();
+    const targetRole = String(req.query.targetRole || student.targetRole || "").trim();
     const plan = generateMockInterviewPlan(student.toObject(), targetRole, req.query.type || "mixed");
     return res.json({ success: true, plan });
   } catch (error) {
@@ -130,7 +130,7 @@ export const getMockInterviewPlan = async (req, res) => {
 
 export const getRecruiterShortlist = async (req, res) => {
   try {
-    const role = String(req.query.targetRole || "Data Analyst").trim() || "Data Analyst";
+    const role = String(req.query.targetRole || "").trim();
     const minScore = Number(req.query.minScore || 70);
     const candidates = await User.find({ role: "student" }).select("name skills targetRole cgpa profileCompletion projects experiences certifications").limit(50).lean();
     const shortlist = buildRecruiterShortlist(candidates, role, { minScore });
@@ -148,7 +148,7 @@ export const getPlacementReadiness = async (req, res) => {
     const student = await User.findById(studentId).select("name skills targetRole cgpa profileCompletion projects experiences certifications").lean();
     if (!student) return res.status(404).json({ success: false, message: "Student not found" });
 
-    const readiness = calculatePlacementReadiness(student, student.targetRole || "Data Analyst");
+    const readiness = calculatePlacementReadiness(student, student.targetRole || "");
     const cohort = await User.find({ role: "student" }).select("name skills targetRole cgpa profileCompletion projects experiences certifications").limit(20).lean();
     const summary = buildReadinessSummary(cohort);
 

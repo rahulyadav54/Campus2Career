@@ -20,3 +20,16 @@ test('evaluateSkillGap returns role coverage, strong skills, and missing skills 
   assert.ok(result.recommendations.length > 0);
   assert.ok(typeof result.why === 'string');
 });
+
+test('evaluateSkillGap does not silently default to Data Analyst when no target role is provided', () => {
+  const result = evaluateSkillGap({
+    skills: ['Python', 'SQL'],
+    skillProfile: { strengths: ['Python'], gaps: [] },
+  }, '');
+
+  assert.equal(result.targetRole, '');
+  assert.equal(result.skillCoverage, 0);
+  assert.deepEqual(result.strongSkills, []);
+  assert.deepEqual(result.missingSkills, []);
+  assert.deepEqual(result.recommendations, []);
+});

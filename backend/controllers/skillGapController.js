@@ -7,7 +7,7 @@ export const getSkillGapAnalysis = async (req, res) => {
     const student = await User.findById(req.user._id).select("skills targetRole skillProfile certifications projects department cgpa");
     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    const targetRole = String(req.query.targetRole || student.targetRole || "Data Analyst").trim();
+    const targetRole = String(req.query.targetRole || student.targetRole || "").trim();
     const analysis = evaluateSkillGap(student.toObject(), targetRole);
 
     await logSuccess({
@@ -42,7 +42,7 @@ export const getSkillGapAnalysisForStudent = async (req, res) => {
     const student = await User.findById(req.params.studentId).select("skills targetRole skillProfile certifications projects department cgpa");
     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    const targetRole = String(req.query.targetRole || student.targetRole || "Data Analyst").trim();
+    const targetRole = String(req.query.targetRole || student.targetRole || "").trim();
     const analysis = evaluateSkillGap(student.toObject(), targetRole);
     return res.json({ success: true, analysis });
   } catch (error) {

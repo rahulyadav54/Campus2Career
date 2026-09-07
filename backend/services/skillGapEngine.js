@@ -26,8 +26,8 @@ const extractProjectSkills = (projects = []) => {
 };
 
 export const evaluateSkillGap = (student = {}, targetRole = "") => {
-  const roleName = String(targetRole || student.targetRole || "").trim() || "Data Analyst";
-  const requiredSkills = getRequiredSkillsForRole(roleName) || [];
+  const roleName = String(targetRole || student.targetRole || "").trim();
+  const requiredSkills = roleName ? getRequiredSkillsForRole(roleName) || [] : [];
 
   const studentSkills = normalizeList([
     ...(student.skills || []),
@@ -55,9 +55,13 @@ export const evaluateSkillGap = (student = {}, targetRole = "") => {
     .slice(0, 5)
     .map((skill) => ({
       skill,
-      reason: `${skill} is a core requirement in ${roleName} and is currently missing from the student’s priority skill set.`,
+      reason: roleName
+        ? `${skill} is a core requirement in ${roleName} and is currently missing from the student’s priority skill set.`
+        : `${skill} is a high-priority skill but no target role is currently selected for comparison.`,
       priority: "high",
-      why: `This recommendation is generated because ${skill} appears in the role’s core skill map and is needed for better alignment with ${roleName} roles.`,
+      why: roleName
+        ? `This recommendation is generated because ${skill} appears in the role’s core skill map and is needed for better alignment with ${roleName} roles.`
+        : `This recommendation is generated from the student’s skills, but the target role is empty so no role-specific comparison can be made yet.`,
     }));
 
   return {
@@ -66,7 +70,9 @@ export const evaluateSkillGap = (student = {}, targetRole = "") => {
     strongSkills,
     missingSkills,
     recommendations,
-    why: `Skill coverage was calculated by comparing the student's current profile to the ${roleName} role’s core skill priorities and identifying the biggest remaining gaps.`,
+    why: roleName
+      ? `Skill coverage was calculated by comparing the student's current profile to the ${roleName} role’s core skill priorities and identifying the biggest remaining gaps.`
+      : "No target role is selected yet, so no role-specific skill gap analysis can be generated.",
   };
 };
 
