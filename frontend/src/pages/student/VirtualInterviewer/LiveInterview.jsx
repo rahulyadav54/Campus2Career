@@ -18,6 +18,7 @@ import {
   mapEmotionToAvatar,
   isReadyConfirmation,
 } from "../../../features/virtualInterview/constants";
+import { stopMediaStream } from "../../../features/virtualInterview/mediaAccess";
 
 const fmt = (secs) => {
   const m = Math.floor(secs / 60);
@@ -36,7 +37,7 @@ const buildLocalReport = (targetRole, answeredCount, avgScore) => ({
   evaluations: [],
 });
 
-export default function LiveInterview({ session, onFinish, onExit }) {
+export default function LiveInterview({ session, mediaStream: initialMediaStream, onFinish, onExit }) {
   const activeSessionId = session?.sessionId;
   const candidateName = session?.candidateName || "";
   const targetRole = session?.targetRole || "Software Engineer";
@@ -67,15 +68,40 @@ export default function LiveInterview({ session, onFinish, onExit }) {
   const processingRef = useRef(false);
   const listenStartRef = useRef(0);
 
+  const candidateVideoRef = useRef(null);
+  const candidateStreamRef = useRef(initialMediaStream || null);
+
   useEffect(() => { stateRef.current = state; }, [state]);
 
-  // Candidate self-view
+  // Candidate self-view — reuse stream from pre-check when available
   useEffect(() => {
-    navigator.mediaDevices?.getUserMedia({ video: true, audio: false })
-      .then((s) => setCandidateStream(s))
-      .catch(() => {});
-    return () => candidateStream?.getTracks().forEach((t) => t.stop());
-  }, []);
+    let stream = initialMediaStream || null;
+
+    const attach = (s) => {
+      candidateStreamRef.current = s;
+      setCandidateStream(s);
+      if (candidateVideoRef.current && s?.getVideoTracks?.().length) {
+        candidateVideoRef.current.srcObject = s;
+        candidateVideoRef.current.play?.().catch(() => {});
+      }
+    };
+
+    if (stream) {
+      attach(stream);
+    } else {
+      navigator.mediaDevices
+        ?.getUserMedia({ video: { facingMode: "user" }, audio: false })
+        .then((s) => {
+          attach(s);
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      stopMediaStream(candidateStreamRef.current);
+      candidateStreamRef.current = null;
+    };
+  }, [initialMediaStream]);
 
   const handleEndRef = useRef(() => {});
 
@@ -364,11 +390,14 @@ export default function LiveInterview({ session, onFinish, onExit }) {
           {/* Candidate */}
           <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden relative shadow-sm">
             <p className="absolute top-3 left-3 text-xs font-semibold text-gray-300 uppercase z-10">You</p>
-            {candidateStream ? (
+            {candidateStream?.getVideoTracks?.().length ? (
               <video
-                autoPlay playsInline muted
-                ref={(el) => { if (el && candidateStream) el.srcObject = candidateStream; }}
+                autoPlay
+                playsInline
+                muted
+                ref={candidateVideoRef}
                 className="w-full h-full min-h-[280px] object-cover"
+                style={{ transform: "scaleX(-1)" }}
               />
             ) : (
               <div className="w-full min-h-[280px] flex items-center justify-center text-gray-500 text-sm">Camera off</div>

@@ -20,7 +20,7 @@ export default function VirtualInterviewer() {
   const [reportData, setReportData] = useState(null);
   const [starting, setStarting] = useState(false);
   const [candidateName, setCandidateName] = useState("");
-  const [pendingConfig, setPendingConfig] = useState(null);
+  const [mediaStream, setMediaStream] = useState(null);
 
   useEffect(() => {
     apiClient.get("/api/auth/profile")
@@ -101,6 +101,7 @@ export default function VirtualInterviewer() {
     setActiveSession(null);
     setReportData(null);
     setPendingConfig(null);
+    setMediaStream(null);
     setView("setup");
     navigate("/student/virtual-interview");
   };
@@ -115,12 +116,20 @@ export default function VirtualInterviewer() {
         <PreInterviewFlow
           candidateName={activeSession.candidateName || candidateName}
           targetRole={activeSession.targetRole || pendingConfig?.targetRole}
-          onComplete={() => setView("live")}
+          onComplete={(stream) => {
+            setMediaStream(stream || null);
+            setView("live");
+          }}
         />
       )}
 
       {view === "live" && activeSession && (
-        <LiveInterview session={activeSession} onFinish={handleFinishInterview} onExit={handleRestart} />
+        <LiveInterview
+          session={activeSession}
+          mediaStream={mediaStream}
+          onFinish={handleFinishInterview}
+          onExit={handleRestart}
+        />
       )}
 
       {view === "report" && (
