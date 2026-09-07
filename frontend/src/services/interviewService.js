@@ -35,19 +35,26 @@ export const interviewService = {
   end: (sessionId) =>
     apiClient.post(`${BASE}/${sessionId}/end`, {}, { timeout: 90000 }),
 
-  /** Generate natural neural speech — returns audio Blob */
-  synthesizeSpeech: async (text) => {
+  /** Generate natural neural speech — returns audio Blob (falls back quickly) */
+  synthesizeSpeech: async (text, timeoutMs = 4000) => {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${API_URL}${BASE}/tts`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ text: String(text).slice(0, 1200) }),
-    });
-    if (!res.ok) throw new Error("Neural speech unavailable");
-    return res.blob();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(`${API_URL}${BASE}/tts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ text: String(text).slice(0, 1200) }),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error("Neural speech unavailable");
+      return res.blob();
+    } finally {
+      clearTimeout(timer);
+    }
   },
 
   /** Get session state (for recovery) */

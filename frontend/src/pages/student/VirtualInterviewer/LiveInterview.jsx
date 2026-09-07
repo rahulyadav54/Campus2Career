@@ -67,6 +67,7 @@ export default function LiveInterview({ session, mediaStream: initialMediaStream
   const stateRef = useRef(state);
   const processingRef = useRef(false);
   const listenStartRef = useRef(0);
+  const welcomeStartedRef = useRef(false);
 
   const candidateVideoRef = useRef(null);
   const candidateStreamRef = useRef(initialMediaStream || null);
@@ -88,6 +89,12 @@ export default function LiveInterview({ session, mediaStream: initialMediaStream
 
     if (stream) {
       attach(stream);
+      if (!stream.getVideoTracks?.().length) {
+        navigator.mediaDevices
+          ?.getUserMedia({ video: { facingMode: "user" }, audio: false })
+          .then((videoOnly) => attach(videoOnly))
+          .catch(() => {});
+      }
     } else {
       navigator.mediaDevices
         ?.getUserMedia({ video: { facingMode: "user" }, audio: false })
@@ -146,37 +153,69 @@ export default function LiveInterview({ session, mediaStream: initialMediaStream
     }
   }, [speakerEnabled]);
 
-  const activateListening = useCallback(() => {
-    if (!micEnabled) return;
-    setTranscript("");
-    setFinalTranscript("");
+  const beginListening = useCallback(() => {
     setState(INTERVIEWER_STATES.LISTENING);
     setEmotion("listening");
+    if (waitingForReady) {
+      setDisplayCaption("Say \"Yes\" or \"I'm ready\" when you'd like to begin.");
+    }
     listenStartRef.current = Date.now();
     speechRef.current?.startListening();
-  }, [micEnabled]);
+  }, [waitingForReady]);
+
+  const activateListening = useCallback(() => {
+    if (!micEnabled) {
+      setError("Microphone is off. Turn it on to respond.");
+      return;
+    }
+    setTranscript("");
+    setFinalTranscript("");
+    beginListening();
+  }, [micEnabled, beginListening]);
 
   // Opening sequence — welcome + wait for ready
   useEffect(() => {
-    const greeting = session?.greeting || session?.speakText;
+    if (welcomeStartedRef.current) return;
+
+    const greeting = (session?.speakText || session?.greeting || "").trim();
     const firstQ = session?.firstQuestion;
     if (!greeting) return;
 
-    const t = setTimeout(() => {
-      speakAI(greeting, () => {
+    let attempts = 0;
+    const maxAttempts = 40;
+
+    const startWelcome = () => {
+      if (welcomeStartedRef.current) return;
+      if (!speechRef.current?.speak) {
+        attempts += 1;
+        if (attempts < maxAttempts) {
+          setTimeout(startWelcome, 100);
+        } else {
+          setError("Voice engine failed to start. Refresh and try again.");
+          setState(INTERVIEWER_STATES.ERROR);
+        }
+        return;
+      }
+
+      welcomeStartedRef.current = true;
+      setDisplayCaption(greeting);
+      setState(INTERVIEWER_STATES.SPEAKING);
+      setEmotion("speaking");
+
+      speechRef.current.speak(greeting, () => {
         if (waitingForReady) {
-          setState(INTERVIEWER_STATES.LISTENING);
-          setEmotion("listening");
-          speechRef.current?.startListening();
+          beginListening();
         } else if (firstQ?.text) {
           speakAI(firstQ.text, () => activateListening());
         } else {
           activateListening();
         }
       });
-    }, 600);
-    return () => clearTimeout(t);
-  }, []);
+    };
+
+    const timer = setTimeout(startWelcome, 250);
+    return () => clearTimeout(timer);
+  }, [session?.sessionId]);
 
   const processAnswer = useCallback(async (answer) => {
     if (processingRef.current) return;
@@ -433,7 +472,17 @@ export default function LiveInterview({ session, mediaStream: initialMediaStream
           </button>
         </div>
 
-        {state === INTERVIEWER_STATES.LISTENING && (
+        {state === INTERVIEWER_STATES.LISTENING && waitingForReady && (
+          <button
+            type="button"
+            onClick={() => processAnswer("Yes, I'm ready")}
+            className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium"
+          >
+            I'm ready
+          </button>
+        )}
+
+        {state === INTERVIEWER_STATES.LISTENING && !waitingForReady && (
           <button
             type="button"
             onClick={() => {

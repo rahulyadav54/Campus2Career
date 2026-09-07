@@ -25,33 +25,41 @@ export const synthesizeGeminiSpeech = async (text) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
 
-  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
-    method: "POST",
-    headers: {
-      "x-goog-api-key": apiKey,
-      "Content-Type": "application/json",
-      "Api-Revision": "2026-05-20",
-    },
-    body: JSON.stringify({
-      model: TTS_MODEL,
-      input: `Speak naturally and professionally in English: ${text}`,
-      response_format: { type: "audio" },
-      generation_config: {
-        speech_config: [{ voice: TTS_VOICE }],
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+      method: "POST",
+      headers: {
+        "x-goog-api-key": apiKey,
+        "Content-Type": "application/json",
+        "Api-Revision": "2026-05-20",
       },
-    }),
-  });
+      body: JSON.stringify({
+        model: TTS_MODEL,
+        input: `Speak naturally and professionally in English: ${text}`,
+        response_format: { type: "audio" },
+        generation_config: {
+          speech_config: [{ voice: TTS_VOICE }],
+        },
+      }),
+      signal: controller.signal,
+    });
 
-  if (!response.ok) throw new Error(`Gemini TTS request failed: ${response.status}`);
+    if (!response.ok) throw new Error(`Gemini TTS request failed: ${response.status}`);
 
-  const data = await response.json();
-  const audio = data.output_audio || data.steps
-    ?.flatMap(step => step.content || [])
-    .find(part => part.type === "audio");
-  if (!audio?.data) throw new Error("Gemini TTS returned no audio");
-  return createWavBuffer(
-    Buffer.from(audio.data, "base64"),
-    Number(audio.sample_rate) || 24000,
-    Number(audio.channels) || 1
-  );
+    const data = await response.json();
+    const audio = data.output_audio || data.steps
+      ?.flatMap((step) => step.content || [])
+      .find((part) => part.type === "audio");
+    if (!audio?.data) throw new Error("Gemini TTS returned no audio");
+    return createWavBuffer(
+      Buffer.from(audio.data, "base64"),
+      Number(audio.sample_rate) || 24000,
+      Number(audio.channels) || 1
+    );
+  } finally {
+    clearTimeout(timer);
+  }
 };

@@ -1,5 +1,6 @@
 /**
  * SpeechPipeline — unified STT/TTS with interruption + lip-sync audio levels.
+ * Browser TTS is primary (reliable); neural TTS is optional with strict timeout.
  */
 
 import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from "react";
@@ -7,6 +8,9 @@ import interviewService from "../../services/interviewService";
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+const NEURAL_TTS_TIMEOUT_MS = 3500;
+const MAX_SPEAK_MS = 45000;
 
 const SpeechPipeline = forwardRef(function SpeechPipeline(
   {
@@ -25,7 +29,7 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
   ref
 ) {
   const recognitionRef = useRef(null);
-  const synthRef = useRef(window.speechSynthesis);
+  const synthRef = useRef(typeof window !== "undefined" ? window.speechSynthesis : null);
   const listeningRef = useRef(false);
   const speakingRef = useRef(false);
   const silenceTimerRef = useRef(null);
@@ -36,6 +40,17 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
   const audioCtxRef = useRef(null);
   const rafRef = useRef(null);
   const hadSpeechRef = useRef(false);
+  const voicesReadyRef = useRef(false);
+
+  useEffect(() => {
+    if (!synthRef.current) return;
+    const loadVoices = () => {
+      voicesReadyRef.current = (synthRef.current.getVoices() || []).length > 0;
+    };
+    loadVoices();
+    synthRef.current.addEventListener("voiceschanged", loadVoices);
+    return () => synthRef.current?.removeEventListener("voiceschanged", loadVoices);
+  }, []);
 
   const stopAnalyser = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -51,6 +66,7 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
     stopAnalyser();
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
       const source = ctx.createMediaElementSource(audio);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
@@ -69,76 +85,172 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
       };
       tick();
     } catch {
-      /* analyser optional */
+      onAudioLevel?.(0.35);
     }
   }, [onAudioLevel, stopAnalyser]);
 
   const getPreferredVoice = useCallback(() => {
     const voices = synthRef.current?.getVoices() || [];
     return voices.find((v) => v.lang === "en-IN" || v.lang === "en_IN")
-      || voices.find((v) => v.lang.startsWith("en") && /natural|neural|google/i.test(v.name))
+      || voices.find((v) => v.lang.startsWith("en") && /natural|neural|google|microsoft/i.test(v.name))
       || voices.find((v) => v.lang.startsWith("en"));
   }, []);
 
-  const speakWithBrowser = useCallback((text, onDone) => {
-    if (!text || !synthRef.current) { onDone?.(); return; }
-    synthRef.current.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
-    const voice = getPreferredVoice();
-    if (voice) { utterance.voice = voice; utterance.lang = voice.lang; }
-    else utterance.lang = "en-IN";
-    utterance.onstart = () => { speakingRef.current = true; onSpeakStart?.(); };
-    utterance.onend = () => { speakingRef.current = false; onSpeakEnd?.(); onDone?.(); };
-    utterance.onerror = () => { speakingRef.current = false; onSpeakEnd?.(); onDone?.(); };
-    synthRef.current.speak(utterance);
-  }, [getPreferredVoice, onSpeakStart, onSpeakEnd]);
+  const waitForVoices = useCallback(() => new Promise((resolve) => {
+    if (!synthRef.current) return resolve(null);
+    const existing = synthRef.current.getVoices();
+    if (existing.length) return resolve(existing);
+    const timer = setTimeout(() => resolve(synthRef.current.getVoices()), 400);
+    synthRef.current.onvoiceschanged = () => {
+      clearTimeout(timer);
+      resolve(synthRef.current.getVoices());
+    };
+  }), []);
 
   const stopSpeaking = useCallback(() => {
     speechRequestRef.current += 1;
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-    if (audioUrlRef.current) { URL.revokeObjectURL(audioUrlRef.current); audioUrlRef.current = null; }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
     synthRef.current?.cancel();
     speakingRef.current = false;
     stopAnalyser();
     onAudioLevel?.(0);
   }, [onAudioLevel, stopAnalyser]);
 
-  const speak = useCallback(async (text, onDone) => {
-    if (!text) return;
-    const requestId = ++speechRequestRef.current;
-    stopSpeaking();
+  const speakWithBrowser = useCallback(async (text, onDone, requestId) => {
+    if (!text?.trim() || !synthRef.current) {
+      onDone?.();
+      return false;
+    }
 
-    try {
-      const blob = await interviewService.synthesizeSpeech(text);
-      if (requestId !== speechRequestRef.current) return;
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audioUrlRef.current = url;
+    await waitForVoices();
+    if (requestId !== speechRequestRef.current) return false;
+
+    synthRef.current.cancel();
+
+    return new Promise((resolve) => {
+      let finished = false;
+      const finish = () => {
+        if (finished || requestId !== speechRequestRef.current) return;
+        finished = true;
+        speakingRef.current = false;
+        stopAnalyser();
+        onAudioLevel?.(0);
+        onSpeakEnd?.();
+        onDone?.();
+        resolve(true);
+      };
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.94;
+      utterance.pitch = 1;
+      const voice = getPreferredVoice();
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      } else {
+        utterance.lang = "en-IN";
+      }
+
+      const maxMs = Math.min(MAX_SPEAK_MS, Math.max(4000, text.length * 70));
+      const safety = setTimeout(finish, maxMs);
+
+      utterance.onstart = () => {
+        speakingRef.current = true;
+        onSpeakStart?.();
+        onAudioLevel?.(0.4);
+      };
+      utterance.onend = () => {
+        clearTimeout(safety);
+        finish();
+      };
+      utterance.onerror = () => {
+        clearTimeout(safety);
+        finish();
+      };
+
+      try {
+        synthRef.current.speak(utterance);
+        if (synthRef.current.paused) synthRef.current.resume();
+      } catch {
+        clearTimeout(safety);
+        finish();
+      }
+    });
+  }, [getPreferredVoice, onSpeakStart, onSpeakEnd, onAudioLevel, stopAnalyser, waitForVoices]);
+
+  const speakWithNeural = useCallback(async (text, onDone, requestId) => {
+    const blob = await interviewService.synthesizeSpeech(text, NEURAL_TTS_TIMEOUT_MS);
+    if (requestId !== speechRequestRef.current) return false;
+
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audioUrlRef.current = url;
+
+    return new Promise((resolve) => {
+      let finished = false;
+      const finish = (ok) => {
+        if (finished || requestId !== speechRequestRef.current) return;
+        finished = true;
+        if (!ok) {
+          if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+          audioUrlRef.current = null;
+          audioRef.current = null;
+        }
+        resolve(ok);
+      };
+
       audio.onplay = () => {
         speakingRef.current = true;
         onSpeakStart?.();
         startAnalyser(audio);
       };
       audio.onended = () => {
-        if (requestId !== speechRequestRef.current) return;
         speakingRef.current = false;
         stopAnalyser();
         onAudioLevel?.(0);
         onSpeakEnd?.();
         onDone?.();
+        finish(true);
       };
-      audio.onerror = () => {
-        if (requestId !== speechRequestRef.current) return;
-        speakWithBrowser(text, onDone);
-      };
-      await audio.play();
-    } catch {
-      if (requestId === speechRequestRef.current) speakWithBrowser(text, onDone);
+      audio.onerror = () => finish(false);
+
+      audio.play()
+        .catch(() => finish(false));
+    });
+  }, [onSpeakStart, onSpeakEnd, onAudioLevel, startAnalyser, stopAnalyser]);
+
+  const speak = useCallback(async (text, onDone) => {
+    const trimmed = String(text || "").trim();
+    if (!trimmed) {
+      onDone?.();
+      return;
     }
-  }, [onSpeakStart, onSpeakEnd, onAudioLevel, speakWithBrowser, startAnalyser, stopSpeaking]);
+
+    const requestId = ++speechRequestRef.current;
+    stopSpeaking();
+
+    let neuralOk = false;
+    try {
+      neuralOk = await speakWithNeural(trimmed, onDone, requestId);
+    } catch {
+      neuralOk = false;
+    }
+
+    if (requestId !== speechRequestRef.current) return;
+
+    if (!neuralOk) {
+      await speakWithBrowser(trimmed, onDone, requestId);
+    }
+  }, [speakWithBrowser, speakWithNeural, stopSpeaking]);
 
   const stopListening = useCallback(() => {
     clearTimeout(silenceTimerRef.current);
