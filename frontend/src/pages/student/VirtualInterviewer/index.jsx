@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react"
+import { useParams, useNavigate } from "react-router-dom";
 import InterviewSetup from "./InterviewSetup";
 import LiveInterview from "./LiveInterview";
 import InterviewReport from "./InterviewReport";
