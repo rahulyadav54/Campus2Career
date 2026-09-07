@@ -20,6 +20,7 @@ export default function PreInterviewFlow({ candidateName, targetRole, sessionRea
   const [error, setError] = useState("");
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const handedOffRef = useRef(false);
   const analyserRef = useRef(null);
   const audioCtxRef = useRef(null);
   const rafRef = useRef(null);
@@ -91,7 +92,9 @@ export default function PreInterviewFlow({ candidateName, targetRole, sessionRea
     initMedia();
     return () => {
       stopMicMeter();
-      stopMediaStream(streamRef.current);
+      if (!handedOffRef.current) {
+        stopMediaStream(streamRef.current);
+      }
       streamRef.current = null;
     };
   }, [initMedia, stopMicMeter]);
@@ -111,6 +114,7 @@ export default function PreInterviewFlow({ candidateName, targetRole, sessionRea
 
   const handleEnter = () => {
     stopMicMeter();
+    handedOffRef.current = true;
     const stream = streamRef.current;
     streamRef.current = null;
     onComplete?.(stream);
@@ -167,11 +171,11 @@ export default function PreInterviewFlow({ candidateName, targetRole, sessionRea
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover z-0"
               style={{ transform: "scaleX(-1)" }}
             />
             {!cameraOk && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 text-sm px-6 text-center gap-2">
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-gray-400 text-sm px-6 text-center gap-2 bg-gray-900/80">
                 <Camera className="w-8 h-8 opacity-50" />
                 {loading ? "Requesting camera access…" : "Camera preview unavailable"}
                 {micOk && !cameraOk && (
