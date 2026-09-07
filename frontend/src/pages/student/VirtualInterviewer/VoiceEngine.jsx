@@ -33,7 +33,6 @@ const VoiceEngine = forwardRef(function VoiceEngine(
   const listeningRef   = useRef(false);
   const speakingRef    = useRef(false);
   const silenceTimerRef = useRef(null);
-  const keepAliveTimerRef = useRef(null);
   const interviewActiveRef = useRef(true);
 
   // Helper to select Indian English voice or fallback
@@ -124,7 +123,6 @@ const VoiceEngine = forwardRef(function VoiceEngine(
       try { recognitionRef.current.stop(); } catch { /* ignore */ }
       recognitionRef.current = null;
     }
-    clearTimeout(keepAliveTimerRef.current);
 
     const recognition = new SpeechRecognition();
     recognition.continuous      = true;
@@ -141,7 +139,11 @@ const VoiceEngine = forwardRef(function VoiceEngine(
 
     recognition.onresult = (event) => {
       if (speakingRef.current) {
-        const hasMeaningfulSpeech = event.results.length > 0 && event.results[event.results.length - 1][0].transcript.trim().length > 2;
+        const latestResult = event.results[event.results.length - 1];
+        const latestTranscript = latestResult?.[0]?.transcript?.trim() || "";
+        const hasMeaningfulSpeech = latestResult?.isFinal
+          && latestTranscript.split(/\s+/).length >= 3
+          && (latestResult[0].confidence ?? 0) >= 0.6;
         if (hasMeaningfulSpeech) {
           stopSpeaking();
           onBargeIn?.();
@@ -181,12 +183,6 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     recognition.onend = () => {
       listeningRef.current = false;
       recognitionRef.current = null;
-      clearTimeout(keepAliveTimerRef.current);
-      keepAliveTimerRef.current = setTimeout(() => {
-        if (!listeningRef.current && !speakingRef.current && interviewActiveRef.current) {
-          try { recognition.start(); } catch { /* ignore */ }
-        }
-      }, 300);
       onListeningEnd?.();
     };
 
@@ -198,7 +194,6 @@ const VoiceEngine = forwardRef(function VoiceEngine(
 
   const stopListening = useCallback(() => {
     clearTimeout(silenceTimerRef.current);
-    clearTimeout(keepAliveTimerRef.current);
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch { /* ignore */ }
       recognitionRef.current = null;
@@ -218,7 +213,6 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     return () => {
       interviewActiveRef.current = false;
       clearTimeout(silenceTimerRef.current);
-      clearTimeout(keepAliveTimerRef.current);
       if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch { /* ignore */ }
       }

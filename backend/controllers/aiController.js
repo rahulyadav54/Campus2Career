@@ -5,7 +5,7 @@ import mammoth from "mammoth";
 import UserModel from "../models/UserModel.js";
 import AssessmentAttemptModel from "../models/AssessmentAttemptModel.js";
 import PortfolioItemModel from "../models/PortfolioItemModel.js";
-import { chatWithNemotron, isNemotronConfigured } from "../services/nemotronService.js";
+import { chatWithGemini, isGeminiConfigured } from "../services/geminiService.js";
 
 const SKILL_KEYWORDS = [
   "JavaScript",
@@ -198,7 +198,7 @@ const buildUserContext = (user) => {
 
 export const chatWithAI = async (req, res) => {
   try {
-    if (!isNemotronConfigured()) {
+    if (!isGeminiConfigured()) {
       return res.status(503).json({
         success: false,
         message: "AI service is not configured. Please try again later.",
@@ -257,7 +257,7 @@ export const chatWithAI = async (req, res) => {
     // Optional additional context from the client (e.g. job description, skill gaps)
     const extraContext = typeof context === "object" && context !== null ? context : null;
 
-    const result = await chatWithNemotron({
+    const result = await chatWithGemini({
       messages,
       systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
       userContext,
@@ -371,8 +371,8 @@ export const getCareerAdvice = async (req, res) => {
     const profileCompletion = user?.profileCompletion || 0;
     const readinessScore = user?.readinessScore || 0;
 
-    // --- Upgrade: call NVIDIA Nemotron when configured ---
-    if (isNemotronConfigured()) {
+    // --- Upgrade: call Gemini when configured ---
+    if (isGeminiConfigured()) {
       try {
         const userContext = {
           skills: userSkills,
@@ -383,7 +383,7 @@ export const getCareerAdvice = async (req, res) => {
           ...studentContext,
         };
 
-        const result = await chatWithNemotron({
+        const result = await chatWithGemini({
           messages: [{ role: "user", content: userPrompt }],
           systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
           userContext,
@@ -394,13 +394,13 @@ export const getCareerAdvice = async (req, res) => {
           source: "Campus2Career AI Advisor",
           answer: result.response,
         });
-      } catch (nemotronError) {
-        console.error("Nemotron fallback: AI call failed, using template engine:", nemotronError.message || nemotronError);
+      } catch (geminiError) {
+        console.error("Gemini fallback: AI call failed, using template engine:", geminiError.message || geminiError);
         // Fall through to the template-based fallback below
       }
     }
 
-    // --- Fallback: keyword-based template engine (used when Nemotron is not configured) ---
+    // --- Fallback: keyword-based template engine (used when Gemini is not configured) ---
     const lowerPrompt = userPrompt.toLowerCase();
     let adviceText = "";
 

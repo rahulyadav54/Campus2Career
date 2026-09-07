@@ -37,6 +37,7 @@ import skillGapRoutes from "./routes/skillGapRoutes.js";
 import opportunityScoutRoutes from "./routes/opportunityScoutRoutes.js";
 import interviewRoutes from "./routes/interviewRoutes.js";
 
+dotenv.config({ path: ".env.local" });
 dotenv.config();
 const app = express();
 

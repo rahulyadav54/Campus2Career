@@ -257,11 +257,22 @@ export const endInterview = async (req, res) => {
     return res.json({
       success: true,
       sessionId,
+      targetRole:      session.targetRole,
+      durationMinutes: session.durationMinutes,
+      createdAt:       session.createdAt,
       summary:         report.summary,
       strengths:       report.strengths,
       weaknesses:      report.weaknesses,
       recommendations: report.recommendations,
       readinessLevel:  report.readinessLevel,
+      evaluations: session.questions
+        .filter(q => q.answer?.transcript)
+        .map(q => ({
+          questionText:  q.question,
+          studentAnswer: q.answer.transcript,
+          score:         q.evaluation?.overallScore ?? 0,
+          feedback:      q.evaluation?.improvements?.join(" ") || "",
+        })),
     });
   } catch (error) {
     console.error("[Interview] endInterview error:", error);
@@ -308,11 +319,20 @@ export const getReport = async (req, res) => {
       questionsCount: session.questions?.length || 0,
       startedAt:  session.startedAt,
       endedAt:    session.endedAt,
+      createdAt:  session.createdAt,
       summary:         session.summary,
       strengths:       session.strengths,
       weaknesses:      session.weaknesses,
       recommendations: session.recommendations,
       readinessLevel:  session.readinessLevel,
+      evaluations: (session.questions || [])
+        .filter(q => q.answer?.transcript)
+        .map(q => ({
+          questionText:  q.question,
+          studentAnswer: q.answer.transcript,
+          score:         q.evaluation?.overallScore ?? 0,
+          feedback:      q.evaluation?.improvements?.join(" ") || "",
+        })),
     });
   } catch (error) {
     console.error("[Interview] getReport error:", error);

@@ -44,7 +44,7 @@ export default function InterviewReport({ sessionId, reportData, onRestart }) {
     try {
       const res = await interviewService.getReport(sessionId);
       if (res.data?.success) {
-        setReport(res.data.data.report || res.data.data);
+        setReport(res.data.data?.report || res.data.data || res.data);
       } else {
         setError(res.data?.message || "Failed to load report");
       }
@@ -90,12 +90,13 @@ export default function InterviewReport({ sessionId, reportData, onRestart }) {
     );
   }
 
-  const overallScore = report.overallScore || report.score || 75;
+  const overallScore = report.summary?.overallScore ?? report.overallScore ?? report.score ?? 0;
   const readiness = report.readinessLevel || (
     overallScore >= 90 ? "EXCELLENT" :
     overallScore >= 75 ? "READY_WITH_IMPROVEMENT" :
     overallScore >= 60 ? "NEEDS_PRACTICE" : "NOT_READY"
   );
+  const normalizedReadiness = readiness.toUpperCase().replace(/\s+/g, "_");
 
   const getReadinessColor = (lvl) => {
     switch (lvl) {
@@ -142,7 +143,7 @@ export default function InterviewReport({ sessionId, reportData, onRestart }) {
               <Sparkles className="w-3.5 h-3.5" /> AI Interview Assessment Report
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-white">
-              {report.roleTitle || "Software Engineer"} Simulation
+              {report.roleTitle || report.targetRole || "Interview"} Simulation
             </h1>
             <p className="text-slate-400 text-sm mt-1">
               Completed on {new Date(report.createdAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
@@ -196,8 +197,8 @@ export default function InterviewReport({ sessionId, reportData, onRestart }) {
           {/* Status & Highlights */}
           <div className="md:col-span-2 flex flex-col justify-center space-y-4 p-2">
             <div className="flex items-center gap-3">
-              <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getReadinessColor(readiness)}`}>
-                {getReadinessBadge(readiness)}
+              <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getReadinessColor(normalizedReadiness)}`}>
+                {getReadinessBadge(normalizedReadiness)}
               </span>
               <span className="text-slate-400 text-xs flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" /> {report.durationMinutes || 10} min session
@@ -205,12 +206,13 @@ export default function InterviewReport({ sessionId, reportData, onRestart }) {
             </div>
 
             <h3 className="text-xl font-semibold text-white">
-              {report.summaryHeadline || "Solid Technical Foundation with Room for Communication Polish"}
+              {report.summaryHeadline || (overallScore ? "Interview Performance Summary" : "No Answers Were Recorded")}
             </h3>
 
             <p className="text-slate-400 text-sm leading-relaxed">
-              {report.executiveSummary ||
-                "You demonstrated strong domain knowledge and answered most core questions accurately. Focus on structuring responses with the STAR method and speaking with more confident cadence."}
+              {report.executiveSummary || (overallScore
+                ? "Scores are calculated from the answers recorded during this interview session."
+                : "Finish at least one spoken answer to generate a performance assessment.")}
             </p>
           </div>
         </div>
@@ -224,7 +226,7 @@ export default function InterviewReport({ sessionId, reportData, onRestart }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {categoryList.map((cat) => {
-              const val = scores[cat.key] || overallScore;
+              const val = scores[cat.key];
               const Icon = cat.icon;
               return (
                 <div key={cat.key} className="space-y-2 bg-slate-950/40 border border-slate-800/50 rounded-xl p-4">
@@ -254,11 +256,7 @@ export default function InterviewReport({ sessionId, reportData, onRestart }) {
               <CheckCircle2 className="w-5 h-5" /> Key Strengths
             </div>
             <ul className="space-y-2.5">
-              {(report.strengths || [
-                "Clear technical terminology used throughout the session",
-                "Direct answers without rambling",
-                "Strong conceptual understanding of core principles"
-              ]).map((item, idx) => (
+              {(report.strengths?.length ? report.strengths : ["No strengths could be assessed because no substantive answer was recorded."]).map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-2 shrink-0" />
                   <span>{item}</span>
@@ -273,11 +271,7 @@ export default function InterviewReport({ sessionId, reportData, onRestart }) {
               <AlertTriangle className="w-5 h-5" /> Areas to Improve
             </div>
             <ul className="space-y-2.5">
-              {(report.areasToImprove || [
-                "Use the STAR method (Situation, Task, Action, Result) for behavioral answers",
-                "Elaborate more on trade-offs and edge cases in system design questions",
-                "Maintain a steady speaking pace to avoid filler pauses"
-              ]).map((item, idx) => (
+              {(report.areasToImprove || report.weaknesses || ["Answer at least one question to receive targeted feedback."]).map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2.5 text-sm text-slate-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 shrink-0" />
                   <span>{item}</span>

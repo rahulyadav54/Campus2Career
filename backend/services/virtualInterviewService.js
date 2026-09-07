@@ -4,10 +4,10 @@
  * AI orchestration layer for the Campus2Career Virtual Interviewer.
  * All AI logic lives here — controllers are thin wrappers that call these functions.
  *
- * Uses the existing nemotronService (NVIDIA Nemotron) as the AI backend.
+ * Uses the dedicated Gemini provider for virtual-interview AI requests.
  */
 
-import { chatWithNemotron, isNemotronConfigured } from "./nemotronService.js";
+import { chatWithGemini, isGeminiConfigured } from "./geminiService.js";
 import { getRequiredSkillsForRole } from "./roleSkillMap.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ CRITICAL RULES:
  * Returns a short spoken greeting string.
  */
 export const generateOpeningGreeting = async (session) => {
-  if (!isNemotronConfigured()) {
+  if (!isGeminiConfigured()) {
     return `Hello! Welcome to your ${session.targetRole} interview. I'm your interviewer today. Let's get started. Could you please introduce yourself?`;
   }
 
@@ -103,7 +103,7 @@ export const generateOpeningGreeting = async (session) => {
   const userMsg = `Generate a warm, natural opening greeting for a ${session.interviewType} interview for the role of ${session.targetRole}. Keep it under 40 words. End by asking the candidate to introduce themselves. Do NOT mention AI, scores, or assessments. Sound like a real human — use casual openers like "Hi there", "Great to meet you", or "Welcome". Avoid robotic phrasing.`;
 
   try {
-    const result = await chatWithNemotron({
+    const result = await chatWithGemini({
       messages: [{ role: "user", content: userMsg }],
       systemPrompt,
       temperature: 0.8,
@@ -142,7 +142,7 @@ export const generateNextQuestion = async (session, avgScore = 70) => {
     "resume-based": `I see you've worked with ${session.resumeContext?.skills?.[0] || "various technologies"}. Can you walk me through a project where you used it?`,
   };
 
-  if (!isNemotronConfigured()) {
+  if (!isGeminiConfigured()) {
     return {
       question: fallbackQuestions[session.interviewType] || fallbackQuestions.mixed,
       section:  session.interviewType,
@@ -164,7 +164,7 @@ Return ONLY a JSON object:
 }`;
 
   try {
-    const result = await chatWithNemotron({
+    const result = await chatWithGemini({
       messages: [{ role: "user", content: prompt }],
       systemPrompt,
       temperature: 0.75,
@@ -190,7 +190,7 @@ Return ONLY a JSON object:
  */
 export const generateFollowUp = async (question, answer, session) => {
   if (!answer?.trim()) return "";
-  if (!isNemotronConfigured()) {
+  if (!isGeminiConfigured()) {
     return `That's interesting. Can you walk me through a specific example of when you did that?`;
   }
 
@@ -210,7 +210,7 @@ Generate ONE natural, specific follow-up question that:
 Return ONLY the question text. No quotes. No labels.`;
 
   try {
-    const result = await chatWithNemotron({
+    const result = await chatWithGemini({
       messages: [{ role: "user", content: prompt }],
       systemPrompt,
       temperature: 0.7,
@@ -257,7 +257,7 @@ export const evaluateAnswer = async (question, answer, session) => {
     };
   }
 
-  if (!isNemotronConfigured()) return defaultEval;
+  if (!isGeminiConfigured()) return defaultEval;
 
   const prompt = `You are a STRICT, experienced interviewer evaluating a candidate's answer for a ${session.targetRole} role.
 
@@ -299,7 +299,7 @@ Return ONLY this JSON:
 }`;
 
   try {
-    const result = await chatWithNemotron({
+    const result = await chatWithGemini({
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
       maxTokens: 400,
@@ -327,7 +327,9 @@ Return ONLY this JSON:
  * @returns {object}       - Report with scores, strengths, weaknesses, recommendations, readinessLevel
  */
 export const generateFinalReport = async (session) => {
-  const answered = (session.questions || []).filter(q => q.evaluation?.overallScore >= 0);
+  const answered = (session.questions || []).filter(q =>
+    q.answer?.transcript?.trim() && q.evaluation?.overallScore >= 0
+  );
 
   // Calculate summary scores from per-question evaluations
   const avg = (field) => {
@@ -350,6 +352,16 @@ export const generateFinalReport = async (session) => {
   const uniqueStrengths    = [...new Set(allStrengths)].slice(0, 4);
   const uniqueImprovements = [...new Set(allImprovements)].slice(0, 4);
 
+  if (!answered.length) {
+    return {
+      summary,
+      strengths: [],
+      weaknesses: ["No substantive answers were recorded during this session"],
+      recommendations: ["Check microphone permissions and complete at least one spoken answer before ending the interview"],
+      readinessLevel: "Not Yet Ready",
+    };
+  }
+
   // Readiness level
   const score = summary.overallScore;
   let readinessLevel;
@@ -360,7 +372,7 @@ export const generateFinalReport = async (session) => {
 
   // AI recommendations
   let recommendations = [];
-  if (!isNemotronConfigured()) {
+  if (!isGeminiConfigured()) {
     recommendations = [
       "Practice STAR-based behavioral answers for clearer structure",
       `Strengthen your knowledge of ${session.targetRole} core skills`,
@@ -384,7 +396,7 @@ Skill gaps: ${session.skillGapContext?.missingSkills?.slice(0,3).join(", ") || "
 Generate exactly 4 specific, actionable improvement recommendations. Return a JSON array:
 ["recommendation 1", "recommendation 2", "recommendation 3", "recommendation 4"]`;
 
-      const result = await chatWithNemotron({
+      const result = await chatWithGemini({
         messages:    [{ role: "user", content: prompt }],
         temperature: 0.5,
         maxTokens:   300,
@@ -424,7 +436,7 @@ Generate exactly 4 specific, actionable improvement recommendations. Return a JS
  * Very short — just a 1-sentence acknowledgement + bridge to next question.
  */
 export const generateTransition = async (evaluation, nextQuestion, session) => {
-  if (!isNemotronConfigured() || !nextQuestion) return "";
+  if (!isGeminiConfigured() || !nextQuestion) return "";
 
   const score = evaluation?.overallScore || 60;
   let tone = "neutral";
@@ -446,7 +458,7 @@ Examples by tone:
 Return ONLY the sentence. No quotes.`;
 
   try {
-    const result = await chatWithNemotron({
+    const result = await chatWithGemini({
       messages:    [{ role: "user", content: prompt }],
       temperature: 0.7,
       maxTokens:   50,

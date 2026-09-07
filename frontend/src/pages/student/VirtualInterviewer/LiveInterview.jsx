@@ -111,11 +111,10 @@ export default function LiveInterview({
     return () => clearInterval(timerRef.current);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── On mount: start listening immediately, then speak greeting ──────────────
+  // ── On mount: greet first, then enable the microphone ───────────────────────
 
   useEffect(() => {
     voiceRef.current?.setInterviewActive(true);
-    voiceRef.current?.startListening();
 
     if (!activeGreeting && !activeFirstQ?.text) return;
     const text = activeGreeting
@@ -127,6 +126,7 @@ export default function LiveInterview({
     const t = setTimeout(() => {
       speakAI(text, () => {
         setInterviewState(STATES.LISTENING);
+        voiceRef.current?.startListening();
       });
     }, 800);
     return () => {
@@ -139,6 +139,7 @@ export default function LiveInterview({
 
   const speakAI = useCallback((text, onDone) => {
     if (!speakerEnabled) { onDone?.(); return; }
+    voiceRef.current?.stopListening();
     setInterviewState(STATES.AI_SPEAKING);
     voiceRef.current?.speak(text, onDone);
   }, [speakerEnabled]);
@@ -299,14 +300,10 @@ export default function LiveInterview({
         const res = await interviewService.end(activeSessionId);
         reportData = res.data?.data || res.data || res;
       }
-      setTimeout(() => activeOnFinish?.(reportData || {
-        sessionId: activeSessionId,
-        score: 85,
-        feedback: "Great job completing the interview!",
-      }), 2500);
+      setTimeout(() => activeOnFinish?.(reportData), 2500);
     } catch (err) {
       console.error("[LiveInterview] endInterview error:", err);
-      activeOnFinish?.({ sessionId: activeSessionId, score: 80, feedback: "Interview completed." });
+      activeOnFinish?.(null);
     }
   }, [activeSessionId, activeOnFinish]);
 
