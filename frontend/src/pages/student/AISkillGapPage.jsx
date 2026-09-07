@@ -37,7 +37,9 @@ export default function AISkillGapPage() {
           <AlertTriangle className="w-4 h-4" />
           AI Skill Gap Engine
         </div>
-        <h1 className="text-3xl font-bold mt-2">{analysis.targetRole}</h1>
+        <h1 className="text-3xl font-bold mt-2">
+          {analysis.targetRole || "Choose a target role to begin"}
+        </h1>
         <p className="mt-3 text-orange-50">{analysis.why}</p>
       </div>
 
@@ -60,14 +62,16 @@ export default function AISkillGapPage() {
           <div className="flex flex-wrap gap-2">
             {(analysis.missingSkills || []).length ? analysis.missingSkills.map((skill) => (
               <span key={skill} className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">{skill}</span>
-            )) : <span className="text-slate-500">You are well-aligned with this role.</span>}
+            )) : <span className="text-slate-500">
+              {analysis.targetRole ? "You are well-aligned with this role." : "Select a target role to identify priority skills."}
+            </span>}
           </div>
         </Card>
       </div>
 
       <Card title="Why these recommendations were generated" icon={<Sparkles className="w-5 h-5" />}>
         <div className="space-y-3">
-          {(analysis.recommendations || []).map((item, index) => (
+          {(analysis.recommendations || []).length ? analysis.recommendations.map((item, index) => (
             <div key={index} className="rounded-xl border border-slate-200 p-4 bg-slate-50">
               <div className="flex items-center justify-between gap-4">
                 <div className="font-semibold text-slate-800">{item.skill}</div>
@@ -76,7 +80,9 @@ export default function AISkillGapPage() {
               <div className="text-sm text-slate-600 mt-2">{item.reason}</div>
               <div className="text-xs text-slate-500 mt-2">{item.why}</div>
             </div>
-          ))}
+          )) : <p className="text-slate-500">
+            {analysis.targetRole ? "No additional recommendations are needed for this role." : "Recommendations will appear after you select a target role."}
+          </p>}
         </div>
       </Card>
     </div>

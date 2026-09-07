@@ -1,4 +1,5 @@
 import User from "../models/UserModel.js";
+import CareerMission from "../models/CareerMission.js";
 import { evaluateSkillGap } from "../services/skillGapEngine.js";
 import { logSuccess, logFailed } from "../services/aiLogger.js";
 
@@ -7,7 +8,14 @@ export const getSkillGapAnalysis = async (req, res) => {
     const student = await User.findById(req.user._id).select("skills targetRole skillProfile certifications projects department cgpa");
     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    const targetRole = String(req.query.targetRole || student.targetRole || "").trim();
+    let targetRole = String(req.query.targetRole || student.targetRole || "").trim();
+    if (!targetRole) {
+      const mission = await CareerMission.findOne({ student: student._id, isActive: true })
+        .sort({ updatedAt: -1 })
+        .select("targetRole")
+        .lean();
+      targetRole = String(mission?.targetRole || "").trim();
+    }
     const analysis = evaluateSkillGap(student.toObject(), targetRole);
 
     await logSuccess({

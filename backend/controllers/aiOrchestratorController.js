@@ -63,7 +63,13 @@ export const generateCareerMissionForStudent = async (req, res) => {
       return res.status(404).json({ success: false, message: "Student not found" });
     }
 
-    const mission = buildCareerMission(student.toObject(), targetRole || student.targetRole || "");
+    const resolvedTargetRole = String(targetRole || student.targetRole || "").trim();
+    if (resolvedTargetRole && student.targetRole !== resolvedTargetRole) {
+      student.targetRole = resolvedTargetRole;
+      await student.save();
+    }
+
+    const mission = buildCareerMission(student.toObject(), resolvedTargetRole);
     const saved = await CareerMission.findOneAndUpdate(
       { student: student._id },
       { $set: { ...mission, student: student._id, lastAnalyzedAt: new Date() } },
