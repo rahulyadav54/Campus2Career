@@ -70,6 +70,7 @@ import CareerGuidance from "./pages/student/CareerGuidance";
 import AIDashboardPage from "./pages/student/AIDashboardPage";
 import AICareerMissionPage from "./pages/student/AICareerMissionPage";
 import AISkillGapPage from "./pages/student/AISkillGapPage";
+import InterviewPreparation from "./pages/student/InterviewPreparation";
 import LearningRecommendations from "./pages/student/LearningRecommendations";
 import SkillMapping from "./pages/student/SkillMapping";
 import Internships from "./pages/student/Internships";
@@ -130,6 +131,7 @@ function App() {
           <Route path="ai-dashboard" element={<AIDashboardPage />} />
           <Route path="ai-career-mission" element={<AICareerMissionPage />} />
           <Route path="ai-skill-gap" element={<AISkillGapPage />} />
+          <Route path="interview-preparation" element={<InterviewPreparation />} />
           <Route path="skill-mapping" element={<SkillMapping />} />
           <Route path="learning" element={<LearningRecommendations />} />
           <Route path="learning-platforms" element={<LearningPlatforms />} />

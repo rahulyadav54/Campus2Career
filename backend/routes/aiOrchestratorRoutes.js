@@ -9,6 +9,7 @@ import {
   getAIOverviewForAdmin,
   getResumeIntelligence,
   getMockInterviewPlan,
+  getInterviewMaterials,
   getRecruiterShortlist,
   getPlacementReadiness,
   getInstitutionInsights,
@@ -21,6 +22,7 @@ router.get("/career/mission", protect, studentOnly, getMyCareerMission);
 router.post("/career/mission", protect, generateCareerMissionForStudent);
 router.get("/resume/intelligence", protect, getResumeIntelligence);
 router.get("/interview/plan", protect, getMockInterviewPlan);
+router.get("/interview/materials", protect, studentOnly, getInterviewMaterials);
 router.get("/recruiter/shortlist", protect, getRecruiterShortlist);
 router.get("/placement/readiness", protect, getPlacementReadiness);
 router.get("/institution/insights", protect, getInstitutionInsights);

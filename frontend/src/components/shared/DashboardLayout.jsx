@@ -32,7 +32,7 @@ const roleNavConfig = {
         { label: "My Applications", icon: FileText, path: "/student/applications" },
         { label: "Career Guidance", icon: Compass, path: "/student/career" },
         { label: "Skill Mapping", icon: TrendingUp, path: "/student/skill-mapping" },
-        { label: "Interview Preparation", icon: Presentation, path: "/student/internships" },
+        { label: "Interview Preparation", icon: Presentation, path: "/student/interview-preparation" },
       ]},
       { group: "Learning", items: [
         { label: "My Courses", icon: BookOpen, path: "/student/my-courses" },

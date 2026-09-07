@@ -1,11 +1,14 @@
 import User from "../models/UserModel.js";
 import CareerMission from "../models/CareerMission.js";
 import AIAutomationLog from "../models/AIAutomationLog.js";
+import Course from "../models/Course.js";
+import Workshop from "../models/Workshop.js";
 import { dispatchAIRequest, getRecentAILogs, getOrchestratorOverview, buildCareerMission } from "../services/aiOrchestrator.js";
 import { analyzeResumeForRole, generateMockInterviewPlan } from "../services/resumeInterviewAgent.js";
 import { buildRecruiterShortlist } from "../services/recruiterIntelligenceAgent.js";
 import { calculatePlacementReadiness, buildReadinessSummary } from "../services/placementReadinessAgent.js";
 import { generateInstitutionInsights } from "../services/institutionInsightsAgent.js";
+import { getRequiredSkillsForRole } from "../services/roleSkillMap.js";
 import { protect, studentOnly, adminOnly } from "../middleware/authMiddleware.js";
 
 export const orchestrateCareerRequest = async (req, res) => {
@@ -131,6 +134,105 @@ export const getMockInterviewPlan = async (req, res) => {
     return res.json({ success: true, plan });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message || "Unable to generate interview plan" });
+  }
+};
+
+export const getInterviewMaterials = async (req, res) => {
+  try {
+    const student = await User.findById(req.user._id).select("targetRole skills").lean();
+    if (!student) return res.status(404).json({ success: false, message: "Student not found" });
+
+    const targetRole = String(req.query.targetRole || student.targetRole || "Data Analyst").trim() || "Data Analyst";
+    const roleSkills = getRequiredSkillsForRole(targetRole) || [];
+    const searchSkills = [...new Set([...roleSkills.slice(0, 8), ...(student.skills || [])])];
+
+    const [courses, workshops] = await Promise.all([
+      Course.find({ status: "published", skills: { $in: searchSkills } })
+        .select("title description provider platform skills duration level externalUrl rating isFree")
+        .sort({ rating: -1, createdAt: -1 })
+        .limit(6)
+        .lean(),
+      Workshop.find({ status: "published", skills: { $in: searchSkills }, date: { $gte: new Date() } })
+        .select("title description organizer date time mode skills")
+        .sort({ date: 1 })
+        .limit(4)
+        .lean(),
+    ]);
+
+    const databaseMaterials = [
+      ...courses.map((course) => ({
+        type: "course",
+        title: course.title,
+        description: course.description,
+        provider: course.provider || course.platform,
+        duration: course.duration || "Self-paced",
+        level: course.level || "beginner",
+        url: course.externalUrl,
+        skills: course.skills || [],
+        isFree: course.isFree,
+        source: "Campus2Career courses",
+      })),
+      ...workshops.map((workshop) => ({
+        type: "workshop",
+        title: workshop.title,
+        description: workshop.description,
+        provider: workshop.organizer,
+        duration: `${workshop.mode || "online"} · ${new Date(workshop.date).toLocaleDateString()}`,
+        level: "live session",
+        url: "",
+        skills: workshop.skills || [],
+        isFree: true,
+        source: "Campus2Career workshops",
+      })),
+    ];
+
+    const fallbackMaterials = [
+      {
+        type: "guide",
+        title: `Interview questions for ${targetRole}`,
+        description: "Practice role-specific technical and behavioral questions with model evaluation points.",
+        provider: "Campus2Career AI",
+        duration: "Practice set",
+        level: "all levels",
+        url: `/student/interview-preparation?targetRole=${encodeURIComponent(targetRole)}`,
+        skills: roleSkills.slice(0, 5),
+        isFree: true,
+        source: "Generated for your target role",
+      },
+      {
+        type: "guide",
+        title: "STAR method interview guide",
+        description: "Use Situation, Task, Action, and Result to turn project and internship experiences into clear answers.",
+        provider: "Indeed Career Guide",
+        duration: "10 minute read",
+        level: "all levels",
+        url: "https://www.indeed.com/career-advice/interviewing/star-interview-method",
+        skills: ["Communication", "Behavioral interviews"],
+        isFree: true,
+        source: "Public learning resource",
+      },
+      {
+        type: "guide",
+        title: `${targetRole} interview preparation`,
+        description: "Review common questions, role expectations, and preparation advice before your interview.",
+        provider: "Coursera Career Guide",
+        duration: "Preparation guide",
+        level: "all levels",
+        url: `https://www.coursera.org/articles/${encodeURIComponent(targetRole.toLowerCase().replace(/\s+/g, "-"))}-interview-questions`,
+        skills: roleSkills.slice(0, 5),
+        isFree: true,
+        source: "Public learning resource",
+      },
+    ];
+
+    return res.json({
+      success: true,
+      targetRole,
+      materials: [...databaseMaterials, ...fallbackMaterials].slice(0, 8),
+      sourceSummary: { courses: courses.length, workshops: workshops.length },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message || "Unable to load interview materials" });
   }
 };
 
