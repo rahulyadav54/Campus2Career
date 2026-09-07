@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from "react";
+import interviewService from "../../../services/interviewService";
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -34,6 +35,9 @@ const VoiceEngine = forwardRef(function VoiceEngine(
   const speakingRef    = useRef(false);
   const silenceTimerRef = useRef(null);
   const interviewActiveRef = useRef(true);
+  const audioRef = useRef(null);
+  const audioUrlRef = useRef(null);
+  const speechRequestRef = useRef(0);
 
   // Helper to select Indian English voice or fallback
   const getPreferredVoice = useCallback(() => {
@@ -63,7 +67,7 @@ const VoiceEngine = forwardRef(function VoiceEngine(
 
   // ── TTS ─────────────────────────────────────────────────────────────────────
 
-  const speak = useCallback((text, onDone) => {
+  const speakWithBrowser = useCallback((text, onDone) => {
     if (!text) return;
     const synth = synthRef.current;
     if (!synth) { onDone?.(); return; }
@@ -103,7 +107,57 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     synth.speak(utterance);
   }, [getPreferredVoice, onSpeakStart, onSpeakEnd, onError]);
 
+  const speak = useCallback(async (text, onDone) => {
+    if (!text) return;
+    const requestId = ++speechRequestRef.current;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
+    synthRef.current?.cancel();
+
+    try {
+      const response = await interviewService.synthesizeSpeech(text);
+      if (requestId !== speechRequestRef.current) return;
+
+      const url = URL.createObjectURL(response.data);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audioUrlRef.current = url;
+      audio.onplay = () => {
+        speakingRef.current = true;
+        onSpeakStart?.();
+      };
+      audio.onended = () => {
+        if (requestId !== speechRequestRef.current) return;
+        speakingRef.current = false;
+        onSpeakEnd?.();
+        onDone?.();
+      };
+      audio.onerror = () => {
+        if (requestId !== speechRequestRef.current) return;
+        speakWithBrowser(text, onDone);
+      };
+      await audio.play();
+    } catch {
+      if (requestId === speechRequestRef.current) speakWithBrowser(text, onDone);
+    }
+  }, [onSpeakStart, onSpeakEnd, speakWithBrowser]);
+
   const stopSpeaking = useCallback(() => {
+    speechRequestRef.current += 1;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
     if (synthRef.current) {
       synthRef.current.cancel();
     }
@@ -219,6 +273,8 @@ const VoiceEngine = forwardRef(function VoiceEngine(
       if (synthRef.current) {
         synthRef.current.cancel();
       }
+      if (audioRef.current) audioRef.current.pause();
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
     };
   }, []);
 

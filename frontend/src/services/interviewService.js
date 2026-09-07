@@ -21,6 +21,10 @@ export const interviewService = {
   end: (sessionId) =>
     apiClient.post(`${BASE}/${sessionId}/end`, {}, { timeout: 30000 }),
 
+  /** Generate natural neural speech for the interviewer */
+  synthesizeSpeech: (text) =>
+    apiClient.post(`${BASE}/tts`, { text }, { responseType: "blob", timeout: 30000 }),
+
   /** Get session state (for recovery) */
   getSession: (sessionId) =>
     apiClient.get(`${BASE}/${sessionId}`),

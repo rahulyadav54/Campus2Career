@@ -271,7 +271,7 @@ function DIDAvatar({ state, speakText, presenterUrl, onReady, onError }) {
         ref={videoRef}
         autoPlay
         playsInline
-        muted={false}
+        muted
         className={`w-72 h-72 sm:w-80 sm:h-80 rounded-full object-cover ring-4 ring-indigo-500 ring-offset-4 ring-offset-slate-950 transition-opacity duration-500 shadow-2xl ${
           connected ? "opacity-100" : "opacity-0"
         }`}
