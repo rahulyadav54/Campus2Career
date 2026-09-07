@@ -139,6 +139,110 @@ The project contains an orchestration-based AI layer that routes requests to rol
 
 ---
 
+## AI Automation Workflow
+
+The AI automation flow is built as an orchestrated system, not as one giant prompt. The request is routed through a central orchestrator that decides which specialized agent should process the user intent and what data should be used.
+
+### Request flow
+
+1. A student, recruiter, or institution user opens a page in the frontend and clicks a feature like AI Dashboard, Career Mission, Skill Gap, Resume Fit, or Placement Readiness.
+2. The frontend calls a backend endpoint such as `/api/ai-automation/career/mission`, `/api/skill-gap/analysis`, or `/api/ai-automation/placement/readiness`.
+3. The backend route receives the request and forwards it to the matching controller.
+4. The controller calls the orchestrator service, which checks:
+   - user role
+   - requested action
+   - target role or opportunity
+   - available profile context
+   - which AI agent is relevant
+5. The orchestrator selects the correct agent such as:
+   - Career Mission Agent
+   - Skill Gap Engine
+   - Opportunity Scout
+   - Resume Interview Agent
+   - Recruiter Intelligence Agent
+   - Placement Readiness Agent
+   - Institution Insights Agent
+6. The selected agent reads the student or cohort data from the database, compares it against the role-skill map, and computes explainable scores.
+7. The service then packages the result into a structured response with summary, recommendations, scores, missing skills, and next actions.
+8. The frontend renders the AI insights in a dashboard or dedicated page.
+
+### Core execution pattern
+
+```mermaid
+flowchart TD
+    A[Frontend UI] --> B[API Route]
+    B --> C[Controller]
+    C --> D[AI Orchestrator]
+    D --> E{Select matched agent}
+    E --> F[Skill Gap Engine]
+    E --> G[Career Mission Agent]
+    E --> H[Resume / Interview Agent]
+    E --> I[Placement Readiness Agent]
+    E --> J[Opportunity Scout]
+    E --> K[Recruiter Intelligence]
+    E --> L[Institution Insights]
+    F --> M[Role-Skill Map + Student Data]
+    G --> M
+    H --> M
+    I --> M
+    J --> M
+    K --> M
+    L --> M
+    M --> N[Scoring + Recommendations]
+    N --> O[Structured Response]
+    O --> A
+```
+
+### How the intelligence is built
+
+The system uses a role-based knowledge model rather than a generic one-size-fits-all AI approach:
+
+- each target role has a skill map
+- the student profile is compared against that map
+- missing skills are prioritized by importance
+- readiness is scored using profile completeness, project evidence, skills, and role alignment
+- opportunities are ranked based on fit and current student profile
+- recruiter evaluation uses role-specific matching and candidate strength
+
+This makes the output explainable. Instead of giving a vague answer, the platform explains:
+
+- what the student is already strong in
+- what is missing for the target role
+- how ready they are for placement
+- what role or opportunity fits best
+- what action should be taken next
+
+### Example: student career mission workflow
+
+A student may request a Data Analyst career mission:
+
+1. The frontend sends the request with the target role and intent.
+2. The orchestrator identifies the career mission flow.
+3. The engine loads the student profile and role skill map.
+4. It calculates current skill coverage, readiness, and missing priorities.
+5. It generates a mission structure with:
+   - target role
+   - readiness score
+   - key gap areas
+   - action roadmap
+   - recommended learning steps
+6. The result is returned to the frontend and displayed as a personalized career plan.
+
+### Logging and observability
+
+Every major AI request is logged through the AI logging service. This stores:
+
+- request type
+- target role
+- triggered agent
+- timestamp
+- response summary
+- status and trace metadata
+
+This gives administrators visibility into how the AI system is being used and helps troubleshoot issues in the automation layer.
+
+---
+
 ## Project Structure
 
 ```text
