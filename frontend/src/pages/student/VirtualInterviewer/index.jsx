@@ -8,6 +8,7 @@ import InterviewSetup from "./InterviewSetup";
 import LiveInterview from "./LiveInterview";
 import InterviewReport from "./InterviewReport";
 import PreInterviewFlow from "../../../features/virtualInterview/PreInterviewFlow";
+import { unlockAudioOutput } from "../../../features/virtualInterview/mediaAccess";
 import { interviewService, unwrapInterviewResponse } from "../../../services/interviewService";
 import { apiClient } from "../../../services/apiClient";
 
@@ -139,7 +140,8 @@ export default function VirtualInterviewer() {
           candidateName={activeSession.candidateName || candidateName}
           targetRole={activeSession.targetRole || pendingConfig?.targetRole}
           sessionReady={Boolean(activeSession?.sessionId)}
-          onComplete={(stream) => {
+          onComplete={async (stream) => {
+            await unlockAudioOutput();
             setMediaStream(stream || null);
             setView("live");
           }}

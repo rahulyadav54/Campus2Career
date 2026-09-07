@@ -10,6 +10,7 @@ import {
   isMediaSupported,
   requestInterviewMedia,
   stopMediaStream,
+  unlockAudioOutput,
 } from "./mediaAccess";
 
 export default function PreInterviewFlow({ candidateName, targetRole, sessionReady = true, onComplete }) {
@@ -112,8 +113,9 @@ export default function PreInterviewFlow({ candidateName, targetRole, sessionRea
     { id: "ready", label: "Ready to begin", icon: CheckCircle, ok: canContinue, hint: canContinue ? "Ready" : "Waiting for mic" },
   ];
 
-  const handleEnter = () => {
+  const handleEnter = async () => {
     stopMicMeter();
+    await unlockAudioOutput();
     handedOffRef.current = true;
     const stream = streamRef.current;
     streamRef.current = null;

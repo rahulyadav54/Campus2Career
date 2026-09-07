@@ -19,7 +19,7 @@ import {
   isReadyConfirmation,
 } from "../../../features/virtualInterview/constants";
 import CandidateVideo from "../../../features/virtualInterview/CandidateVideo";
-import { stopMediaStream } from "../../../features/virtualInterview/mediaAccess";
+import { stopMediaStream, unlockAudioOutput } from "../../../features/virtualInterview/mediaAccess";
 
 const fmt = (secs) => {
   const m = Math.floor(secs / 60);
@@ -171,18 +171,25 @@ export default function LiveInterview({ session, mediaStream: initialMediaStream
 
       welcomeStartedRef.current = true;
       setDisplayCaption(greeting);
-      setState(INTERVIEWER_STATES.SPEAKING);
-      setEmotion("speaking");
 
-      speechRef.current.speak(greeting, () => {
-        if (waitingForReady) {
-          beginListening();
-        } else if (firstQ?.text) {
-          speakAI(firstQ.text, () => activateListening());
-        } else {
-          activateListening();
-        }
-      });
+      const runWelcome = async () => {
+        await unlockAudioOutput();
+        await speechRef.current?.unlockAudio?.();
+        setState(INTERVIEWER_STATES.SPEAKING);
+        setEmotion("speaking");
+
+        speechRef.current.speak(greeting, () => {
+          if (waitingForReady) {
+            beginListening();
+          } else if (firstQ?.text) {
+            speakAI(firstQ.text, () => activateListening());
+          } else {
+            activateListening();
+          }
+        });
+      };
+
+      runWelcome();
     };
 
     const timer = setTimeout(startWelcome, 250);

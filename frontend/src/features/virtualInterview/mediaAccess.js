@@ -163,3 +163,37 @@ export function hasLiveVideo(stream) {
   const track = stream?.getVideoTracks?.()?.[0];
   return Boolean(track && track.readyState === "live" && track.enabled);
 }
+
+/** Unlock speaker output after a user click (required by Chrome autoplay rules). */
+export async function unlockAudioOutput() {
+  if (typeof window === "undefined") return;
+
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    await ctx.resume();
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+    await new Promise((r) => setTimeout(r, 10));
+    await ctx.close();
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    const probe = new Audio();
+    probe.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+    probe.volume = 0.01;
+    await probe.play();
+    probe.pause();
+  } catch {
+    /* ignore */
+  }
+
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+  }
+}
