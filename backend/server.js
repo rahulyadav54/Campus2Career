@@ -209,6 +209,22 @@ const startServer = async () => {
         .then((summary) => console.log("Portal catalog seed complete:", summary))
         .catch((err) => console.error("Portal catalog seed failed:", err));
     }
+
+    try {
+      const LiveIndustryProject = (await import("./models/LiveIndustryProject.js")).default;
+      const Workshop = (await import("./models/Workshop.js")).default;
+      const projectCount = await LiveIndustryProject.countDocuments({ status: "published" });
+      const workshopCount = await Workshop.countDocuments({ status: "published" });
+      if (projectCount < 3 || workshopCount < 2) {
+        console.log(`Auto-seeding collaborations (projects: ${projectCount}, workshops: ${workshopCount})`);
+        const { runCollaborationSeed } = await import("./scripts/seedCollaborations.js");
+        runCollaborationSeed()
+          .then((summary) => console.log("Collaboration seed complete:", summary))
+          .catch((err) => console.error("Collaboration seed failed:", err));
+      }
+    } catch (seedErr) {
+      console.error("Collaboration auto-seed check failed:", seedErr.message);
+    }
   } catch (error) {
     console.error("❌ Backend startup stopped:", error.message);
     process.exitCode = 1;

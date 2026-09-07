@@ -45,7 +45,15 @@ export const listProjects = async (req, res) => {
 
 export const createWorkshop = async (req, res) => {
   try {
-    const item = await Workshop.create({ ...req.body, createdBy: req.user._id });
+    const body = { ...req.body };
+    if (Array.isArray(body.tags) && !body.skills) body.skills = body.tags;
+    if (typeof body.tags === "string" && !body.skills) {
+      body.skills = body.tags.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    if (body.instructor && !body.organizer) body.organizer = body.instructor;
+    if (body.capacity) body.maxParticipants = Number(body.capacity);
+    body.status = body.status || "published";
+    const item = await Workshop.create({ ...body, createdBy: req.user._id });
     res.status(201).json({ success: true, data: item });
   } catch (err) {
     res.status(400).json({ message: "Failed to create workshop", error: err.message });
@@ -54,7 +62,15 @@ export const createWorkshop = async (req, res) => {
 
 export const createGuestLecture = async (req, res) => {
   try {
-    const item = await GuestLecture.create({ ...req.body, createdBy: req.user._id });
+    const body = { ...req.body };
+    if (body.instructor && !body.speaker) body.speaker = body.instructor;
+    if (body.title && !body.topic) body.topic = body.title;
+    if (!body.organization) body.organization = body.organizer || "Campus Partner";
+    if (!body.designation) body.designation = "Industry Expert";
+    if (Array.isArray(body.tags) && !body.skills) body.skills = body.tags;
+    if (body.capacity) body.maxParticipants = Number(body.capacity);
+    body.status = body.status || "published";
+    const item = await GuestLecture.create({ ...body, createdBy: req.user._id });
     res.status(201).json({ success: true, data: item });
   } catch (err) {
     res.status(400).json({ message: "Failed to create guest lecture", error: err.message });
@@ -63,7 +79,18 @@ export const createGuestLecture = async (req, res) => {
 
 export const createChallenge = async (req, res) => {
   try {
-    const item = await InnovationChallenge.create({ ...req.body, createdBy: req.user._id });
+    const body = { ...req.body };
+    if (!body.organizer) body.organizer = "Campus2Career";
+    if (!body.theme) body.theme = body.title || "Innovation";
+    if (body.deadline && !body.registrationDeadline) body.registrationDeadline = body.deadline;
+    if (!body.startDate) body.startDate = body.registrationDeadline || new Date();
+    if (!body.endDate) body.endDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+    if (body.teamSize) body.maxTeamSize = Number(body.teamSize);
+    if (typeof body.tags === "string") {
+      body.skills = body.tags.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    body.status = body.status === "open" || !body.status ? "published" : body.status;
+    const item = await InnovationChallenge.create({ ...body, createdBy: req.user._id });
     res.status(201).json({ success: true, data: item });
   } catch (err) {
     res.status(400).json({ message: "Failed to create innovation challenge", error: err.message });
@@ -72,7 +99,17 @@ export const createChallenge = async (req, res) => {
 
 export const createProject = async (req, res) => {
   try {
-    const item = await LiveIndustryProject.create({ ...req.body, createdBy: req.user._id });
+    const body = { ...req.body };
+    if (Array.isArray(body.skills) && !body.skillsRequired) {
+      body.skillsRequired = body.skills;
+    }
+    if (body.deadline && !body.applicationDeadline) {
+      body.applicationDeadline = body.deadline;
+    }
+    if (body.capacity) body.capacity = Number(body.capacity);
+    body.status = body.status || "published";
+
+    const item = await LiveIndustryProject.create({ ...body, createdBy: req.user._id });
     res.status(201).json({ success: true, data: item });
   } catch (err) {
     res.status(400).json({ message: "Failed to create live industry project", error: err.message });

@@ -10,6 +10,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import { FALLBACK_PROJECTS } from "../../data/collaborationCatalog";
 
 const getUserRole = () => {
   try {
@@ -53,15 +54,21 @@ export default function LiveIndustryProjects() {
       });
       if (!res.ok) throw new Error("Failed to fetch projects");
       const data = await res.json();
-      setProjects(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
+      const list = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
+      setProjects(list.length ? list : FALLBACK_PROJECTS);
     } catch (err) {
-      toast.error(err.message);
+      setProjects(FALLBACK_PROJECTS);
+      toast.error(err.message || "Showing sample industry projects");
     } finally {
       setLoading(false);
     }
   };
 
   const handleApply = async (id) => {
+    if (String(id).startsWith("demo-")) {
+      toast.success("Application recorded (demo listing). Connect backend seed for live applications.");
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
@@ -346,7 +353,7 @@ export default function LiveIndustryProjects() {
                   </div>
                 </div>
                 <span className="text-[10px] sm:text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded capitalize">
-                  {project.mode}
+                  {project.mode || "hybrid"}
                 </span>
               </div>
 
@@ -357,24 +364,26 @@ export default function LiveIndustryProjects() {
               <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Building2 size={12} className="text-gray-400" />
-                  {project.industry}
+                  {project.industry || project.company || "Industry"}
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign size={12} className="text-gray-400" />
-                  {project.stipend}
+                  {project.stipend || "Stipend TBA"}
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock size={12} className="text-gray-400" />
-                  {project.duration}
+                  {project.duration || "Flexible"}
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar size={12} className="text-gray-400" />
-                  Due: {new Date(project.deadline).toLocaleDateString()}
+                  Due: {project.applicationDeadline || project.deadline
+                    ? new Date(project.applicationDeadline || project.deadline).toLocaleDateString()
+                    : "Open"}
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
-                {(project.skills || []).map((skill) => (
+                {(project.skillsRequired || project.skills || []).map((skill) => (
                   <span
                     key={skill}
                     className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-50 text-blue-700 rounded flex items-center gap-1"

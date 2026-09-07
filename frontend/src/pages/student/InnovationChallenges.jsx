@@ -11,6 +11,7 @@ import {
   X,
   Code,
 } from "lucide-react";
+import { FALLBACK_CHALLENGES } from "../../data/collaborationCatalog";
 
 const getUserRole = () => {
   try {
@@ -53,15 +54,21 @@ export default function InnovationChallenges() {
       });
       if (!res.ok) throw new Error("Failed to fetch challenges");
       const data = await res.json();
-      setChallenges(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
+      const list = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
+      setChallenges(list.length ? list : FALLBACK_CHALLENGES);
     } catch (err) {
-      toast.error(err.message);
+      setChallenges(FALLBACK_CHALLENGES);
+      toast.error(err.message || "Showing sample challenges");
     } finally {
       setLoading(false);
     }
   };
 
   const handleApply = async (id) => {
+    if (String(id).startsWith("demo-")) {
+      toast.success("Team registration recorded (demo challenge).");
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
@@ -354,32 +361,34 @@ export default function InnovationChallenges() {
               <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Users size={12} className="text-gray-400" />
-                  Team size: {challenge.teamSize}
+                  Team size: {challenge.maxTeamSize || challenge.teamSize || 4}
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar size={12} className="text-gray-400" />
-                  Deadline: {new Date(challenge.deadline).toLocaleDateString()}
+                  Deadline: {(challenge.registrationDeadline || challenge.deadline)
+                    ? new Date(challenge.registrationDeadline || challenge.deadline).toLocaleDateString()
+                    : "Open"}
                 </div>
                 <div className="flex items-center gap-2">
                   <Award size={12} className="text-gray-400" />
-                  {challenge.prize}
+                  {challenge.prize || "Certificates"}
                 </div>
                 <div className="flex items-center gap-2">
                   <Target size={12} className="text-gray-400" />
-                  {challenge.applications?.length || 0} teams
+                  {challenge.organizer || "Campus partner"}
                 </div>
               </div>
 
-              {challenge.rules && (
+              {challenge.eligibility && (
                 <div className="mt-3 p-3 bg-gray-50 rounded-lg">
                   <p className="text-xs text-gray-600 line-clamp-2">
-                    {challenge.rules}
+                    Eligibility: {challenge.eligibility}
                   </p>
                 </div>
               )}
 
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
-                {(challenge.tags || []).map((tag) => (
+                {(challenge.skills || challenge.tags || []).map((tag) => (
                   <span
                     key={tag}
                     className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-100 text-gray-700 rounded"

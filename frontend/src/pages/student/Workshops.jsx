@@ -10,6 +10,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import { FALLBACK_LECTURES, FALLBACK_WORKSHOPS } from "../../data/collaborationCatalog";
 
 const getUserRole = () => {
   try {
@@ -56,23 +57,31 @@ export default function Workshops() {
         });
         if (!res.ok) throw new Error("Failed to fetch workshops");
         const data = await res.json();
-        setWorkshops(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
+        const list = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
+        setWorkshops(list.length ? list : FALLBACK_WORKSHOPS);
       } else {
         const res = await fetch(`${API_URL}/api/collaborations/guest-lectures`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to fetch guest lectures");
         const data = await res.json();
-        setLectures(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
+        const list = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
+        setLectures(list.length ? list : FALLBACK_LECTURES);
       }
     } catch (err) {
-      toast.error(err.message);
+      if (activeTab === "workshops") setWorkshops(FALLBACK_WORKSHOPS);
+      else setLectures(FALLBACK_LECTURES);
+      toast.error(err.message || "Showing sample events");
     } finally {
       setLoading(false);
     }
   };
 
   const handleRegister = async (id) => {
+    if (String(id).startsWith("demo-")) {
+      toast.success("Registration recorded (demo event).");
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
       const endpoint =
@@ -379,44 +388,42 @@ export default function Workshops() {
                       {item.title}
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                      {item.instructor || item.speaker}
+                      {item.organizer || item.instructor || item.speaker || item.organization}
                     </p>
                   </div>
                 </div>
                 <span className="text-[10px] sm:text-xs px-2 py-1 bg-indigo-50 text-indigo-700 rounded capitalize">
-                  {item.mode}
+                  {item.mode || "online"}
                 </span>
               </div>
 
               <p className="text-gray-700 mt-3 sm:mt-4 text-xs sm:text-sm line-clamp-2">
-                {item.description}
+                {item.description || item.topic}
               </p>
 
               <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <Calendar size={12} className="text-gray-400" />
-                  {new Date(item.date).toLocaleDateString()}
+                  {item.date ? new Date(item.date).toLocaleDateString() : "TBA"}
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock size={12} className="text-gray-400" />
-                  {item.time}
+                  {item.time || "TBA"}
                 </div>
-                {item.location && (
+                {(item.location || item.organization) && (
                   <div className="flex items-center gap-2">
                     <MapPin size={12} className="text-gray-400" />
-                    {item.location}
+                    {item.location || item.organization}
                   </div>
                 )}
-                {item.capacity && (
-                  <div className="flex items-center gap-2">
-                    <Users size={12} className="text-gray-400" />
-                    {item.capacity} seats
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <Users size={12} className="text-gray-400" />
+                  {item.registeredCount || 0}/{item.maxParticipants || item.capacity || "∞"} seats
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-3 sm:mt-4">
-                {(item.tags || []).map((tag) => (
+                {(item.skills || item.tags || []).map((tag) => (
                   <span
                     key={tag}
                     className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gray-100 text-gray-700 rounded"
