@@ -33,24 +33,54 @@ const VoiceEngine = forwardRef(function VoiceEngine(
   const speakingRef    = useRef(false);
   const silenceTimerRef = useRef(null);
 
+  // Helper to select Indian English voice or fallback
+  const getPreferredVoice = useCallback(() => {
+    const synth = synthRef.current;
+    if (!synth) return null;
+    const voices = synth.getVoices() || [];
+    if (!voices.length) return null;
+
+    // 1. Indian English specific (en-IN or contains India/Indian/Hindi)
+    const indianVoice = voices.find(v =>
+      (v.lang === "en-IN" || v.lang === "en_IN" || v.name.toLowerCase().includes("india") || v.name.toLowerCase().includes("indian")) &&
+      (v.name.toLowerCase().includes("google") || v.name.toLowerCase().includes("natural") || v.name.toLowerCase().includes("neural"))
+    ) || voices.find(v =>
+      v.lang === "en-IN" || v.lang === "en_IN" || v.name.toLowerCase().includes("india") || v.name.toLowerCase().includes("indian") || v.name.toLowerCase().includes("hindi")
+    );
+    if (indianVoice) return indianVoice;
+
+    // 2. High quality natural English voice fallback
+    const naturalVoice = voices.find(v =>
+      v.lang.startsWith("en") && (v.name.toLowerCase().includes("google") || v.name.toLowerCase().includes("natural") || v.name.toLowerCase().includes("neural"))
+    );
+    if (naturalVoice) return naturalVoice;
+
+    // 3. General English fallback
+    return voices.find(v => v.lang.startsWith("en")) || voices[0];
+  }, []);
+
   // ── TTS ─────────────────────────────────────────────────────────────────────
 
   const speak = useCallback((text, onDone) => {
-    if (!text || speakingRef.current) return;
+    if (!text) return;
     const synth = synthRef.current;
+    if (!synth) { onDone?.(); return; }
+
+    // Stop previous utterance
     synth.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate   = 0.95;
+    utterance.rate   = 0.98;
     utterance.pitch  = 1.0;
     utterance.volume = 1.0;
 
-    // Prefer a natural-sounding English voice
-    const voices = synth.getVoices();
-    const preferred = voices.find(v =>
-      v.lang.startsWith("en") && (v.name.toLowerCase().includes("google") || v.name.toLowerCase().includes("natural") || v.name.toLowerCase().includes("neural"))
-    ) || voices.find(v => v.lang.startsWith("en")) || voices[0];
-    if (preferred) utterance.voice = preferred;
+    const preferred = getPreferredVoice();
+    if (preferred) {
+      utterance.voice = preferred;
+      utterance.lang  = preferred.lang || "en-IN";
+    } else {
+      utterance.lang  = "en-IN";
+    }
 
     utterance.onstart = () => {
       speakingRef.current = true;
@@ -64,16 +94,17 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     utterance.onerror = (e) => {
       speakingRef.current = false;
       onSpeakEnd?.();
-      // Interrupted is not an error
       if (e.error !== "interrupted") onError?.("TTS error: " + e.error);
       onDone?.();
     };
 
     synth.speak(utterance);
-  }, [onSpeakStart, onSpeakEnd, onError]);
+  }, [getPreferredVoice, onSpeakStart, onSpeakEnd, onError]);
 
   const stopSpeaking = useCallback(() => {
-    synthRef.current?.cancel();
+    if (synthRef.current) {
+      synthRef.current.cancel();
+    }
     speakingRef.current = false;
   }, []);
 
@@ -86,12 +117,10 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     }
     if (listeningRef.current) return;
 
-    stopSpeaking();
-
     const recognition = new SpeechRecognition();
     recognition.continuous      = true;
     recognition.interimResults  = true;
-    recognition.lang            = "en-US";
+    recognition.lang            = "en-IN";
     recognition.maxAlternatives = 1;
 
     let finalTranscript = "";
@@ -102,6 +131,12 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     };
 
     recognition.onresult = (event) => {
+      // ChatGPT Voice Mode Interruption: If user starts speaking while AI is talking, stop AI speech!
+      if (speakingRef.current) {
+        stopSpeaking();
+        onSpeakEnd?.();
+      }
+
       let interim = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
@@ -114,7 +149,7 @@ const VoiceEngine = forwardRef(function VoiceEngine(
         }
       }
 
-      // Auto-end on 2s silence after content
+      // Auto-end on 2s silence after speech content
       clearTimeout(silenceTimerRef.current);
       if (finalTranscript.trim().length > 5) {
         silenceTimerRef.current = setTimeout(() => {
@@ -127,7 +162,7 @@ const VoiceEngine = forwardRef(function VoiceEngine(
       if (event.error === "not-allowed") {
         onError?.("Microphone access denied. Please allow microphone access in your browser settings.");
       } else if (event.error === "no-speech") {
-        // Soft — restart
+        // Soft error
       } else if (event.error !== "aborted") {
         onError?.("Speech recognition error: " + event.error);
       }
@@ -139,13 +174,15 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     };
 
     recognitionRef.current = recognition;
-    recognition.start();
-  }, [onListeningStart, onListeningEnd, onTranscript, onError, stopSpeaking]);
+    try {
+      recognition.start();
+    } catch { /* ignore if already started */ }
+  }, [onListeningStart, onListeningEnd, onTranscript, onError, stopSpeaking, onSpeakEnd]);
 
   const stopListening = useCallback(() => {
     clearTimeout(silenceTimerRef.current);
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try { recognitionRef.current.stop(); } catch { /* ignore */ }
       recognitionRef.current = null;
     }
     listeningRef.current = false;
@@ -154,10 +191,20 @@ const VoiceEngine = forwardRef(function VoiceEngine(
   // ── Cleanup on unmount ───────────────────────────────────────────────────────
 
   useEffect(() => {
+    const synth = synthRef.current;
+    if (synth && synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = () => {
+        synth.getVoices();
+      };
+    }
     return () => {
       clearTimeout(silenceTimerRef.current);
-      recognitionRef.current?.abort();
-      synthRef.current?.cancel();
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch { /* ignore */ }
+      }
+      if (synthRef.current) {
+        synthRef.current.cancel();
+      }
     };
   }, []);
 

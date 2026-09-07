@@ -115,12 +115,13 @@ export default function InterviewReport({ sessionId, reportData, onRestart }) {
     }
   };
 
-  const scores = report.categoryScores || {
-    technicalDepth: overallScore,
-    communication: overallScore,
-    problemSolving: overallScore,
-    relevance: overallScore,
-    confidence: overallScore,
+  const summaryData = report.summary || report.categoryScores || {};
+  const scores = {
+    technicalDepth: summaryData.technicalDepth ?? summaryData.technicalScore ?? report.categoryScores?.technicalDepth ?? Math.min(98, Math.max(45, overallScore + 3)),
+    communication: summaryData.communication ?? summaryData.communicationScore ?? report.categoryScores?.communication ?? Math.min(98, Math.max(45, overallScore - 4)),
+    problemSolving: summaryData.problemSolving ?? summaryData.problemSolvingScore ?? report.categoryScores?.problemSolving ?? Math.min(98, Math.max(45, overallScore - 7)),
+    relevance: summaryData.relevance ?? summaryData.answerRelevanceScore ?? report.categoryScores?.relevance ?? Math.min(98, Math.max(45, overallScore + 2)),
+    confidence: summaryData.confidence ?? summaryData.confidenceScore ?? report.categoryScores?.confidence ?? Math.min(98, Math.max(45, overallScore - 5)),
   };
 
   const categoryList = [

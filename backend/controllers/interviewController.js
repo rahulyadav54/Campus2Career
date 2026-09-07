@@ -402,8 +402,8 @@ export const getAvatarToken = async (req, res) => {
 import fs from "fs";
 import path from "path";
 
-// Helper to get local interviewer base64 photo
-const getLocalInterviewerBase64 = () => {
+// Helper to get local interviewer URL
+const getLocalInterviewerUrl = (req) => {
   try {
     const pathsToTry = [
       path.join(process.cwd(), "uploads", "interviewer.jpeg"),
@@ -414,12 +414,12 @@ const getLocalInterviewerBase64 = () => {
     ];
     for (const p of pathsToTry) {
       if (fs.existsSync(p)) {
-        const buffer = fs.readFileSync(p);
-        return `data:image/jpeg;base64,${buffer.toString("base64")}`;
+        const backendUrl = (process.env.BACKEND_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+        return `${backendUrl}/uploads/interviewer.jpeg`;
       }
     }
   } catch (e) {
-    console.warn("Could not read local interviewer.jpeg:", e.message);
+    console.warn("Could not resolve local interviewer.jpeg:", e.message);
   }
   return "https://create-images-results.d-id.com/DefaultPresenters/Noam_m/image.jpeg";
 };
@@ -443,7 +443,7 @@ export const createDIDStream = async (req, res) => {
     let presenterUrl = req.body.presenterUrl;
 
     if (!presenterUrl || presenterUrl === "default" || presenterUrl.startsWith("/interviewer") || presenterUrl.includes("interviewer.jpeg")) {
-      presenterUrl = getLocalInterviewerBase64();
+      presenterUrl = getLocalInterviewerUrl(req);
     }
 
     const didRes = await fetch("https://api.d-id.com/talks/streams", {
