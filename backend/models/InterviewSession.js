@@ -14,6 +14,7 @@ const evaluationSchema = new mongoose.Schema(
     improvements:        [{ type: String }],
     followUpRequired:    { type: Boolean, default: false },
     followUpReason:      { type: String, default: "" },
+    answerClassification: { type: String, default: "" },
   },
   { _id: false }
 );
@@ -53,6 +54,7 @@ const summarySchema = new mongoose.Schema(
     confidenceScore:       { type: Number, min: 0, max: 100, default: 0 },
     problemSolvingScore:   { type: Number, min: 0, max: 100, default: 0 },
     answerRelevanceScore:  { type: Number, min: 0, max: 100, default: 0 },
+    clarityScore:          { type: Number, min: 0, max: 100, default: 0 },
   },
   { _id: false }
 );
@@ -86,6 +88,30 @@ const interviewSessionSchema = new mongoose.Schema(
     },
     durationMinutes:   { type: Number, default: 10 },
     resumeBased:       { type: Boolean, default: false },
+    jobDescription:    { type: String, default: "" },
+
+    conversationState: {
+      phase:               { type: String, default: "welcome" },
+      questionNumber:      { type: Number, default: 0 },
+      interviewerEmotion:  { type: String, default: "idle" },
+      candidateReady:      { type: Boolean, default: false },
+      topicsCovered:       [{ type: String }],
+      topicsMissing:       [{ type: String }],
+    },
+
+    conversationMemory: {
+      candidateName:           { type: String, default: "" },
+      skillsMentioned:         [{ type: String }],
+      projectsMentioned:       [{ type: String }],
+      technologiesMentioned:   [{ type: String }],
+      topicsCovered:           [{ type: String }],
+      strongAreas:             [{ type: String }],
+      weakAreas:               [{ type: String }],
+      keyQuotes:               [{ type: String }],
+      questionsAsked:          [{ type: String }],
+    },
+
+    executiveSummary: { type: String, default: "" },
 
     // Session lifecycle
     status: {
@@ -130,7 +156,7 @@ const interviewSessionSchema = new mongoose.Schema(
     },
 
     // AI model used
-    aiModel: { type: String, default: "nvidia/nemotron" },
+    aiModel: { type: String, default: "gemini" },
   },
   { timestamps: true }
 );

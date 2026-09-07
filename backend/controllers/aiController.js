@@ -6,6 +6,7 @@ import UserModel from "../models/UserModel.js";
 import AssessmentAttemptModel from "../models/AssessmentAttemptModel.js";
 import PortfolioItemModel from "../models/PortfolioItemModel.js";
 import { chatWithGemini, isGeminiConfigured } from "../services/geminiService.js";
+import { chatWithNemotron, isNemotronConfigured } from "../services/nemotronService.js";
 
 const SKILL_KEYWORDS = [
   "JavaScript",
@@ -174,7 +175,18 @@ const mergeImportedArrays = (existing = [], imported = []) => {
 // ==========================================
 // 0. Campus2Career AI Chat (NVIDIA Nemotron)
 // ==========================================
-const CAREER_ADVISOR_SYSTEM_PROMPT = `You are Campus2Career AI Advisor, a helpful career assistant for students, recruiters, and academicians. You provide personalised career guidance, skill recommendations, job search advice, interview preparation tips, resume improvement suggestions, and learning roadmaps. Keep responses concise, actionable, and friendly. If you don't know something, say so rather than guessing. Do not make up factual information about companies or opportunities — always recommend checking the official Campus2Career portal for real-time listings.`;
+const CAREER_ADVISOR_SYSTEM_PROMPT = `You are Campus2Career AI Advisor, a helpful career assistant for students, recruiters, and academicians.
+
+You provide personalised career guidance, skill recommendations, job search advice, interview preparation tips, resume improvement suggestions, and learning roadmaps.
+
+Rules:
+- Answer the user's actual question directly. If they ask for a 4-week plan, give a full week-by-week plan — not generic portal navigation steps.
+- Use their profile context (skills, gaps, interests) to personalise answers.
+- Keep responses structured with markdown headings and bullet points when helpful.
+- Be concise, actionable, and friendly.
+- If you don't know something, say so rather than guessing.
+- Do not make up factual information about companies or opportunities — recommend checking the Campus2Career portal for live listings.
+- Never reply with only "complete your profile" or assessment reminders unless the user specifically asks about profile setup.`;
 
 /**
  * Build a safe, minimal context object from the authenticated user's profile.
@@ -203,7 +215,95 @@ const buildTemplateCareerAdvice = (userPrompt, {
   profileCompletion = 0,
   readinessScore = 0,
 } = {}) => {
-  const lowerPrompt = String(userPrompt || "").toLowerCase();
+  const lowerPrompt = String(userPrompt || "").toLowerCase().trim();
+  const skillsList = String(userSkills)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const primarySkills = skillsList.slice(0, 6);
+  const focusSkill =
+    primarySkills.find((s) => lowerPrompt.includes(s.toLowerCase())) ||
+    primarySkills[0] ||
+    "your target role";
+
+  if (/^(hi|hello|hey|hii|hola|good\s+(morning|afternoon|evening))[\s!.?]*$/i.test(lowerPrompt)) {
+    return `Hi! I'm your Campus2Career career advisor.
+
+I can help you with:
+- **Learning roadmaps** (e.g. a 4-week plan for a skill)
+- **Interview preparation** and mock questions
+- **Skill gap analysis** based on your profile
+- **Resume and portfolio** improvements
+- **Job and internship** search strategy
+
+What would you like to work on today?`;
+  }
+
+  if (
+    lowerPrompt.includes("week plan") ||
+    lowerPrompt.includes("weekly plan") ||
+    /\b\d+\s*[- ]?week\b/.test(lowerPrompt) ||
+    (lowerPrompt.includes("plan") && (lowerPrompt.includes("learn") || lowerPrompt.includes("study")))
+  ) {
+    const weeks = (() => {
+      const m = lowerPrompt.match(/(\d+)\s*[- ]?week/);
+      return m ? Math.min(12, Math.max(2, parseInt(m[1], 10))) : 4;
+    })();
+
+    const topic =
+      (lowerPrompt.match(/learn\s+([a-z0-9+#.\s-]{2,40})/i)?.[1] ||
+        lowerPrompt.match(/for\s+([a-z0-9+#.\s-]{2,40})/i)?.[1] ||
+        focusSkill)
+        .replace(/\b(what|i|need|to|the|full|with|answer)\b/gi, "")
+        .trim() || focusSkill;
+
+    const weekBlocks = Array.from({ length: weeks }, (_, i) => {
+      const w = i + 1;
+      if (w === 1) {
+        return `**Week ${w} — Foundations**\n- Core concepts and terminology for ${topic}\n- 2–3 short tutorials + 1 mini exercise\n- Goal: explain basics in your own words`;
+      }
+      if (w === 2) {
+        return `**Week ${w} — Guided practice**\n- Build one small project using ${topic}\n- Focus on one real workflow end-to-end\n- Document what you learned in your portfolio`;
+      }
+      if (w === weeks) {
+        return `**Week ${w} — Interview-ready**\n- 2 mock interview questions on ${topic}\n- Revise weak areas from Weeks 1–${weeks - 1}\n- Add project + notes to your Campus2Career portfolio`;
+      }
+      return `**Week ${w} — Depth & application**\n- Intermediate topics in ${topic}\n- Extend your project with one new feature\n- 30 min/day deliberate practice`;
+    }).join("\n\n");
+
+    return `### 📅 ${weeks}-Week Learning Plan: ${topic}
+
+Based on your profile skills (${userSkills}) and your request.
+
+${weekBlocks}
+
+**Daily rhythm (recommended):**
+- 45–60 min learning
+- 30–45 min hands-on practice
+- 10 min reflection (what was unclear?)
+
+**Track progress in Campus2Career:**
+1. Add ${topic} to your skills after Week 2
+2. Upload project artifacts to **Portfolio**
+3. Run **Skill Assessment** at the end to refresh gaps
+
+💡 Want this tailored to a specific job role? Tell me the role and company type.`;
+  }
+
+  if (lowerPrompt.includes("mock") && lowerPrompt.includes("interview")) {
+    return `### 🎤 Mock Interview Starter
+
+I can run a focused mock interview with you. Pick a track:
+
+1. **HR / Behavioral** — teamwork, conflict, strengths
+2. **Technical** — ${primarySkills.slice(0, 3).join(", ") || "core stack"} fundamentals
+3. **Role-based** — tell me the job title (e.g. Frontend Developer)
+
+**Sample question to practice now:**
+*"Tell me about a project where you used ${focusSkill}. What was your contribution and what would you improve?"*
+
+Reply with your answer, or say **"Start HR mock"** / **"Start technical mock"**.`;
+  }
 
   if (lowerPrompt.includes("data science") || lowerPrompt.includes("data analyst") || lowerPrompt.includes("machine learning")) {
     return `### 📊 Career Guidance: Data Science & Analytics
@@ -276,6 +376,38 @@ Based on your query: *"${userPrompt}"*
 💡 **Tip:** Keep your profile updated and upload your resume for AI-based profile enrichment.`;
 };
 
+const callCareerAdvisorModel = async ({ messages, systemPrompt, userContext }) => {
+  if (isNemotronConfigured()) {
+    try {
+      const result = await chatWithNemotron({ messages, systemPrompt, userContext });
+      return {
+        response: result.response,
+        source: "Campus2Career AI Advisor",
+        provider: "nvidia-nemotron",
+        usage: result.usage,
+      };
+    } catch (nemotronError) {
+      console.error("Nemotron chat failed:", nemotronError.message || nemotronError);
+    }
+  }
+
+  if (isGeminiConfigured()) {
+    try {
+      const result = await chatWithGemini({ messages, systemPrompt, userContext });
+      return {
+        response: result.response,
+        source: "Campus2Career AI Advisor",
+        provider: "gemini",
+        usage: result.usage || null,
+      };
+    } catch (geminiError) {
+      console.error("Gemini chat failed:", geminiError.message || geminiError);
+    }
+  }
+
+  return null;
+};
+
 export const chatWithAI = async (req, res) => {
   try {
     const { message, prompt, context, history, attachments } = req.body;
@@ -331,30 +463,24 @@ export const chatWithAI = async (req, res) => {
     const extraContext = typeof context === "object" && context !== null ? context : null;
     const effectiveContext = extraContext || userContext;
 
-    let aiResponse = null;
-    let source = "Campus2Career AI Advisor";
+    const modelResult = await callCareerAdvisorModel({
+      messages,
+      systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
+      userContext: effectiveContext,
+    });
 
-    if (isGeminiConfigured()) {
-      try {
-        const result = await chatWithGemini({
-          messages,
-          systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
-          userContext: effectiveContext,
-        });
-        aiResponse = result.response;
-        if (result.usage) {
-          return res.json({
-            success: true,
-            source,
-            response: aiResponse,
-            usage: result.usage,
-          });
-        }
-      } catch (geminiError) {
-        console.error("Gemini chat failed, using template fallback:", geminiError.message || geminiError);
-      }
-    } else {
-      console.warn("GEMINI_API_KEY is not configured — using template career advisor fallback");
+    if (modelResult?.response) {
+      return res.json({
+        success: true,
+        source: modelResult.source,
+        response: modelResult.response,
+        provider: modelResult.provider,
+        ...(modelResult.usage ? { usage: modelResult.usage } : {}),
+      });
+    }
+
+    if (!isNemotronConfigured() && !isGeminiConfigured()) {
+      console.warn("No AI provider configured — using template career advisor fallback");
     }
 
     const templateContext = {
@@ -369,13 +495,14 @@ export const chatWithAI = async (req, res) => {
       readinessScore: effectiveContext?.readinessScore || 0,
     };
 
-    aiResponse = buildTemplateCareerAdvice(combinedPrompt, templateContext);
-    source = "Campus2Career Career Advisor (template)";
+    const aiResponse = buildTemplateCareerAdvice(combinedPrompt, templateContext);
+    const source = "Campus2Career Career Advisor (template)";
 
     return res.json({
       success: true,
       source,
       response: aiResponse,
+      provider: "template",
     });
   } catch (error) {
     console.error("AI chat error:", error.message || error);
@@ -453,33 +580,28 @@ export const getCareerAdvice = async (req, res) => {
     const profileCompletion = user?.profileCompletion || 0;
     const readinessScore = user?.readinessScore || 0;
 
-    // --- Upgrade: call Gemini when configured ---
-    if (isGeminiConfigured()) {
-      try {
-        const userContext = {
-          skills: userSkills,
-          skillGaps: userGaps,
-          interests: userInterests,
-          profileCompletion,
-          readinessScore,
-          ...studentContext,
-        };
+    const userContext = {
+      skills: userSkills,
+      skillGaps: userGaps,
+      interests: userInterests,
+      profileCompletion,
+      readinessScore,
+      ...studentContext,
+    };
 
-        const result = await chatWithGemini({
-          messages: [{ role: "user", content: userPrompt }],
-          systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
-          userContext,
-        });
+    const modelResult = await callCareerAdvisorModel({
+      messages: [{ role: "user", content: userPrompt }],
+      systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
+      userContext,
+    });
 
-        return res.json({
-          success: true,
-          source: "Campus2Career AI Advisor",
-          answer: result.response,
-        });
-      } catch (geminiError) {
-        console.error("Gemini fallback: AI call failed, using template engine:", geminiError.message || geminiError);
-        // Fall through to the template-based fallback below
-      }
+    if (modelResult?.response) {
+      return res.json({
+        success: true,
+        source: modelResult.source,
+        answer: modelResult.response,
+        provider: modelResult.provider,
+      });
     }
 
     const adviceText = buildTemplateCareerAdvice(userPrompt, {

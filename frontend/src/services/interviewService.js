@@ -5,6 +5,7 @@
  */
 
 import { apiClient } from "./apiClient";
+import { API_URL } from "../config/api";
 
 const BASE = "/api/interviews";
 
@@ -24,15 +25,30 @@ export const interviewService = {
 
   /** Submit an answer and get the next action */
   submitAnswer: (sessionId, payload) =>
-    apiClient.post(`${BASE}/${sessionId}/answer`, payload, { timeout: 30000 }),
+    apiClient.post(`${BASE}/${sessionId}/answer`, payload, { timeout: 60000 }),
+
+  /** Confirm candidate is ready to begin */
+  confirmReady: (sessionId) =>
+    apiClient.post(`${BASE}/${sessionId}/answer`, { confirmReady: true }, { timeout: 30000 }),
 
   /** End the interview and generate the final report */
   end: (sessionId) =>
     apiClient.post(`${BASE}/${sessionId}/end`, {}, { timeout: 90000 }),
 
-  /** Generate natural neural speech for the interviewer */
-  synthesizeSpeech: (text) =>
-    apiClient.post(`${BASE}/tts`, { text }, { responseType: "blob", timeout: 30000 }),
+  /** Generate natural neural speech — returns audio Blob */
+  synthesizeSpeech: async (text) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_URL}${BASE}/tts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ text: String(text).slice(0, 1200) }),
+    });
+    if (!res.ok) throw new Error("Neural speech unavailable");
+    return res.blob();
+  },
 
   /** Get session state (for recovery) */
   getSession: (sessionId) =>

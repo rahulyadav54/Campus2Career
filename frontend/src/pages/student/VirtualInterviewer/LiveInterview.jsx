@@ -1,564 +1,438 @@
 /**
- * LiveInterview.jsx
- *
- * Main interview screen. Manages the full state machine:
- * IDLE → AI_SPEAKING → WAITING_FOR_STUDENT → LISTENING → PROCESSING → AI_THINKING → AI_SPEAKING → ...
+ * LiveInterview — human-like video interview room with conversational state machine.
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Mic, MicOff, Volume2, VolumeX, Pause, Play, Square,
-  Clock, BarChart2, CheckCircle, AlertTriangle, Loader,
+  CheckCircle, AlertTriangle, Loader,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import AvatarPanel from "./AvatarPanel";
-import VoiceEngine from "./VoiceEngine";
+import SpeechPipeline from "../../../features/virtualInterview/SpeechPipeline";
+import HumanAvatar from "../../../features/virtualInterview/HumanAvatar";
+import InterviewProgressPanel from "../../../features/virtualInterview/InterviewProgressPanel";
 import { interviewService, unwrapInterviewResponse } from "../../../services/interviewService";
+import {
+  INTERVIEWER_STATES,
+  AVATAR_EMOTIONS,
+  mapEmotionToAvatar,
+  isReadyConfirmation,
+} from "../../../features/virtualInterview/constants";
 
-const buildLocalReport = (targetRole, answeredCount, avgScore) => {
-  const score = avgScore ?? (answeredCount > 0 ? 68 : 0);
-  return {
-    success: true,
-    targetRole,
-    durationMinutes: 10,
-    createdAt: new Date().toISOString(),
-    summary: {
-      overallScore: score,
-      technicalScore: Math.max(0, score - 5),
-      communicationScore: Math.max(0, score - 2),
-      confidenceScore: Math.max(0, score - 8),
-      problemSolvingScore: Math.max(0, score - 6),
-      answerRelevanceScore: Math.max(0, score - 3),
-    },
-    strengths: answeredCount > 0
-      ? ["You completed spoken answers during the practice session"]
-      : [],
-    weaknesses: answeredCount > 0
-      ? ["Connect to the server for full AI evaluation and detailed feedback"]
-      : ["No substantive answers were recorded during this session"],
-    recommendations: [
-      "Practice STAR-based answers with measurable outcomes",
-      `Review core skills expected for ${targetRole || "your target role"}`,
-      "Retry the interview while connected to generate a full AI report",
-    ],
-    readinessLevel: score >= 75 ? "Ready with Improvement" : score >= 60 ? "Needs More Practice" : "Not Yet Ready",
-    evaluations: [],
-  };
-};
-
-// ── Interview state machine states ────────────────────────────────────────────
-
-const STATES = {
-  IDLE:              "idle",
-  AI_SPEAKING:       "ai_speaking",
-  WAITING:           "waiting",
-  LISTENING:         "listening",
-  PROCESSING:        "processing",
-  AI_THINKING:       "ai_thinking",
-  PAUSED:            "paused",
-  COMPLETED:         "completed",
-  ERROR:             "error",
-};
-
-// Map interview state → avatar state
-const toAvatarState = (state) => ({
-  [STATES.IDLE]:        "idle",
-  [STATES.AI_SPEAKING]: "speaking",
-  [STATES.WAITING]:     "idle",
-  [STATES.LISTENING]:   "listening",
-  [STATES.PROCESSING]:  "thinking",
-  [STATES.AI_THINKING]: "thinking",
-  [STATES.PAUSED]:      "idle",
-  [STATES.COMPLETED]:   "completed",
-  [STATES.ERROR]:       "idle",
-}[state] || "idle");
-
-// ── Helper: format seconds as MM:SS ───────────────────────────────────────────
 const fmt = (secs) => {
   const m = Math.floor(secs / 60);
   const s = Math.floor(secs % 60);
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
-export default function LiveInterview({
-  sessionId,
-  greeting,
-  firstQuestion,
-  totalDurationMs,
-  presenterUrl,
-  heygenToken,
-  isAvatarAvailable,
-  onComplete,
-  onFinish,
-  onExit,
-  session,
-}) {
-  const activeSessionId    = sessionId || session?.sessionId;
-  const activeTargetRole   = session?.targetRole || "Software Engineer";
-  const activeGreeting     = greeting || session?.greeting;
-  const activeFirstQ       = firstQuestion || session?.firstQuestion;
-  const activeDuration     = totalDurationMs || session?.totalDurationMs || 600000;
-  const activePresenterUrl = presenterUrl || session?.presenterUrl;
-  const activeOnFinish     = onFinish || onComplete;
+const buildLocalReport = (targetRole, answeredCount, avgScore) => ({
+  success: true,
+  targetRole,
+  summary: { overallScore: avgScore ?? (answeredCount > 0 ? 68 : 0) },
+  strengths: answeredCount > 0 ? ["Completed spoken answers in practice mode"] : [],
+  weaknesses: ["Connect to server for full AI evaluation"],
+  recommendations: ["Retry with a stable connection for dynamic follow-up questions"],
+  readinessLevel: "Needs More Practice",
+  evaluations: [],
+});
 
-  // ── State ───────────────────────────────────────────────────────────────────
+export default function LiveInterview({ session, onFinish, onExit }) {
+  const activeSessionId = session?.sessionId;
+  const candidateName = session?.candidateName || "";
+  const targetRole = session?.targetRole || "Software Engineer";
+  const activeDuration = session?.totalDurationMs || 600000;
+  const presenterUrl = session?.presenterUrl || "/interviewer.jpeg";
 
-  const [interviewState, setInterviewState]   = useState(STATES.IDLE);
-  const [currentQuestion, setCurrentQuestion] = useState(activeFirstQ || { index: 0, text: "", section: "general" });
-  const [transcript, setTranscript]           = useState("");
+  const [state, setState] = useState(INTERVIEWER_STATES.WELCOME);
+  const [emotion, setEmotion] = useState("speaking");
+  const [currentQuestion, setCurrentQuestion] = useState(session?.firstQuestion || { index: 0, text: "", section: "warmup" });
+  const [displayCaption, setDisplayCaption] = useState("");
+  const [transcript, setTranscript] = useState("");
   const [finalTranscript, setFinalTranscript] = useState("");
-  const [questionCount, setQuestionCount]     = useState(1);
-  const [answeredCount, setAnsweredCount]     = useState(0);
-  const [timeLeft, setTimeLeft]               = useState(Math.floor(activeDuration / 1000));
-  const [micEnabled, setMicEnabled]           = useState(true);
-  const [speakerEnabled, setSpeakerEnabled]   = useState(true);
-  const [error, setError]                     = useState("");
-  const [avgScore, setAvgScore]               = useState(null);
+  const [answeredCount, setAnsweredCount] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(Math.floor(activeDuration / 1000));
+  const [micEnabled, setMicEnabled] = useState(true);
+  const [speakerEnabled, setSpeakerEnabled] = useState(true);
+  const [error, setError] = useState("");
+  const [avgScore, setAvgScore] = useState(null);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [nodTrigger, setNodTrigger] = useState(0);
+  const [phase, setPhase] = useState("welcome");
+  const [waitingForReady, setWaitingForReady] = useState(session?.waitForReady ?? true);
+  const [candidateStream, setCandidateStream] = useState(null);
 
-  const voiceRef      = useRef(null);
-  const timerRef      = useRef(null);
-  const stateRef      = useRef(STATES.IDLE);
-  const bargeInRef    = useRef(false);
+  const speechRef = useRef(null);
+  const timerRef = useRef(null);
+  const stateRef = useRef(state);
   const processingRef = useRef(false);
+  const listenStartRef = useRef(0);
 
-  // Keep stateRef in sync
-  useEffect(() => { stateRef.current = interviewState; }, [interviewState]);
+  useEffect(() => { stateRef.current = state; }, [state]);
 
-  // ── Timer ───────────────────────────────────────────────────────────────────
+  // Candidate self-view
+  useEffect(() => {
+    navigator.mediaDevices?.getUserMedia({ video: true, audio: false })
+      .then((s) => setCandidateStream(s))
+      .catch(() => {});
+    return () => candidateStream?.getTracks().forEach((t) => t.stop());
+  }, []);
+
+  const handleEndRef = useRef(() => {});
 
   useEffect(() => {
     timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          if (stateRef.current !== STATES.COMPLETED) {
-            toast("⏰ Time's up! Ending interview…", { icon: "⏰" });
-            handleEnd();
-          }
+          handleEndRef.current?.();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timerRef.current);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  // ── On mount: greet first, then enable the microphone ───────────────────────
+  const speakAI = useCallback((text, onDone, pauseMs = 0) => {
+    if (!text?.trim()) { onDone?.(); return; }
+    setDisplayCaption(text);
+    if (!speakerEnabled) {
+      setTimeout(onDone, 400);
+      return;
+    }
+    speechRef.current?.stopListening();
+    setState(INTERVIEWER_STATES.SPEAKING);
+    setEmotion("speaking");
 
-  useEffect(() => {
-    voiceRef.current?.setInterviewActive(true);
-
-    if (!activeGreeting && !activeFirstQ?.text) return;
-    const text = activeGreeting
-      ? `${activeGreeting} ${activeFirstQ?.text || ""}`
-      : activeFirstQ?.text || "";
-
-    setCurrentQuestion(activeFirstQ || { index: 0, text, section: "general" });
-
-    const t = setTimeout(() => {
-      speakAI(text, () => {
-        setInterviewState(STATES.LISTENING);
-        voiceRef.current?.startListening();
+    const startSpeak = () => {
+      speechRef.current?.speak(text, () => {
+        setEmotion("listening");
+        onDone?.();
       });
-    }, 800);
-    return () => {
-      clearTimeout(t);
-      voiceRef.current?.setInterviewActive(false);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Voice helpers ────────────────────────────────────────────────────────────
-
-  const speakAI = useCallback((text, onDone) => {
-    if (!speakerEnabled) { onDone?.(); return; }
-    voiceRef.current?.stopListening();
-    setInterviewState(STATES.AI_SPEAKING);
-    voiceRef.current?.speak(text, onDone);
+    if (pauseMs > 0) {
+      setState(INTERVIEWER_STATES.THINKING);
+      setEmotion("thinking");
+      setTimeout(startSpeak, pauseMs);
+    } else {
+      startSpeak();
+    }
   }, [speakerEnabled]);
 
   const activateListening = useCallback(() => {
     if (!micEnabled) return;
     setTranscript("");
     setFinalTranscript("");
-    setInterviewState(STATES.LISTENING);
-    bargeInRef.current = false;
-    voiceRef.current?.startListening();
+    setState(INTERVIEWER_STATES.LISTENING);
+    setEmotion("listening");
+    listenStartRef.current = Date.now();
+    speechRef.current?.startListening();
   }, [micEnabled]);
 
-  // ── Voice engine callbacks ──────────────────────────────────────────────────
+  // Opening sequence — welcome + wait for ready
+  useEffect(() => {
+    const greeting = session?.greeting || session?.speakText;
+    const firstQ = session?.firstQuestion;
+    if (!greeting) return;
 
-  const handleTranscript = useCallback((text, isFinal) => {
-    setTranscript(text);
-    if (isFinal) setFinalTranscript(text);
+    const t = setTimeout(() => {
+      speakAI(greeting, () => {
+        if (waitingForReady) {
+          setState(INTERVIEWER_STATES.LISTENING);
+          setEmotion("listening");
+          speechRef.current?.startListening();
+        } else if (firstQ?.text) {
+          speakAI(firstQ.text, () => activateListening());
+        } else {
+          activateListening();
+        }
+      });
+    }, 600);
+    return () => clearTimeout(t);
   }, []);
-
-  const handleBargeIn = useCallback(() => {
-    bargeInRef.current = true;
-    setInterviewState(STATES.LISTENING);
-  }, []);
-
-  const handleSpeechError = useCallback((msg) => {
-    setError(msg);
-    setInterviewState(STATES.ERROR);
-    toast.error(msg);
-  }, []);
-
-  // ── Process student's answer ────────────────────────────────────────────────
 
   const processAnswer = useCallback(async (answer) => {
     if (processingRef.current) return;
     processingRef.current = true;
-
-    bargeInRef.current = false;
+    speechRef.current?.stopListening();
     setTranscript("");
     setFinalTranscript("");
-    voiceRef.current?.stopListening();
-    setInterviewState(STATES.PROCESSING);
+    setState(INTERVIEWER_STATES.ANALYZING);
+    setEmotion("thinking");
+
+    const durationMs = Date.now() - listenStartRef.current;
 
     try {
-      if (activeSessionId?.startsWith("local-")) {
-        throw new Error("Client session mode");
-      }
-      const res = unwrapInterviewResponse(await interviewService.submitAnswer(activeSessionId, {
-        transcript:    answer,
-        questionIndex: currentQuestion.index,
-      }));
-
-      setAnsweredCount(prev => prev + 1);
-      const data = res;
-      if (data?.avgScore) setAvgScore(data.avgScore);
-
-      const nextQ = data?.nextQuestion;
-      const speakText = data?.speakText || nextQ?.text || "Great job. Let's move to the next question.";
-
-      setCurrentQuestion({
-        index:   nextQ?.index ?? currentQuestion.index + 1,
-        text:    nextQ?.text || "Tell me about a technical challenge you resolved recently.",
-        section: nextQ?.section || "technical",
-      });
-      setQuestionCount(prev => prev + 1);
-
-      setInterviewState(STATES.AI_THINKING);
-
-      setTimeout(() => {
-        if (stateRef.current === STATES.AI_THINKING) {
-          speakAI(speakText, () => {
+      // Ready confirmation before first question
+      if (waitingForReady && isReadyConfirmation(answer)) {
+        setWaitingForReady(false);
+        if (!activeSessionId?.startsWith("local-")) {
+          const res = unwrapInterviewResponse(
+            await interviewService.confirmReady(activeSessionId)
+          );
+          speakAI(res.speakText, () => {
+            setCurrentQuestion(res.nextQuestion || currentQuestion);
+            setPhase(res.phase || "introduction");
             processingRef.current = false;
-            setInterviewState(STATES.LISTENING);
-            voiceRef.current?.startListening();
-          });
-        } else {
-          processingRef.current = false;
+            activateListening();
+          }, res.thinkingPauseMs || 500);
+          return;
         }
-      }, 500);
-
-    } catch (err) {
-      console.warn("[LiveInterview] processAnswer fallback:", err.message);
-      const mockQuestions = [
-        { text: "Can you describe a technical challenge you faced in a recent project and how you resolved it?", section: "technical" },
-        { text: "How do you prioritize tasks when working under tight deadlines?", section: "behavioral" },
-        { text: "What are your core strengths and areas you are currently working to improve?", section: "hr" },
-        { text: "Where do you see yourself professionally in the next three years?", section: "hr" },
-      ];
-      setAnsweredCount(prev => prev + 1);
-      const nextIndex = currentQuestion.index + 1;
-      const mockQ = mockQuestions[(nextIndex - 1) % mockQuestions.length];
-      const speakText = `Thank you for your answer. ${mockQ.text}`;
-
-      setCurrentQuestion({
-        index: nextIndex,
-        text: mockQ.text,
-        section: mockQ.section,
-      });
-      setQuestionCount(prev => prev + 1);
-
-      setInterviewState(STATES.AI_THINKING);
-
-      setTimeout(() => {
-        speakAI(speakText, () => {
+        speakAI(`Great. Let's begin. ${session?.firstQuestion?.text || "Tell me about yourself."}`, () => {
+          setWaitingForReady(false);
           processingRef.current = false;
-          setInterviewState(STATES.LISTENING);
-          voiceRef.current?.startListening();
+          activateListening();
+        }, 600);
+        return;
+      }
+
+      if (activeSessionId?.startsWith("local-")) {
+        throw new Error("offline");
+      }
+
+      const res = unwrapInterviewResponse(
+        await interviewService.submitAnswer(activeSessionId, {
+          transcript: answer,
+          questionIndex: currentQuestion.index,
+          durationMs,
+        })
+      );
+
+      setAnsweredCount((c) => c + 1);
+      if (res.avgScore) setAvgScore(res.avgScore);
+      setPhase(res.phase || phase);
+      setEmotion(res.emotion || "speaking");
+      setNodTrigger((n) => n + 1);
+
+      const nextQ = res.nextQuestion;
+      if (nextQ) {
+        setCurrentQuestion({
+          index: nextQ.index ?? currentQuestion.index + 1,
+          text: nextQ.text,
+          section: nextQ.section || "general",
         });
-      }, 500);
+      }
+
+      setState(INTERVIEWER_STATES.THINKING);
+      speakAI(
+        res.speakText || nextQ?.text || "Thank you. Let's continue.",
+        () => {
+          processingRef.current = false;
+          activateListening();
+        },
+        res.thinkingPauseMs || 800
+      );
+    } catch {
+      setAnsweredCount((c) => c + 1);
+      setNodTrigger((n) => n + 1);
+      const fallbacks = [
+        "That's interesting. Can you walk me through a specific example from that experience?",
+        "I see. What was the most challenging part of that for you?",
+        "Alright. How did you measure whether that approach was successful?",
+      ];
+      const line = fallbacks[answeredCount % fallbacks.length];
+      setState(INTERVIEWER_STATES.THINKING);
+      speakAI(`Okay. ${line}`, () => {
+        setCurrentQuestion((q) => ({ ...q, index: q.index + 1, text: line }));
+        processingRef.current = false;
+        activateListening();
+      }, 900);
     }
-  }, [activeSessionId, currentQuestion, speakAI]);
+  }, [activeSessionId, currentQuestion, waitingForReady, session, speakAI, activateListening, answeredCount, phase]);
 
   const handleListeningEnd = useCallback(() => {
-    if (stateRef.current === STATES.COMPLETED || processingRef.current) return;
-
+    if (stateRef.current === INTERVIEWER_STATES.COMPLETED || processingRef.current) return;
     const answer = finalTranscript.trim();
-    if (answer.length >= 3 && (stateRef.current === STATES.LISTENING || bargeInRef.current)) {
+    if (answer.length >= 2 && stateRef.current === INTERVIEWER_STATES.LISTENING) {
       processAnswer(answer);
       return;
     }
-
-    if (stateRef.current !== STATES.PROCESSING && stateRef.current !== STATES.COMPLETED) {
-      setInterviewState(STATES.LISTENING);
-      voiceRef.current?.startListening();
+    if (stateRef.current === INTERVIEWER_STATES.LISTENING) {
+      speechRef.current?.startListening();
     }
   }, [finalTranscript, processAnswer]);
 
-  // ── Manual finish answer button ──────────────────────────────────────────────
-
-  const handleFinishAnswer = useCallback(() => {
-    if (processingRef.current) return;
-    if (stateRef.current !== STATES.LISTENING && stateRef.current !== STATES.AI_SPEAKING) return;
-    voiceRef.current?.stopListening();
-    const answer = finalTranscript.trim() || transcript.trim();
-    if (answer.length < 3) {
-      toast("No answer detected. Please speak into your microphone.", { icon: "🎤" });
-      voiceRef.current?.startListening();
-      return;
-    }
-    processAnswer(answer);
-  }, [finalTranscript, transcript, processAnswer]);
-
-  // ── End interview ────────────────────────────────────────────────────────────
-
   const handleEnd = useCallback(async () => {
     clearInterval(timerRef.current);
-    voiceRef.current?.stopListening();
-    voiceRef.current?.stopSpeaking();
-    voiceRef.current?.setInterviewActive(false);
-    setInterviewState(STATES.COMPLETED);
+    speechRef.current?.stopListening();
+    speechRef.current?.stopSpeaking();
+    setState(INTERVIEWER_STATES.COMPLETED);
+    setEmotion("goodbye");
 
-    const endText = "Thank you for your time. That concludes our interview. I'll now generate your performance report.";
-    voiceRef.current?.speak(endText);
+    const closing = "Thank you for your time today. I'll now prepare your performance report.";
+    speechRef.current?.speak(closing);
 
     try {
       let reportData = null;
       if (activeSessionId?.startsWith("local-")) {
-        reportData = buildLocalReport(activeTargetRole, answeredCount, avgScore);
+        reportData = buildLocalReport(targetRole, answeredCount, avgScore);
       } else {
         const res = unwrapInterviewResponse(await interviewService.end(activeSessionId));
         if (res?.success) reportData = res;
       }
-      setTimeout(() => activeOnFinish?.(reportData), 2500);
-    } catch (err) {
-      console.error("[LiveInterview] endInterview error:", err);
-      activeOnFinish?.(buildLocalReport(activeTargetRole, answeredCount, avgScore));
+      setTimeout(() => onFinish?.(reportData), 2800);
+    } catch {
+      onFinish?.(buildLocalReport(targetRole, answeredCount, avgScore));
     }
-  }, [activeSessionId, activeTargetRole, activeOnFinish, answeredCount, avgScore]);
+  }, [activeSessionId, targetRole, answeredCount, avgScore, onFinish]);
 
-  // ── Pause / resume ───────────────────────────────────────────────────────────
+  handleEndRef.current = handleEnd;
 
-  const handlePause = useCallback(() => {
-    if (interviewState === STATES.PAUSED) {
-      setInterviewState(STATES.LISTENING);
-      voiceRef.current?.startListening();
+  const handlePause = () => {
+    if (state === INTERVIEWER_STATES.PAUSED) {
+      activateListening();
     } else {
-      voiceRef.current?.stopListening();
-      voiceRef.current?.stopSpeaking();
-      setInterviewState(STATES.PAUSED);
+      speechRef.current?.stopListening();
+      speechRef.current?.stopSpeaking();
+      setState(INTERVIEWER_STATES.PAUSED);
     }
-  }, [interviewState]);
+  };
 
-  // ── Progress ─────────────────────────────────────────────────────────────────
-
-  const totalExpected  = Math.ceil((activeDuration / 1000 / 60) * 1.5); // ~1.5 Qs per min
-  const progress       = Math.min(100, Math.round((answeredCount / Math.max(totalExpected, 1)) * 100));
-  const isTimeLow      = timeLeft < 60;
-
-  // ── Render ────────────────────────────────────────────────────────────────────
+  const totalExpected = Math.ceil((activeDuration / 1000 / 60) * 1.5);
+  const progress = Math.min(100, Math.round((answeredCount / Math.max(totalExpected, 1)) * 100));
+  const avatarEmotion = mapEmotionToAvatar(emotion);
+  const statusKey = state === INTERVIEWER_STATES.FOLLOW_UP ? "follow_up"
+    : state === INTERVIEWER_STATES.ANALYZING ? "analyzing"
+    : state === INTERVIEWER_STATES.THINKING ? "thinking"
+    : state === INTERVIEWER_STATES.SPEAKING ? "speaking"
+    : state === INTERVIEWER_STATES.LISTENING ? "listening"
+    : state;
 
   return (
-    <div className="min-h-full bg-gray-50 text-gray-900 flex flex-col relative">
-      {/* VoiceEngine — non-rendering */}
-      <VoiceEngine
-        ref={voiceRef}
-        onTranscript={handleTranscript}
-        onListeningStart={() => setInterviewState(STATES.LISTENING)}
+    <div className="min-h-full bg-gray-100 text-gray-900 flex flex-col relative">
+      <SpeechPipeline
+        ref={speechRef}
+        onTranscript={(text, isFinal) => {
+          setTranscript(text);
+          if (isFinal) setFinalTranscript(text);
+        }}
+        onListeningStart={() => setState(INTERVIEWER_STATES.LISTENING)}
         onListeningEnd={handleListeningEnd}
-        onSpeakStart={() => setInterviewState(STATES.AI_SPEAKING)}
-        onSpeakEnd={() => {}}
-        onBargeIn={handleBargeIn}
-        onError={handleSpeechError}
+        onSpeakStart={() => { setState(INTERVIEWER_STATES.SPEAKING); setEmotion("speaking"); }}
+        onSpeakEnd={() => setAudioLevel(0)}
+        onBargeIn={() => {
+          setState(INTERVIEWER_STATES.LISTENING);
+          setEmotion("listening");
+        }}
+        onAudioLevel={setAudioLevel}
+        onSpeechStarted={() => setNodTrigger((n) => n + 1)}
+        onError={(msg) => { setError(msg); toast.error(msg); }}
       />
 
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200 bg-white flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-sm font-semibold text-gray-900">AI Virtual Interview</span>
-          <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">
-            {currentQuestion.section}
-          </span>
+      <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <span className="font-semibold text-sm">Live interview</span>
+          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 capitalize">{phase}</span>
         </div>
-        <div className={`flex items-center gap-1.5 text-sm font-mono font-bold ${isTimeLow ? "text-red-600 animate-pulse" : "text-gray-700"}`}>
-          <Clock className="w-4 h-4" />
-          {fmt(timeLeft)}
-        </div>
-      </div>
+        <span className={`font-mono text-sm font-bold ${timeLeft < 60 ? "text-red-600" : ""}`}>{fmt(timeLeft)}</span>
+      </header>
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-auto">
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-auto">
+        <InterviewProgressPanel
+          questionNumber={answeredCount + 1}
+          totalExpected={totalExpected}
+          progress={progress}
+          currentTopic={currentQuestion.section}
+          timeLeft={timeLeft}
+          status={statusKey}
+          avgScore={avgScore}
+        />
 
-        {/* Left: Avatar + question */}
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-6 lg:p-10">
-          {/* Avatar */}
-          <AvatarPanel
-            avatarState={toAvatarState(interviewState)}
-            speakText={currentQuestion.text}
-            presenterUrl={activePresenterUrl}
-            heygenToken={heygenToken}
-            isAvatarAvailable={isAvatarAvailable}
-          />
-
-          {/* Current question */}
-          <div className="max-w-lg w-full">
-            <div className="rounded-xl bg-white border border-gray-200 p-5 shadow-sm">
-              {interviewState === STATES.AI_THINKING || interviewState === STATES.PROCESSING ? (
-                <div className="flex items-center gap-3 text-indigo-600">
-                  <Loader className="w-5 h-5 animate-spin" />
-                  <span className="text-sm">Analyzing your answer…</span>
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[320px]">
+          {/* Interviewer */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative">
+            <p className="absolute top-3 left-3 text-xs font-semibold text-gray-500 uppercase">AI interviewer</p>
+            <HumanAvatar
+              emotion={avatarEmotion}
+              audioLevel={audioLevel}
+              presenterUrl={presenterUrl}
+              nodTrigger={nodTrigger}
+            />
+            <div className="mt-4 w-full max-w-md rounded-xl bg-gray-50 border border-gray-200 p-3 min-h-[72px]">
+              {state === INTERVIEWER_STATES.ANALYZING || state === INTERVIEWER_STATES.THINKING ? (
+                <div className="flex items-center gap-2 text-indigo-600 text-sm">
+                  <Loader className="w-4 h-4 animate-spin" /> Processing your answer…
                 </div>
-              ) : interviewState === STATES.PAUSED ? (
-                <p className="text-amber-700 text-sm font-medium flex items-center gap-2">
-                  <Pause className="w-4 h-4" /> Interview paused
-                </p>
               ) : (
-                <p className="text-gray-900 text-base sm:text-lg leading-relaxed font-medium">
-                  {currentQuestion.text || "Preparing your next question…"}
-                </p>
+                <p className="text-sm text-gray-800 leading-relaxed">{displayCaption || currentQuestion.text || "…"}</p>
               )}
             </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="max-w-lg w-full">
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-              <span>Question {answeredCount + 1}</span>
-              <span>{progress}% through</span>
-            </div>
-            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-indigo-600 rounded-full transition-all duration-700"
-                style={{ width: `${progress}%` }}
+          {/* Candidate */}
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden relative shadow-sm">
+            <p className="absolute top-3 left-3 text-xs font-semibold text-gray-300 uppercase z-10">You</p>
+            {candidateStream ? (
+              <video
+                autoPlay playsInline muted
+                ref={(el) => { if (el && candidateStream) el.srcObject = candidateStream; }}
+                className="w-full h-full min-h-[280px] object-cover"
               />
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Transcript + controls */}
-        <div className="w-full lg:w-96 flex flex-col border-t lg:border-t-0 lg:border-l border-gray-200 bg-white">
-          <div className="flex-1 p-5 overflow-y-auto">
-            <div className="flex items-center gap-2 mb-3">
-              <div className={`w-2 h-2 rounded-full transition-colors ${
-                interviewState === STATES.LISTENING ? "bg-emerald-500 animate-pulse" : "bg-gray-300"
-              }`} />
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                {interviewState === STATES.LISTENING ? "Listening…" : "Your Answer"}
-              </span>
-            </div>
-
-            {transcript || finalTranscript ? (
-              <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
-                {transcript || finalTranscript}
-              </p>
             ) : (
-              <p className="text-gray-400 text-sm italic">
-                {interviewState === STATES.LISTENING
-                  ? "Speak now — I'm listening…"
-                  : interviewState === STATES.WAITING
-                  ? "Preparing to listen…"
-                  : "Your response will appear here."}
+              <div className="w-full min-h-[280px] flex items-center justify-center text-gray-500 text-sm">Camera off</div>
+            )}
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+              <p className="text-xs text-gray-300 mb-1">
+                {state === INTERVIEWER_STATES.LISTENING ? "● Listening…" : "Your response"}
               </p>
-            )}
-
-            {error && (
-              <div className="mt-4 flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200">
-                <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                <p className="text-red-700 text-xs">{error}</p>
-              </div>
-            )}
-
-            {avgScore !== null && (
-              <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-100">
-                <BarChart2 className="w-4 h-4 text-indigo-600" />
-                <span className="text-xs text-gray-500">Running score:</span>
-                <span className="text-sm font-bold text-indigo-700">{avgScore}/100</span>
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 border-t border-gray-200 flex flex-col gap-3">
-            {/* Finish answer (manual fallback) */}
-            {interviewState === STATES.LISTENING && (
-              <button
-                onClick={handleFinishAnswer}
-                id="finish-answer-btn"
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition flex items-center justify-center gap-2"
-              >
-                <CheckCircle className="w-4 h-4" />
-                Finish Answer
-              </button>
-            )}
-
-            {/* Icon controls row */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {/* Mic toggle */}
-                <button
-                  onClick={() => setMicEnabled(v => !v)}
-                  title={micEnabled ? "Mute microphone" : "Unmute microphone"}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition border ${
-                    micEnabled ? "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200" : "bg-red-50 border-red-200 text-red-600"
-                  }`}
-                >
-                  {micEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSpeakerEnabled(v => !v);
-                    if (speakerEnabled) voiceRef.current?.stopSpeaking();
-                  }}
-                  title={speakerEnabled ? "Mute speaker" : "Unmute speaker"}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition border ${
-                    speakerEnabled ? "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200" : "bg-red-50 border-red-200 text-red-600"
-                  }`}
-                >
-                  {speakerEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                </button>
-
-                <button
-                  onClick={handlePause}
-                  disabled={interviewState === STATES.COMPLETED}
-                  title={interviewState === STATES.PAUSED ? "Resume" : "Pause"}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition disabled:opacity-30"
-                >
-                  {interviewState === STATES.PAUSED
-                    ? <Play className="w-4 h-4" />
-                    : <Pause className="w-4 h-4" />}
-                </button>
-              </div>
-
-              {/* End interview */}
-              <button
-                onClick={() => {
-                  if (window.confirm("End the interview now and generate your report?")) handleEnd();
-                }}
-                disabled={interviewState === STATES.COMPLETED}
-                id="end-interview-btn"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 border border-red-200 hover:bg-red-100 text-red-700 text-sm font-semibold transition disabled:opacity-30"
-              >
-                <Square className="w-3.5 h-3.5" />
-                End Interview
-              </button>
+              <p className="text-sm text-white line-clamp-3">
+                {transcript || finalTranscript || (state === INTERVIEWER_STATES.LISTENING ? "Speak naturally…" : "…")}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Completed overlay */}
-      {interviewState === STATES.COMPLETED && (
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="text-center space-y-4 bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
-            <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto" />
-            <h2 className="text-2xl font-bold text-gray-900">Interview Complete</h2>
-            <p className="text-gray-500">Generating your performance report…</p>
-            <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+      {error && (
+        <div className="mx-4 mb-2 flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
+        </div>
+      )}
+
+      <footer className="bg-white border-t border-gray-200 p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setMicEnabled((v) => !v)} className={`p-2.5 rounded-lg border ${micEnabled ? "bg-gray-100" : "bg-red-50 border-red-200"}`}>
+            {micEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4 text-red-600" />}
+          </button>
+          <button type="button" onClick={() => { setSpeakerEnabled((v) => !v); if (speakerEnabled) speechRef.current?.stopSpeaking(); }} className="p-2.5 rounded-lg border bg-gray-100">
+            {speakerEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+          <button type="button" onClick={handlePause} className="p-2.5 rounded-lg border bg-gray-100">
+            {state === INTERVIEWER_STATES.PAUSED ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {state === INTERVIEWER_STATES.LISTENING && (
+          <button
+            type="button"
+            onClick={() => {
+              const a = finalTranscript.trim() || transcript.trim();
+              if (a.length >= 2) processAnswer(a);
+              else toast("No speech detected yet", { icon: "🎤" });
+            }}
+            className="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium"
+          >
+            Finish answer
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => { if (window.confirm("End interview and generate report?")) handleEnd(); }}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium"
+        >
+          <Square className="w-3.5 h-3.5" /> End interview
+        </button>
+      </footer>
+
+      {state === INTERVIEWER_STATES.COMPLETED && (
+        <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-50">
+          <div className="text-center space-y-3">
+            <CheckCircle className="w-14 h-14 text-emerald-500 mx-auto" />
+            <h2 className="text-xl font-bold">Interview complete</h2>
+            <p className="text-gray-500 text-sm">Generating your performance report…</p>
           </div>
         </div>
       )}

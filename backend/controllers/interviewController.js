@@ -11,11 +11,11 @@ import { evaluateSkillGap }          from "../services/skillGapEngine.js";
 import {
   generateOpeningGreeting,
   generateNextQuestion,
-  generateFollowUp,
   evaluateAnswer,
   generateFinalReport,
-  generateTransition,
 } from "../services/virtualInterviewService.js";
+import { processInterviewTurn } from "../services/interview/conversationEngine.js";
+import { createEmptyMemory } from "../services/interview/interviewMemory.js";
 import { synthesizeGeminiSpeech } from "../services/geminiSpeechService.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -56,6 +56,7 @@ export const startInterview = async (req, res) => {
       personality   = "professional",
       durationMinutes = 10,
       resumeBased   = false,
+      jobDescription = "",
     } = req.body;
 
     if (!targetRole?.trim()) {
@@ -86,6 +87,7 @@ export const startInterview = async (req, res) => {
       personality,
       durationMinutes: Math.min(Math.max(Number(durationMinutes) || 10, 5), 60),
       resumeBased,
+      jobDescription: String(jobDescription || "").slice(0, 2000),
       status:    "active",
       startedAt: new Date(),
       skillGapContext: {
@@ -94,22 +96,31 @@ export const startInterview = async (req, res) => {
         coverage:      gapResult.skillCoverage || 0,
       },
       resumeContext,
+      conversationMemory: createEmptyMemory(student.name || ""),
+      conversationState: {
+        phase: "welcome",
+        questionNumber: 0,
+        interviewerEmotion: "idle",
+        candidateReady: false,
+        topicsCovered: [],
+        topicsMissing: gapResult.missingSkills || [],
+      },
     });
 
-    // Generate opening greeting and first question in parallel
-    const [greeting, firstQ] = await Promise.all([
-      generateOpeningGreeting(session),
-      generateNextQuestion(session, 70),
-    ]);
+    const greeting = await generateOpeningGreeting(session, student.name);
     session.openingGreeting = greeting;
+    session.conversationState.interviewerEmotion = "speaking";
 
+    const firstQ = await generateNextQuestion(session, 70, session.conversationMemory);
     session.questions.push({
       question:     firstQ.question,
-      section:      firstQ.section || interviewType,
+      section:      firstQ.section || "warmup",
       questionType: "primary",
       isFollowUp:   false,
       askedAt:      new Date(),
     });
+    session.conversationState.phase = "warmup";
+    session.conversationState.questionNumber = 1;
 
     await session.save();
 
@@ -118,12 +129,17 @@ export const startInterview = async (req, res) => {
     return res.status(201).json({
       success: true,
       sessionId: session._id,
+      candidateName: student.name || "",
       greeting:  session.openingGreeting,
       question:  {
         index: 0,
         text:  firstQ.question,
         section: firstQ.section,
       },
+      speakText: greeting,
+      waitForReady: true,
+      emotion: "speaking",
+      phase: "welcome",
       totalDurationMs: session.durationMinutes * 60 * 1000,
     });
   } catch (error) {
@@ -136,11 +152,7 @@ export const startInterview = async (req, res) => {
 export const submitAnswer = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { transcript, questionIndex, requestFollowUp } = req.body;
-
-    if (!transcript?.trim()) {
-      return res.status(400).json({ message: "Answer transcript is required" });
-    }
+    const { transcript, questionIndex, requestFollowUp, confirmReady } = req.body;
 
     const session = await InterviewSession.findById(sessionId);
     if (!session) return res.status(404).json({ message: "Session not found" });
@@ -149,6 +161,34 @@ export const submitAnswer = async (req, res) => {
     }
     if (session.status !== "active") {
       return res.status(400).json({ message: `Session is ${session.status}` });
+    }
+
+    // Handle "ready to begin" confirmation
+    if (confirmReady && !session.conversationState?.candidateReady) {
+      session.conversationState.candidateReady = true;
+      session.conversationState.phase = "introduction";
+      session.conversationState.interviewerEmotion = "encouraging";
+      const firstQ = session.questions[0];
+      const speakText = `Great. Let's begin. ${firstQ?.question || "Tell me about yourself."}`;
+      await session.save();
+      return res.json({
+        success: true,
+        nextAction: "begin_interview",
+        speakText,
+        emotion: "encouraging",
+        phase: "introduction",
+        status: "speaking",
+        nextQuestion: {
+          index: 0,
+          text: firstQ?.question || "",
+          section: firstQ?.section || "warmup",
+        },
+        thinkingPauseMs: 600,
+      });
+    }
+
+    if (!transcript?.trim()) {
+      return res.status(400).json({ message: "Answer transcript is required" });
     }
 
     const idx = typeof questionIndex === "number"
@@ -161,80 +201,72 @@ export const submitAnswer = async (req, res) => {
 
     const qRecord = session.questions[idx];
 
-    // Record answer
     qRecord.answer = {
-      transcript:  transcript.trim().slice(0, 2000),
-      answeredAt:  new Date(),
-      durationMs:  req.body.durationMs || 0,
+      transcript: transcript.trim().slice(0, 2000),
+      answeredAt: new Date(),
+      durationMs: req.body.durationMs || 0,
     };
 
-    // Evaluate answer
     const evaluation = await evaluateAnswer(qRecord.question, transcript, session);
+    if (requestFollowUp) evaluation.followUpRequired = true;
     qRecord.evaluation = evaluation;
 
-    const avgScore = rollingAvgScore(session);
+    const turn = await processInterviewTurn(session, qRecord, transcript, evaluation);
 
-    // Decide: follow-up or next question?
-    let nextAction = "next_question";
-    let nextQuestionText = "";
-    let speakText = "";
+    session.conversationMemory = turn.memory;
+    session.conversationState = {
+      ...session.conversationState,
+      phase: turn.conversational.phase,
+      interviewerEmotion: turn.conversational.emotion,
+      questionNumber: (session.conversationState?.questionNumber || 0) + 1,
+    };
 
-    if (evaluation.followUpRequired || requestFollowUp) {
-      // Generate contextual follow-up
-      const followUp = await generateFollowUp(qRecord.question, transcript, session);
-      if (followUp) {
-        qRecord.followUpQuestion = followUp;
-        // Add follow-up as next question record
-        session.questions.push({
-          question:     followUp,
-          section:      qRecord.section,
-          questionType: "follow-up",
-          isFollowUp:   true,
-          parentIndex:  idx,
-          askedAt:      new Date(),
-        });
-        nextAction       = "follow_up";
-        nextQuestionText = followUp;
-        speakText        = followUp;
-      }
-    }
+    const { nextQuestion, nextAction, conversational, rollingAvg } = turn;
 
-    if (nextAction === "next_question") {
-      // Generate next primary question
-      const nextQ = await generateNextQuestion(session, avgScore);
-      const transition = await generateTransition(evaluation, nextQ.question, session);
+    if (nextQuestion.isFollowUp) {
       session.questions.push({
-        question:     nextQ.question,
-        section:      nextQ.section || session.interviewType,
-        questionType: "primary",
-        isFollowUp:   false,
-        askedAt:      new Date(),
+        question: nextQuestion.text,
+        section: nextQuestion.section || qRecord.section,
+        questionType: "follow-up",
+        isFollowUp: true,
+        parentIndex: idx,
+        askedAt: new Date(),
       });
-      nextQuestionText = nextQ.question;
-      speakText = transition
-        ? `${transition} ${nextQ.question}`
-        : nextQ.question;
+      qRecord.followUpQuestion = nextQuestion.text;
+    } else {
+      session.questions.push({
+        question: nextQuestion.text,
+        section: nextQuestion.section || session.interviewType,
+        questionType: "primary",
+        isFollowUp: false,
+        askedAt: new Date(),
+      });
     }
 
     session.currentQuestionIndex = session.questions.length - 1;
     await session.save();
 
-    console.log(`[Interview] Answer received | Session: ${sessionId} | Q${idx} score: ${evaluation.overallScore}`);
+    console.log(`[Interview] Answer | Session: ${sessionId} | Q${idx} | ${turn.analysis.classification} | score: ${evaluation.overallScore}`);
 
     return res.json({
       success: true,
       evaluation: {
         overallScore: evaluation.overallScore,
-        followUpRequired: evaluation.followUpRequired,
+        classification: turn.analysis.classification,
+        followUpRequired: nextAction === "follow_up",
       },
       nextAction,
       nextQuestion: {
-        index:   session.questions.length - 1,
-        text:    nextQuestionText,
-        section: session.questions[session.questions.length - 1]?.section,
+        index: session.questions.length - 1,
+        text: nextQuestion.text,
+        section: nextQuestion.section,
       },
-      speakText,
-      avgScore,
+      speakText: conversational.speakText,
+      emotion: conversational.emotion,
+      status: conversational.status,
+      phase: conversational.phase,
+      thinkingPauseMs: conversational.thinkingPauseMs,
+      avgScore: rollingAvg,
     });
   } catch (error) {
     console.error("[Interview] submitAnswer error:", error);
@@ -267,6 +299,7 @@ export const endInterview = async (req, res) => {
     session.weaknesses      = report.weaknesses;
     session.recommendations = report.recommendations;
     session.readinessLevel  = report.readinessLevel;
+    session.executiveSummary = report.executiveSummary || "";
 
     await session.save();
 
@@ -283,6 +316,9 @@ export const endInterview = async (req, res) => {
       weaknesses:      report.weaknesses,
       recommendations: report.recommendations,
       readinessLevel:  report.readinessLevel,
+      executiveSummary: report.executiveSummary,
+      struggledQuestions: report.struggledQuestions || [],
+      topicsToPractice: report.topicsToPractice || [],
       evaluations: session.questions
         .filter(q => q.answer?.transcript)
         .map(q => ({

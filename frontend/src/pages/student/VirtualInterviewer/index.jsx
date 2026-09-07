@@ -1,11 +1,5 @@
 /**
- * index.jsx
- *
- * Main entry component for AI Virtual Interviewer.
- * Orchestrates views:
- * 1. setup: Interview setup screen (role, type, difficulty, avatar choice)
- * 2. live: Real-time simulation (Avatar + Voice + Transcript + Question State Machine)
- * 3. report: Performance feedback & readiness evaluation
+ * index.jsx — Virtual Interviewer entry: setup → pre-checks → live → report
  */
 
 import { useState, useEffect } from "react";
@@ -13,7 +7,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import InterviewSetup from "./InterviewSetup";
 import LiveInterview from "./LiveInterview";
 import InterviewReport from "./InterviewReport";
+import PreInterviewFlow from "../../../features/virtualInterview/PreInterviewFlow";
 import { interviewService, unwrapInterviewResponse } from "../../../services/interviewService";
+import { apiClient } from "../../../services/apiClient";
 
 export default function VirtualInterviewer() {
   const { sessionId: paramSessionId } = useParams();
@@ -23,11 +19,20 @@ export default function VirtualInterviewer() {
   const [activeSession, setActiveSession] = useState(null);
   const [reportData, setReportData] = useState(null);
   const [starting, setStarting] = useState(false);
+  const [candidateName, setCandidateName] = useState("");
+  const [pendingConfig, setPendingConfig] = useState(null);
 
   useEffect(() => {
-    if (paramSessionId) {
-      loadSession(paramSessionId);
-    }
+    apiClient.get("/api/auth/profile")
+      .then((data) => {
+        const user = data.user || data;
+        setCandidateName(user?.name || "");
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (paramSessionId) loadSession(paramSessionId);
   }, [paramSessionId]);
 
   const loadSession = async (id) => {
@@ -36,47 +41,52 @@ export default function VirtualInterviewer() {
       if (res?.success) {
         setReportData(res);
         setView("report");
-      } else {
-        setView("setup");
-      }
-    } catch (err) {
-      console.error("Failed to load past session report:", err);
+      } else setView("setup");
+    } catch {
       setView("setup");
     }
   };
 
   const handleStartInterview = async (config) => {
     setStarting(true);
+    setPendingConfig(config);
     try {
       const res = unwrapInterviewResponse(await interviewService.start(config));
       if (res?.success && res?.sessionId) {
         setActiveSession({
           sessionId: res.sessionId,
           targetRole: config.targetRole,
+          candidateName: res.candidateName || candidateName,
           greeting: res.greeting,
+          speakText: res.speakText || res.greeting,
+          waitForReady: res.waitForReady ?? true,
           firstQuestion: res.question,
-          totalDurationMs: res.totalDurationMs || (config.durationMinutes * 60 * 1000),
-          presenterUrl: config.presenterUrl,
+          totalDurationMs: res.totalDurationMs || config.durationMinutes * 60 * 1000,
+          presenterUrl: config.presenterUrl || "/interviewer.jpeg",
+          phase: res.phase || "welcome",
         });
-        setView("live");
+        setView("precheck");
         return;
       }
       throw new Error(res?.message || "Could not start session");
     } catch (err) {
-      console.warn("Starting interview in client session mode:", err.message);
+      console.warn("Offline interview mode:", err.message);
       setActiveSession({
         sessionId: `local-${Date.now()}`,
         targetRole: config.targetRole,
-        greeting: `Welcome! I will be interviewing you today for the ${config.targetRole} position.`,
+        candidateName,
+        greeting: `Hi ${candidateName || "there"}, welcome. I'm going to ask you a few questions about your experience for the ${config.targetRole} role. If you need a moment to think, that's completely fine. Are you ready to begin?`,
+        speakText: `Hi ${candidateName || "there"}, welcome. Are you ready to begin?`,
+        waitForReady: true,
         firstQuestion: {
           index: 0,
-          text: `To get started, please introduce yourself and tell me about your background relevant to ${config.targetRole}.`,
-          section: config.interviewType || "general",
+          text: `To start, please introduce yourself and your background relevant to ${config.targetRole}.`,
+          section: config.interviewType || "warmup",
         },
         totalDurationMs: (config.durationMinutes || 10) * 60 * 1000,
-        presenterUrl: config.presenterUrl,
+        presenterUrl: config.presenterUrl || "/interviewer.jpeg",
       });
-      setView("live");
+      setView("precheck");
     } finally {
       setStarting(false);
     }
@@ -90,6 +100,7 @@ export default function VirtualInterviewer() {
   const handleRestart = () => {
     setActiveSession(null);
     setReportData(null);
+    setPendingConfig(null);
     setView("setup");
     navigate("/student/virtual-interview");
   };
@@ -100,12 +111,16 @@ export default function VirtualInterviewer() {
         <InterviewSetup onStart={handleStartInterview} loading={starting} />
       )}
 
-      {view === "live" && activeSession && (
-        <LiveInterview
-          session={activeSession}
-          onFinish={handleFinishInterview}
-          onExit={handleRestart}
+      {view === "precheck" && activeSession && (
+        <PreInterviewFlow
+          candidateName={activeSession.candidateName || candidateName}
+          targetRole={activeSession.targetRole || pendingConfig?.targetRole}
+          onComplete={() => setView("live")}
         />
+      )}
+
+      {view === "live" && activeSession && (
+        <LiveInterview session={activeSession} onFinish={handleFinishInterview} onExit={handleRestart} />
       )}
 
       {view === "report" && (
