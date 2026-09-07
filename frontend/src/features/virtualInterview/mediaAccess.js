@@ -68,6 +68,22 @@ export async function requestCameraStream() {
     }
     await sleep(200);
   }
+
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoInput = devices.find((d) => d.kind === "videoinput" && d.deviceId);
+    if (videoInput?.deviceId) {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: videoInput.deviceId } },
+        audio: false,
+      });
+      if (stream.getVideoTracks().length > 0) return stream;
+      stream.getTracks().forEach((t) => t.stop());
+    }
+  } catch (error) {
+    lastError = error;
+  }
+
   throw lastError || new Error("Could not access camera");
 }
 

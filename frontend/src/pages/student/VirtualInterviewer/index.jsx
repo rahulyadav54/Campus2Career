@@ -8,13 +8,14 @@ import InterviewSetup from "./InterviewSetup";
 import LiveInterview from "./LiveInterview";
 import InterviewReport from "./InterviewReport";
 import PreInterviewFlow from "../../../features/virtualInterview/PreInterviewFlow";
-import { unlockAudioOutput } from "../../../features/virtualInterview/mediaAccess";
+import { useCandidateMedia } from "../../../features/virtualInterview/useCandidateMedia";
 import { interviewService, unwrapInterviewResponse } from "../../../services/interviewService";
 import { apiClient } from "../../../services/apiClient";
 
 export default function VirtualInterviewer() {
   const { sessionId: paramSessionId } = useParams();
   const navigate = useNavigate();
+  const candidateMedia = useCandidateMedia();
 
   const [view, setView] = useState(paramSessionId ? "report" : "setup");
   const [activeSession, setActiveSession] = useState(null);
@@ -22,7 +23,6 @@ export default function VirtualInterviewer() {
   const [starting, setStarting] = useState(false);
   const [candidateName, setCandidateName] = useState("");
   const [pendingConfig, setPendingConfig] = useState(null);
-  const [mediaStream, setMediaStream] = useState(null);
 
   const buildOptimisticSession = (config, name = "") => ({
     sessionId: null,
@@ -121,10 +121,10 @@ export default function VirtualInterviewer() {
   };
 
   const handleRestart = () => {
+    candidateMedia.release();
     setActiveSession(null);
     setReportData(null);
     setPendingConfig(null);
-    setMediaStream(null);
     setView("setup");
     navigate("/student/virtual-interview");
   };
@@ -140,18 +140,15 @@ export default function VirtualInterviewer() {
           candidateName={activeSession.candidateName || candidateName}
           targetRole={activeSession.targetRole || pendingConfig?.targetRole}
           sessionReady={Boolean(activeSession?.sessionId)}
-          onComplete={async (stream) => {
-            await unlockAudioOutput();
-            setMediaStream(stream || null);
-            setView("live");
-          }}
+          media={candidateMedia}
+          onComplete={() => setView("live")}
         />
       )}
 
       {view === "live" && activeSession && (
         <LiveInterview
           session={activeSession}
-          mediaStream={mediaStream}
+          media={candidateMedia}
           onFinish={handleFinishInterview}
           onExit={handleRestart}
         />

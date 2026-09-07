@@ -19,7 +19,7 @@ import {
   isReadyConfirmation,
 } from "../../../features/virtualInterview/constants";
 import CandidateVideo from "../../../features/virtualInterview/CandidateVideo";
-import { stopMediaStream, unlockAudioOutput } from "../../../features/virtualInterview/mediaAccess";
+import { unlockAudioOutput } from "../../../features/virtualInterview/mediaAccess";
 
 const fmt = (secs) => {
   const m = Math.floor(secs / 60);
@@ -38,7 +38,7 @@ const buildLocalReport = (targetRole, answeredCount, avgScore) => ({
   evaluations: [],
 });
 
-export default function LiveInterview({ session, mediaStream: initialMediaStream, onFinish, onExit }) {
+export default function LiveInterview({ session, media, onFinish, onExit }) {
   const activeSessionId = session?.sessionId;
   const candidateName = session?.candidateName || "";
   const targetRole = session?.targetRole || "Software Engineer";
@@ -61,7 +61,6 @@ export default function LiveInterview({ session, mediaStream: initialMediaStream
   const [nodTrigger, setNodTrigger] = useState(0);
   const [phase, setPhase] = useState("welcome");
   const [waitingForReady, setWaitingForReady] = useState(session?.waitForReady ?? true);
-  const [liveMediaStream, setLiveMediaStream] = useState(initialMediaStream || null);
 
   const speechRef = useRef(null);
   const timerRef = useRef(null);
@@ -69,18 +68,8 @@ export default function LiveInterview({ session, mediaStream: initialMediaStream
   const processingRef = useRef(false);
   const listenStartRef = useRef(0);
   const welcomeStartedRef = useRef(false);
-  const mediaStreamRef = useRef(initialMediaStream || null);
 
   useEffect(() => { stateRef.current = state; }, [state]);
-
-  useEffect(() => {
-    mediaStreamRef.current = liveMediaStream;
-  }, [liveMediaStream]);
-
-  useEffect(() => () => {
-    stopMediaStream(mediaStreamRef.current);
-    mediaStreamRef.current = null;
-  }, []);
 
   const handleEndRef = useRef(() => {});
 
@@ -409,9 +398,12 @@ export default function LiveInterview({ session, mediaStream: initialMediaStream
           <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden relative shadow-sm">
             <p className="absolute top-3 left-3 text-xs font-semibold text-gray-300 uppercase z-10">You</p>
             <CandidateVideo
-              mediaStream={liveMediaStream}
+              stream={media?.stream}
+              cameraOk={media?.cameraOk}
+              loading={media?.loading}
+              error={media?.error}
+              onEnableCamera={() => media?.requestCameraOnly?.().catch(() => {})}
               minHeight="280px"
-              onStreamChange={setLiveMediaStream}
             />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3">
               <p className="text-xs text-gray-300 mb-1">
