@@ -23,6 +23,7 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     onListeningEnd,   // () => void
     onSpeakStart,     // () => void
     onSpeakEnd,       // () => void
+    onBargeIn,        // () => void  — user spoke while AI was talking
     onError,          // (msg: string) => void
   },
   ref
@@ -32,6 +33,8 @@ const VoiceEngine = forwardRef(function VoiceEngine(
   const listeningRef   = useRef(false);
   const speakingRef    = useRef(false);
   const silenceTimerRef = useRef(null);
+  const keepAliveTimerRef = useRef(null);
+  const interviewActiveRef = useRef(true);
 
   // Helper to select Indian English voice or fallback
   const getPreferredVoice = useCallback(() => {
@@ -115,7 +118,13 @@ const VoiceEngine = forwardRef(function VoiceEngine(
       onError?.("Speech recognition is not supported in this browser. Please use Chrome or Edge.");
       return;
     }
-    if (listeningRef.current) return;
+
+    // Stop any existing recognition first to avoid duplicates
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch { /* ignore */ }
+      recognitionRef.current = null;
+    }
+    clearTimeout(keepAliveTimerRef.current);
 
     const recognition = new SpeechRecognition();
     recognition.continuous      = true;
@@ -131,10 +140,12 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     };
 
     recognition.onresult = (event) => {
-      // ChatGPT Voice Mode Interruption: If user starts speaking while AI is talking, stop AI speech!
       if (speakingRef.current) {
-        stopSpeaking();
-        onSpeakEnd?.();
+        const hasMeaningfulSpeech = event.results.length > 0 && event.results[event.results.length - 1][0].transcript.trim().length > 2;
+        if (hasMeaningfulSpeech) {
+          stopSpeaking();
+          onBargeIn?.();
+        }
       }
 
       let interim = "";
@@ -149,7 +160,6 @@ const VoiceEngine = forwardRef(function VoiceEngine(
         }
       }
 
-      // Auto-end on 2s silence after speech content
       clearTimeout(silenceTimerRef.current);
       if (finalTranscript.trim().length > 5) {
         silenceTimerRef.current = setTimeout(() => {
@@ -162,7 +172,7 @@ const VoiceEngine = forwardRef(function VoiceEngine(
       if (event.error === "not-allowed") {
         onError?.("Microphone access denied. Please allow microphone access in your browser settings.");
       } else if (event.error === "no-speech") {
-        // Soft error
+        // Soft error — ignore
       } else if (event.error !== "aborted") {
         onError?.("Speech recognition error: " + event.error);
       }
@@ -170,6 +180,13 @@ const VoiceEngine = forwardRef(function VoiceEngine(
 
     recognition.onend = () => {
       listeningRef.current = false;
+      recognitionRef.current = null;
+      clearTimeout(keepAliveTimerRef.current);
+      keepAliveTimerRef.current = setTimeout(() => {
+        if (!listeningRef.current && !speakingRef.current && interviewActiveRef.current) {
+          try { recognition.start(); } catch { /* ignore */ }
+        }
+      }, 300);
       onListeningEnd?.();
     };
 
@@ -177,10 +194,11 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     try {
       recognition.start();
     } catch { /* ignore if already started */ }
-  }, [onListeningStart, onListeningEnd, onTranscript, onError, stopSpeaking, onSpeakEnd]);
+  }, [onListeningStart, onListeningEnd, onTranscript, onError, stopSpeaking, onBargeIn]);
 
   const stopListening = useCallback(() => {
     clearTimeout(silenceTimerRef.current);
+    clearTimeout(keepAliveTimerRef.current);
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch { /* ignore */ }
       recognitionRef.current = null;
@@ -198,7 +216,9 @@ const VoiceEngine = forwardRef(function VoiceEngine(
       };
     }
     return () => {
+      interviewActiveRef.current = false;
       clearTimeout(silenceTimerRef.current);
+      clearTimeout(keepAliveTimerRef.current);
       if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch { /* ignore */ }
       }
@@ -218,6 +238,7 @@ const VoiceEngine = forwardRef(function VoiceEngine(
     isListening:  () => listeningRef.current,
     isSpeaking:   () => speakingRef.current,
     isSupported:  () => !!SpeechRecognition,
+    setInterviewActive: (val) => { interviewActiveRef.current = val; },
   }), [speak, stopSpeaking, startListening, stopListening]);
 
   return null; // Non-rendering engine

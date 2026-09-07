@@ -86,6 +86,8 @@ export default function LiveInterview({
   const voiceRef      = useRef(null);
   const timerRef      = useRef(null);
   const stateRef      = useRef(STATES.IDLE);
+  const bargeInRef    = useRef(false);
+  const processingRef = useRef(false);
 
   // Keep stateRef in sync
   useEffect(() => { stateRef.current = interviewState; }, [interviewState]);
@@ -109,9 +111,12 @@ export default function LiveInterview({
     return () => clearInterval(timerRef.current);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── On mount: speak greeting then first question ──────────────────────────
+  // ── On mount: start listening immediately, then speak greeting ──────────────
 
   useEffect(() => {
+    voiceRef.current?.setInterviewActive(true);
+    voiceRef.current?.startListening();
+
     if (!activeGreeting && !activeFirstQ?.text) return;
     const text = activeGreeting
       ? `${activeGreeting} ${activeFirstQ?.text || ""}`
@@ -119,15 +124,15 @@ export default function LiveInterview({
 
     setCurrentQuestion(activeFirstQ || { index: 0, text, section: "general" });
 
-    // Small delay so the avatar is ready
     const t = setTimeout(() => {
       speakAI(text, () => {
-        // After speaking: enter waiting/listening
-        setInterviewState(STATES.WAITING);
-        setTimeout(() => activateListening(), 1200);
+        setInterviewState(STATES.LISTENING);
       });
     }, 800);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      voiceRef.current?.setInterviewActive(false);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Voice helpers ────────────────────────────────────────────────────────────
@@ -143,6 +148,7 @@ export default function LiveInterview({
     setTranscript("");
     setFinalTranscript("");
     setInterviewState(STATES.LISTENING);
+    bargeInRef.current = false;
     voiceRef.current?.startListening();
   }, [micEnabled]);
 
@@ -153,17 +159,26 @@ export default function LiveInterview({
     if (isFinal) setFinalTranscript(text);
   }, []);
 
+  const handleBargeIn = useCallback(() => {
+    bargeInRef.current = true;
+    setInterviewState(STATES.LISTENING);
+  }, []);
+
   const handleListeningEnd = useCallback(() => {
-    if (stateRef.current !== STATES.LISTENING) return;
+    if (stateRef.current === STATES.COMPLETED) return;
+    if (processingRef.current) return;
+
     const answer = finalTranscript.trim();
-    if (answer.length < 3) {
-      // No speech detected — prompt again
-      setInterviewState(STATES.WAITING);
-      setTimeout(() => activateListening(), 1500);
+    if (answer.length >= 3 && (stateRef.current === STATES.LISTENING || bargeInRef.current)) {
+      processAnswer(answer);
       return;
     }
-    processAnswer(answer);
-  }, [finalTranscript, activateListening]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    if (stateRef.current !== STATES.PROCESSING && stateRef.current !== STATES.COMPLETED) {
+      setInterviewState(STATES.LISTENING);
+      voiceRef.current?.startListening();
+    }
+  }, [finalTranscript, processAnswer]);
 
   const handleSpeechError = useCallback((msg) => {
     setError(msg);
@@ -174,6 +189,12 @@ export default function LiveInterview({
   // ── Process student's answer ────────────────────────────────────────────────
 
   const processAnswer = useCallback(async (answer) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+
+    bargeInRef.current = false;
+    setTranscript("");
+    setFinalTranscript("");
     voiceRef.current?.stopListening();
     setInterviewState(STATES.PROCESSING);
 
@@ -199,17 +220,18 @@ export default function LiveInterview({
         section: nextQ?.section || "technical",
       });
       setQuestionCount(prev => prev + 1);
-      setTranscript("");
-      setFinalTranscript("");
 
       setInterviewState(STATES.AI_THINKING);
 
       setTimeout(() => {
         if (stateRef.current === STATES.AI_THINKING) {
           speakAI(speakText, () => {
-            setInterviewState(STATES.WAITING);
-            setTimeout(() => activateListening(), 1200);
+            processingRef.current = false;
+            setInterviewState(STATES.LISTENING);
+            voiceRef.current?.startListening();
           });
+        } else {
+          processingRef.current = false;
         }
       }, 500);
 
@@ -232,28 +254,29 @@ export default function LiveInterview({
         section: mockQ.section,
       });
       setQuestionCount(prev => prev + 1);
-      setTranscript("");
-      setFinalTranscript("");
 
       setInterviewState(STATES.AI_THINKING);
 
       setTimeout(() => {
         speakAI(speakText, () => {
-          setInterviewState(STATES.WAITING);
-          setTimeout(() => activateListening(), 1200);
+          processingRef.current = false;
+          setInterviewState(STATES.LISTENING);
+          voiceRef.current?.startListening();
         });
       }, 500);
     }
-  }, [activeSessionId, currentQuestion, speakAI, activateListening]);
+  }, [activeSessionId, currentQuestion, speakAI]);
 
   // ── Manual finish answer button ──────────────────────────────────────────────
 
   const handleFinishAnswer = useCallback(() => {
-    if (stateRef.current !== STATES.LISTENING) return;
+    if (processingRef.current) return;
+    if (stateRef.current !== STATES.LISTENING && stateRef.current !== STATES.AI_SPEAKING) return;
     voiceRef.current?.stopListening();
     const answer = finalTranscript.trim() || transcript.trim();
     if (answer.length < 3) {
       toast("No answer detected. Please speak into your microphone.", { icon: "🎤" });
+      voiceRef.current?.startListening();
       return;
     }
     processAnswer(answer);
@@ -265,6 +288,7 @@ export default function LiveInterview({
     clearInterval(timerRef.current);
     voiceRef.current?.stopListening();
     voiceRef.current?.stopSpeaking();
+    voiceRef.current?.setInterviewActive(false);
     setInterviewState(STATES.COMPLETED);
 
     const endText = "Thank you for your time. That concludes our interview. I'll now generate your performance report.";
@@ -291,15 +315,14 @@ export default function LiveInterview({
 
   const handlePause = useCallback(() => {
     if (interviewState === STATES.PAUSED) {
-      // Resume
-      setInterviewState(STATES.WAITING);
-      setTimeout(() => activateListening(), 800);
+      setInterviewState(STATES.LISTENING);
+      voiceRef.current?.startListening();
     } else {
       voiceRef.current?.stopListening();
       voiceRef.current?.stopSpeaking();
       setInterviewState(STATES.PAUSED);
     }
-  }, [interviewState, activateListening]);
+  }, [interviewState]);
 
   // ── Progress ─────────────────────────────────────────────────────────────────
 
@@ -319,6 +342,7 @@ export default function LiveInterview({
         onListeningEnd={handleListeningEnd}
         onSpeakStart={() => setInterviewState(STATES.AI_SPEAKING)}
         onSpeakEnd={() => {}}
+        onBargeIn={handleBargeIn}
         onError={handleSpeechError}
       />
 

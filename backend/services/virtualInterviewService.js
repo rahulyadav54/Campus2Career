@@ -100,14 +100,14 @@ export const generateOpeningGreeting = async (session) => {
   }
 
   const systemPrompt = buildSystemPrompt(session);
-  const userMsg = `Generate a warm, professional opening greeting for a ${session.interviewType} interview for the role of ${session.targetRole}. Keep it under 50 words. End with asking the candidate to introduce themselves. Do NOT mention AI, scores, or assessments. Sound like a real human interviewer.`;
+  const userMsg = `Generate a warm, natural opening greeting for a ${session.interviewType} interview for the role of ${session.targetRole}. Keep it under 40 words. End by asking the candidate to introduce themselves. Do NOT mention AI, scores, or assessments. Sound like a real human — use casual openers like "Hi there", "Great to meet you", or "Welcome". Avoid robotic phrasing.`;
 
   try {
     const result = await chatWithNemotron({
       messages: [{ role: "user", content: userMsg }],
       systemPrompt,
-      temperature: 0.7,
-      maxTokens: 150,
+      temperature: 0.8,
+      maxTokens: 120,
     });
     return result.response?.trim() || `Hello! Welcome to your ${session.targetRole} interview. Please start by introducing yourself.`;
   } catch {
@@ -191,21 +191,23 @@ Return ONLY a JSON object:
 export const generateFollowUp = async (question, answer, session) => {
   if (!answer?.trim()) return "";
   if (!isNemotronConfigured()) {
-    return `That's interesting. Can you elaborate on that point and give me a specific example?`;
+    return `That's interesting. Can you walk me through a specific example of when you did that?`;
   }
 
   const systemPrompt = buildSystemPrompt(session);
-  const prompt = `The interviewer just asked: "${question}"
+  const prompt = `The interviewer asked: "${question}"
 
-The candidate answered: "${answer.slice(0, 400)}"
+The candidate replied: "${answer.slice(0, 500)}"
 
-Generate a single, natural follow-up question that:
-1. References something SPECIFIC the candidate mentioned
-2. Digs deeper into that specific detail
-3. Feels like a real human follow-up, not a generic question
-4. Is under 40 words
+Generate ONE natural, specific follow-up question that:
+1. References a SPECIFIC detail the candidate mentioned (name, metric, technology, outcome)
+2. Digs deeper into that detail — don't ask something they already answered
+3. Sounds like a real human interviewer, not a checklist
+4. Is conversational and under 35 words
+5. For technical answers, ask about trade-offs, alternatives, or failure modes
+6. For behavioral answers, ask for measurable outcomes or team dynamics
 
-Return ONLY the question text — no labels, no JSON.`;
+Return ONLY the question text. No quotes. No labels.`;
 
   try {
     const result = await chatWithNemotron({
@@ -257,28 +259,44 @@ export const evaluateAnswer = async (question, answer, session) => {
 
   if (!isNemotronConfigured()) return defaultEval;
 
-  const prompt = `You are evaluating a candidate's interview answer.
+  const prompt = `You are a STRICT, experienced interviewer evaluating a candidate's answer for a ${session.targetRole} role.
 
-Role: ${session.targetRole}
-Question: ${question}
-Answer: ${answer.slice(0, 600)}
+Question: "${question}"
+Answer: "${answer.slice(0, 800)}"
 
-Evaluate and return ONLY this JSON (scores 0-100):
+SCORING RULES (be strict — do NOT give everyone 70+):
+- 90-100: Outstanding. Specific examples, metrics, deep technical insight, flawless communication. Top 5% of candidates.
+- 75-89: Strong. Good concrete examples, clear structure, solid technical accuracy. Minor gaps.
+- 60-74: Adequate. Answers the question but lacks depth, specificity, or examples. Some vague statements.
+- 40-59: Weak. Mostly generic, rambling, or partially off-topic. Lacks concrete evidence.
+- 0-39: Poor. Blank, irrelevant, or completely wrong. No meaningful content.
+
+PENALISE:
+- Generic buzzwords without examples (-10 to -15 points)
+- Rambling without structure (-5 to -10 points)
+- Incorrect technical claims (-10 to -20 points)
+- Not answering the actual question (-15 to -25 points)
+
+BONUS:
+- Specific metrics or results (+5 to +10 points)
+- Concrete project examples (+5 to +10 points)
+- Clear STAR structure for behavioral questions (+5 points)
+- Technical depth with trade-off analysis (+5 to +10 points)
+
+Return ONLY this JSON:
 {
-  "relevance": <number>,
-  "technicalKnowledge": <number>,
-  "communication": <number>,
-  "clarity": <number>,
-  "confidence": <number>,
-  "problemSolving": <number>,
-  "overallScore": <number>,
+  "relevance": <number 0-100>,
+  "technicalKnowledge": <number 0-100>,
+  "communication": <number 0-100>,
+  "clarity": <number 0-100>,
+  "confidence": <number 0-100>,
+  "problemSolving": <number 0-100>,
+  "overallScore": <number 0-100>,
   "strengths": ["<string>", "<string>"],
   "improvements": ["<string>"],
   "followUpRequired": <boolean>,
   "followUpReason": "<string or empty>"
-}
-
-Be realistic. A blank/vague answer should score below 40.`;
+}`;
 
   try {
     const result = await chatWithNemotron({
@@ -410,17 +428,22 @@ export const generateTransition = async (evaluation, nextQuestion, session) => {
 
   const score = evaluation?.overallScore || 60;
   let tone = "neutral";
-  if (score >= 80) tone = "positive";
-  else if (score < 50) tone = "encouraging";
+  if (score >= 80) tone = "positive and brief";
+  else if (score < 50) tone = "encouraging and supportive";
 
-  const prompt = `Generate a ONE-sentence ${tone} acknowledgement from an interviewer (${session.personality} personality) before moving to the next question: "${nextQuestion.slice(0, 80)}..."
+  const prompt = `Generate a SHORT, natural verbal acknowledgement (1 sentence, max 12 words) from a ${session.personality} interviewer before asking the next question. The next question is: "${nextQuestion.slice(0, 100)}"
 
-Examples:
-- "Good, thank you for that."
-- "That's a helpful perspective, thank you."
-- "I appreciate your honesty — let's move forward."
+Tone: ${tone}
+Personality: ${session.personality}
 
-Return ONLY the sentence. Under 15 words.`;
+Make it sound like a real human talking — use natural filler words occasionally ("Okay", "Right", "Good"), but keep it concise. This will be spoken aloud, so it must sound conversational.
+
+Examples by tone:
+- Positive: "That's a strong answer. Let's build on that."
+- Neutral: "Right, understood. Moving on."
+- Encouraging: "Thanks for sharing that. Let's try another angle."
+
+Return ONLY the sentence. No quotes.`;
 
   try {
     const result = await chatWithNemotron({
