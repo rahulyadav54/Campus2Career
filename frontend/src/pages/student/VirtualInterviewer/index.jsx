@@ -20,7 +20,26 @@ export default function VirtualInterviewer() {
   const [reportData, setReportData] = useState(null);
   const [starting, setStarting] = useState(false);
   const [candidateName, setCandidateName] = useState("");
+  const [pendingConfig, setPendingConfig] = useState(null);
   const [mediaStream, setMediaStream] = useState(null);
+
+  const buildOptimisticSession = (config, name = "") => ({
+    sessionId: null,
+    pending: true,
+    targetRole: config.targetRole,
+    candidateName: name,
+    greeting: `Hi ${name || "there"}, welcome. I'm going to ask you a few questions about your experience for the ${config.targetRole} role. If you need a moment to think, that's completely fine. Are you ready to begin?`,
+    speakText: `Hi ${name || "there"}, welcome. Are you ready to begin?`,
+    waitForReady: true,
+    firstQuestion: {
+      index: 0,
+      text: `To start, tell me about yourself and your background relevant to ${config.targetRole}.`,
+      section: config.interviewType || "warmup",
+    },
+    totalDurationMs: (config.durationMinutes || 10) * 60 * 1000,
+    presenterUrl: config.presenterUrl || "/interviewer.jpeg",
+    phase: "welcome",
+  });
 
   useEffect(() => {
     apiClient.get("/api/auth/profile")
@@ -50,11 +69,15 @@ export default function VirtualInterviewer() {
   const handleStartInterview = async (config) => {
     setStarting(true);
     setPendingConfig(config);
+    setActiveSession(buildOptimisticSession(config, candidateName));
+    setView("precheck");
+
     try {
       const res = unwrapInterviewResponse(await interviewService.start(config));
       if (res?.success && res?.sessionId) {
         setActiveSession({
           sessionId: res.sessionId,
+          pending: false,
           targetRole: config.targetRole,
           candidateName: res.candidateName || candidateName,
           greeting: res.greeting,
@@ -65,14 +88,14 @@ export default function VirtualInterviewer() {
           presenterUrl: config.presenterUrl || "/interviewer.jpeg",
           phase: res.phase || "welcome",
         });
-        setView("precheck");
         return;
       }
       throw new Error(res?.message || "Could not start session");
     } catch (err) {
-      console.warn("Offline interview mode:", err.message);
+      console.warn("Interview start used offline fallback:", err.message);
       setActiveSession({
         sessionId: `local-${Date.now()}`,
+        pending: false,
         targetRole: config.targetRole,
         candidateName,
         greeting: `Hi ${candidateName || "there"}, welcome. I'm going to ask you a few questions about your experience for the ${config.targetRole} role. If you need a moment to think, that's completely fine. Are you ready to begin?`,
@@ -86,7 +109,6 @@ export default function VirtualInterviewer() {
         totalDurationMs: (config.durationMinutes || 10) * 60 * 1000,
         presenterUrl: config.presenterUrl || "/interviewer.jpeg",
       });
-      setView("precheck");
     } finally {
       setStarting(false);
     }
@@ -116,6 +138,7 @@ export default function VirtualInterviewer() {
         <PreInterviewFlow
           candidateName={activeSession.candidateName || candidateName}
           targetRole={activeSession.targetRole || pendingConfig?.targetRole}
+          sessionReady={Boolean(activeSession?.sessionId)}
           onComplete={(stream) => {
             setMediaStream(stream || null);
             setView("live");

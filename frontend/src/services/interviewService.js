@@ -21,7 +21,7 @@ export const unwrapInterviewResponse = (res) => {
 export const interviewService = {
   /** Start a new interview session */
   start: (config) =>
-    apiClient.post(`${BASE}/start`, config, { timeout: 30000 }),
+    apiClient.post(`${BASE}/start`, config, { timeout: 12000 }),
 
   /** Submit an answer and get the next action */
   submitAnswer: (sessionId, payload) =>

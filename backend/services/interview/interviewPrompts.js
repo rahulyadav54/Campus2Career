@@ -83,12 +83,40 @@ export const extractJSON = (raw) => {
   }
 };
 
-export const generateOpeningGreeting = async (session, candidateName = "") => {
+const STARTUP_AI_TIMEOUT_MS = Number(process.env.INTERVIEW_START_AI_TIMEOUT_MS || 2000);
+
+export const withInterviewTimeout = (promise, fallback, timeoutMs = STARTUP_AI_TIMEOUT_MS) =>
+  Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(fallback), timeoutMs)),
+  ]);
+
+export const getInstantOpeningGreeting = (session, candidateName = "") => {
   const name = candidateName || session.conversationMemory?.candidateName || "there";
-  const fallback = `Hi ${name}, welcome. I'm going to ask you a few questions about your experience and skills for the ${session.targetRole} role. If you need a moment to think, that's completely fine. Are you ready to begin?`;
+  return `Hi ${name}, welcome. I'm going to ask you a few questions about your experience and skills for the ${session.targetRole} role. If you need a moment to think, that's completely fine. Are you ready to begin?`;
+};
+
+export const getInstantFirstQuestion = (session) => {
+  const phase = session.conversationState?.phase || session.interviewType || "warmup";
+  const fallbacks = {
+    warmup: `Before we go deeper, tell me what drew you to the ${session.targetRole} role.`,
+    technical: `Walk me through a technical challenge you solved recently and how you approached it.`,
+    behavioral: `Tell me about a time you had to work under pressure. What was your approach?`,
+    situational: `If you joined our team next month, what would you focus on in your first 30 days?`,
+    hr: `What motivates you about this ${session.targetRole} opportunity?`,
+    mixed: `Describe a project you're proud of and your specific contribution.`,
+    introduction: `To start, tell me a little about yourself and your background relevant to ${session.targetRole}.`,
+  };
+  const section = fallbacks[phase] ? phase : "warmup";
+  return { question: fallbacks[section] || fallbacks.mixed, section };
+};
+
+export const generateOpeningGreeting = async (session, candidateName = "") => {
+  const fallback = getInstantOpeningGreeting(session, candidateName);
 
   if (!isGeminiConfigured()) return fallback;
 
+  const name = candidateName || session.conversationMemory?.candidateName || "there";
   const prompt = `Generate a natural video-interview opening for ${name} applying for ${session.targetRole}.
 Include: brief welcome, explain you'll ask about experience and skills, say thinking time is fine.
 End by asking if they are ready to begin. Under 55 words.

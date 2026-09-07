@@ -12,7 +12,7 @@ import {
   stopMediaStream,
 } from "./mediaAccess";
 
-export default function PreInterviewFlow({ candidateName, targetRole, onComplete }) {
+export default function PreInterviewFlow({ candidateName, targetRole, sessionReady = true, onComplete }) {
   const [cameraOk, setCameraOk] = useState(false);
   const [micOk, setMicOk] = useState(false);
   const [micLevel, setMicLevel] = useState(0);
@@ -102,7 +102,7 @@ export default function PreInterviewFlow({ candidateName, targetRole, onComplete
     }
   }, [cameraOk, loading]);
 
-  const canContinue = micOk;
+  const canContinue = micOk && sessionReady;
   const steps = [
     { id: "camera", label: "Camera check", icon: Camera, ok: cameraOk, hint: cameraOk ? "Ready" : loading ? "Checking…" : "Optional" },
     { id: "audio", label: "Microphone check", icon: Mic, ok: micOk, hint: micOk ? "Ready" : "Required" },
@@ -220,7 +220,16 @@ export default function PreInterviewFlow({ candidateName, targetRole, onComplete
           onClick={handleEnter}
           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold transition"
         >
-          Enter interview room <ChevronRight className="w-4 h-4" />
+          {!sessionReady ? (
+            <>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              Preparing session…
+            </>
+          ) : (
+            <>
+              Enter interview room <ChevronRight className="w-4 h-4" />
+            </>
+          )}
         </button>
       </div>
     </div>

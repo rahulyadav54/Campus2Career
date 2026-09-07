@@ -11,6 +11,11 @@ import { evaluateSkillGap }          from "../services/skillGapEngine.js";
 import {
   generateOpeningGreeting,
   generateNextQuestion,
+  getInstantOpeningGreeting,
+  getInstantFirstQuestion,
+  withInterviewTimeout,
+} from "../services/interview/interviewPrompts.js";
+import {
   evaluateAnswer,
   generateFinalReport,
 } from "../services/virtualInterviewService.js";
@@ -107,11 +112,23 @@ export const startInterview = async (req, res) => {
       },
     });
 
-    const greeting = await generateOpeningGreeting(session, student.name);
+    const instantGreeting = getInstantOpeningGreeting(session, student.name);
+    const instantFirstQ = getInstantFirstQuestion(session);
+
+    const [greeting, firstQ] = await Promise.all([
+      withInterviewTimeout(
+        generateOpeningGreeting(session, student.name),
+        instantGreeting
+      ),
+      withInterviewTimeout(
+        generateNextQuestion(session, 70, session.conversationMemory),
+        instantFirstQ
+      ),
+    ]);
+
     session.openingGreeting = greeting;
     session.conversationState.interviewerEmotion = "speaking";
 
-    const firstQ = await generateNextQuestion(session, 70, session.conversationMemory);
     session.questions.push({
       question:     firstQ.question,
       section:      firstQ.section || "warmup",
