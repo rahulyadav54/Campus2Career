@@ -176,6 +176,7 @@ function DIDAvatar({ state, speakText, presenterUrl, onReady, onError }) {
   const streamInfoRef = useRef(null);
   const [connected, setConnected] = useState(false);
   const lastSpokenRef = useRef("");
+  const initTimerRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -235,14 +236,22 @@ function DIDAvatar({ state, speakText, presenterUrl, onReady, onError }) {
 
     initDID();
 
+    // Timeout: if D-ID doesn't connect within 12s, fall back to animated avatar
+    initTimerRef.current = setTimeout(() => {
+      if (active && !connected) {
+        onError?.("D-ID connection timed out");
+      }
+    }, 12000);
+
     return () => {
       active = false;
+      clearTimeout(initTimerRef.current);
       if (streamInfoRef.current) {
         interviewService.closeDIDStream(streamInfoRef.current.streamId, streamInfoRef.current.sessionId);
       }
       peerRef.current?.close();
     };
-  }, [onReady, onError]);
+  }, [onReady, onError, presenterUrl]);
 
   // Make avatar speak whenever speakText changes
   useEffect(() => {

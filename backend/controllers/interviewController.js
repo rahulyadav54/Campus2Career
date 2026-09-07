@@ -78,12 +78,13 @@ export const startInterview = async (req, res) => {
       resumeContext,
     });
 
-    // Generate opening greeting
-    const greeting = await generateOpeningGreeting(session);
+    // Generate opening greeting and first question in parallel
+    const [greeting, firstQ] = await Promise.all([
+      generateOpeningGreeting(session),
+      generateNextQuestion(session, 70),
+    ]);
     session.openingGreeting = greeting;
 
-    // Generate first question
-    const firstQ = await generateNextQuestion(session, 70);
     session.questions.push({
       question:     firstQ.question,
       section:      firstQ.section || interviewType,

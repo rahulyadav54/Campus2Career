@@ -22,6 +22,7 @@ export default function VirtualInterviewer() {
   const [view, setView] = useState(paramSessionId ? "report" : "setup"); // 'setup' | 'live' | 'report'
   const [activeSession, setActiveSession] = useState(null);
   const [reportData, setReportData] = useState(null);
+  const [starting, setStarting] = useState(false);
 
   // If a session ID is passed in URL, load that session/report directly
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function VirtualInterviewer() {
   };
 
   const handleStartInterview = async (config) => {
+    setStarting(true);
     try {
       const res = await interviewService.start(config);
       const data = res.data?.data || res.data;
@@ -73,6 +75,8 @@ export default function VirtualInterviewer() {
         presenterUrl: config.presenterUrl,
       });
       setView("live");
+    } finally {
+      setStarting(false);
     }
   };
 
@@ -91,7 +95,7 @@ export default function VirtualInterviewer() {
   return (
     <div className="w-full min-h-screen bg-slate-950">
       {view === "setup" && (
-        <InterviewSetup onStart={handleStartInterview} />
+        <InterviewSetup onStart={handleStartInterview} loading={starting} />
       )}
 
       {view === "live" && activeSession && (
