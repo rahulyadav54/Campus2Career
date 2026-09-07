@@ -39,7 +39,7 @@ const Certificates = () => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-indigo-50 to-indigo-100 mx-auto p-4 sm:p-6">
+    <div className="certificates-page bg-gradient-to-br from-slate-50 via-indigo-50 to-indigo-100 mx-auto p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-2">
         <h1 className="text-xl sm:text-2xl font-bold">Certificates</h1>
         <div className="text-sm text-gray-600">
@@ -54,7 +54,7 @@ const Certificates = () => {
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {completedCertificates.map((rec) => (
-              <div key={rec._id} className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+              <div key={rec._id} className="certificate-card bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-semibold text-lg text-gray-900">{rec.title}</h3>
@@ -71,7 +71,7 @@ const Certificates = () => {
                   </div>
                   {rec.certificateNumber && (
                     <div className="text-gray-600">
-                      Certificate no: <span className="font-mono text-gray-800">{rec.certificateNumber}</span>
+                      Certificate no: <span className="font-mono text-gray-800 certificate-number">{rec.certificateNumber}</span>
                     </div>
                   )}
                   {(rec.skillsGained || []).length > 0 && (
@@ -85,7 +85,7 @@ const Certificates = () => {
                 {rec.mentorFeedback?.length > 0 && (
                   <div className="mb-4">
                     <p className="text-sm font-medium text-gray-700 mb-1">Mentor Feedback:</p>
-                    <p className="text-sm text-gray-600 italic bg-gray-50 p-2 rounded">"{rec.mentorFeedback[rec.mentorFeedback.length - 1].text}"</p>
+                    <p className="text-sm text-gray-600 italic bg-gray-50 certificate-feedback p-2 rounded">"{rec.mentorFeedback[rec.mentorFeedback.length - 1].text}"</p>
                   </div>
                 )}
 
@@ -115,7 +115,7 @@ const Certificates = () => {
           </h2>
           <div className="grid md:grid-cols-2 gap-4">
             {pendingCertificates.map((rec) => (
-              <div key={rec._id} className="bg-white rounded-lg shadow-sm p-5 border-l-4 border-amber-400">
+              <div key={rec._id} className="certificate-card bg-white rounded-lg shadow-sm p-5 border-l-4 border-amber-400">
                 <h3 className="font-semibold text-gray-900">{rec.title}</h3>
                 <p className="text-sm text-gray-600">{rec.organization || "Internship record"}</p>
                 <p className="text-sm text-amber-700 mt-2">Completion submitted. Waiting for mentor review.</p>
@@ -132,7 +132,7 @@ const Certificates = () => {
           </h2>
           <div className="grid md:grid-cols-2 gap-4">
             {inProgressCertificates.map((rec) => (
-              <div key={rec._id} className="bg-white rounded-lg shadow-sm p-5 border-l-4 border-indigo-400">
+              <div key={rec._id} className="certificate-card bg-white rounded-lg shadow-sm p-5 border-l-4 border-indigo-400">
                 <h3 className="font-semibold text-gray-900">{rec.title}</h3>
                 <p className="text-sm text-gray-600">{rec.organization || "Internship record"}</p>
                 <p className="text-sm text-indigo-700 mt-2">Certificate will be available after completion and mentor review.</p>
@@ -143,7 +143,7 @@ const Certificates = () => {
       )}
 
       {records.length === 0 && (
-        <div className="bg-white rounded-lg p-8 text-center text-gray-500">
+        <div className="certificate-card bg-white rounded-lg p-8 text-center text-gray-500">
           Complete an internship to receive certificates here.
         </div>
       )}

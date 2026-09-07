@@ -201,6 +201,34 @@ html.dark .border-gray-300 { border-color: #475569; }
 html.dark .hover\:bg-gray-50:hover { background-color: #334155; }
 html.dark .hover\:bg-gray-100:hover { background-color: #334155; }
 
+html.dark .certificates-page {
+  background: linear-gradient(135deg, #111827 0%, #172554 55%, #1e1b4b 100%);
+  color: #f8fafc;
+}
+html.dark .certificates-page .certificate-card {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f8fafc;
+}
+html.dark .certificates-page .certificate-card h3,
+html.dark .certificates-page .certificate-card .certificate-number {
+  color: #f8fafc;
+}
+html.dark .certificates-page .certificate-feedback {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+html.dark .certificates-page .text-gray-600,
+html.dark .certificates-page .text-gray-500 {
+  color: #cbd5e1;
+}
+html.dark .certificates-page .text-gray-700 {
+  color: #e2e8f0;
+}
+html.dark .certificates-page .text-gray-300 {
+  color: #64748b;
+}
+
 html.dark .text-indigo-600 { color: #a5b4fc; }
 html.dark .text-indigo-700 { color: #c7d2fe; }
 html.dark .hover\:text-indigo-700:hover { color: #e0e7ff; }
