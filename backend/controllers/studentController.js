@@ -104,7 +104,7 @@ export const updateStudentProfile = async (req, res) => {
     const allowedFields = [
       'name', 'phone', 'year', 'cgpa', 'description', 'skills', 
       'socialLinks', 'projects', 'experiences', 'course', 'specialization', 'backlogs',
-      'profileImage'
+      'profileImage', 'preferredLocations', 'remotePref', 'targetRole', 'interests', 'skillProfile'
     ];
 
     const updates = {};

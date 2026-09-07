@@ -67,6 +67,9 @@ import InternshipAnalytics from "./pages/admin/InternshipAnalytics";
 import StudentSkillGapReport from "./pages/admin/StudentSkillGapReport";
 import RecruitmentAnalytics from "./pages/recruiter/RecruitmentAnalytics";
 import CareerGuidance from "./pages/student/CareerGuidance";
+import AIDashboardPage from "./pages/student/AIDashboardPage";
+import AICareerMissionPage from "./pages/student/AICareerMissionPage";
+import AISkillGapPage from "./pages/student/AISkillGapPage";
 import LearningRecommendations from "./pages/student/LearningRecommendations";
 import SkillMapping from "./pages/student/SkillMapping";
 import Internships from "./pages/student/Internships";
@@ -124,6 +127,9 @@ function App() {
           <Route path="certificates" element={<Certificates />} />
           <Route path="portfolio" element={<Portfolio />} />
           <Route path="career" element={<CareerGuidance />} />
+          <Route path="ai-dashboard" element={<AIDashboardPage />} />
+          <Route path="ai-career-mission" element={<AICareerMissionPage />} />
+          <Route path="ai-skill-gap" element={<AISkillGapPage />} />
           <Route path="skill-mapping" element={<SkillMapping />} />
           <Route path="learning" element={<LearningRecommendations />} />
           <Route path="learning-platforms" element={<LearningPlatforms />} />

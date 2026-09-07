@@ -1,57 +1,246 @@
-# Campus2Career - Enterprise Campus Placement Platform
+# Campus2Career
 
-A comprehensive full-stack platform for campus placements, skill development, AI career guidance, assessments, and industry-academia collaboration.
+Campus2Career is a full-stack campus placement and career development platform designed for students, recruiters, mentors, institutions, and academic staff. It combines placement workflows, assessments, analytics, collaboration features, and an AI automation layer that helps students understand skill gaps, target roles, interview readiness, and career direction.
 
-## What This Project Actually Does
+## Why Campus2Career
 
-Campus2Career is built around **6 real workflows**:
+The platform goes beyond a simple job board. It creates a connected ecosystem where:
 
-1. **Students** build profiles, take assessments, apply to jobs/internships, join workshops/challenges/projects, and get AI career guidance.
-2. **Recruiters** post jobs, manage applications, schedule interviews, create assessments, and shortlist candidates.
-3. **Mentors** approve student applications, track progress, manage internships, and oversee student activity.
-4. **Institutions/Admins** approve jobs/opportunities, manage users, run analytics, oversee collaborations, and configure assessments.
-5. **Academicians** browse faculty programs, apply to opportunities, and track their applications.
-6. **AI Career Advisor** provides persistent, context-aware chat with full markdown rendering and chat history.
+- Students can build profiles, apply for jobs, track applications, and get AI-guided career planning.
+- Recruiters can post jobs, shortlist candidates, review applications, and assess talent.
+- Mentors can approve progress and guide students through internships and milestones.
+- Institutions can manage approvals, review portfolios, and track placement and skill trends.
+- Academicians can publish faculty opportunities and participate in internship and program workflows.
 
-## Live Stack
+The AI layer adds explainable automation for:
 
-| Layer | Tech |
+- role-based skill gap analysis
+- placement readiness assessment
+- opportunity scouting and fit ranking
+- resume ATS analysis
+- mock interview planning
+- recruiter shortlist generation
+- institution forecasting and cohort insights
+
+---
+
+## Tech Stack
+
+| Layer | Stack |
 |---|---|
-| Frontend | React 18 + Vite + Tailwind CSS + React Router |
-| Backend | Node.js + Express + MongoDB (Mongoose) |
-| AI | NVIDIA Nemotron via OpenAI-compatible API |
-| Auth | JWT + refresh tokens |
-| File handling | Multer + XLSX + Mammoth |
+| Frontend | React, Vite, React Router, Tailwind-style components, Lucide icons |
+| Backend | Node.js, Express, MongoDB, Mongoose |
+| Auth | JWT + refresh-token flow |
+| AI Layer | Role-based orchestration services with explainable scoring logic |
+| Generative AI | OpenAI-compatible / NVIDIA-style model integration |
+| File Handling | Multer, XLSX, PDF parsing, document uploads |
+| Real-Time | Server-sent events with notification streams |
+| Deployment | Vercel + Render-ready configuration |
+
+---
+
+## Platform Workflow
+
+### 1. Student workflow
+
+A student can:
+
+- create a profile and update skills, experience, projects, and resume
+- explore jobs and internships
+- apply for roles and track application status
+- take assessments and aptitude tests
+- review skill gap diagnostics
+- generate a career mission for a target role
+- understand readiness scores and next learning actions
+- use resume intelligence and mock interview preparation
+- access learning and opportunity recommendations
+
+### 2. Recruiter workflow
+
+A recruiter can:
+
+- register and manage company profile
+- create and publish jobs
+- review applicants and applications
+- shortlist candidates using AI ranking
+- assess candidate quality using role-based scoring
+- manage interview and hiring pipelines
+
+### 3. Institution workflow
+
+An institution can:
+
+- review and approve programs, student evidence, and portfolios
+- inspect skill demand and internship participation analytics
+- view placement readiness and cohort-level indicators
+- monitor institutional performance trends
+
+### 4. Mentor and academician workflow
+
+- mentors approve student milestones and internship progress
+- academicians publish and manage opportunities and faculty-facing programs
+
+### 5. Admin workflow
+
+An admin can:
+
+- verify jobs, users, and portfolios
+- manage pathways, assessments, and question banks
+- monitor analytics and system activity
+- oversee institutional programs and collaboration data
+
+---
+
+## AI Automation Layer
+
+The project contains an orchestration-based AI layer that routes requests to role-aware automation agents instead of a single monolithic AI service.
+
+### Included automation modules
+
+1. Career Mission Engine
+   - generates a target role plan
+   - checks role coverage and current readiness
+   - highlights skill gaps
+   - returns roadmap and learning recommendations
+
+2. Skill Gap Engine
+   - compares the student profile against target-role skill requirements
+   - ranks strong vs. missing skills
+   - outputs explainable recommendation blocks
+
+3. Opportunity Scout
+   - scores approved opportunities based on fit, role match, and student profile strength
+   - ranks the best opportunity matches
+
+4. Resume Intelligence
+   - computes ATS-style score estimates
+   - identifies missing keywords and weak sections
+   - provides role-aligned recommendations
+
+5. Mock Interview Agent
+   - builds a practice interview plan for the target role
+   - suggests domain questions, evaluation criteria, and readiness ranges
+
+6. Recruiter Intelligence
+   - ranks student candidates for a role
+   - surfaces strongest fit profiles and shortlisting rationale
+
+7. Placement Readiness Agent
+   - evaluates skill coverage, profile completeness, project evidence, and academic consistency
+   - returns readiness summaries and decision support
+
+8. Institution Insights Agent
+   - predicts cohort readiness and placement outcomes
+   - creates department-level summaries and forecast insights
+
+9. AI Command Center
+   - provides an orchestrator overview of active AI agents and automation health
+   - helps administrators see system readiness in one place
+
+---
+
+## Project Structure
+
+```text
+Campus2Career/
+├── backend/
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── scripts/
+│   ├── tests/
+│   ├── config/
+│   ├── middleware/
+│   ├── uploads/
+│   ├── package.json
+│   ├── server.js
+│   └── ...
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   ├── vite.config.js
+│   └── ...
+├── recommendation_service/
+│   ├── app.py
+│   ├── ml_engine.py
+│   ├── train_model.py
+│   ├── dataset.csv
+│   └── requirements.txt
+├── README.md
+├── TODO.md
+├── render.yaml
+├── LICENSE
+└── CONTRIBUTING.md
+```
+
+---
+
+## Core Roles
+
+- student
+- mentor
+- recruiter
+- admin
+- institution
+- academician
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js >= 18
-- MongoDB
-- Python venv (only if running the recommendation service locally)
+- Node.js 18+
+- MongoDB instance or MongoDB Atlas connection
+- Python 3.10+ for the recommendation service (optional but recommended)
 
-### Clone
+### 1) Clone the repository
 
 ```bash
 git clone https://github.com/rahulyadav54/Campus2Career.git
 cd Campus2Career
 ```
 
-### Backend
+### 2) Backend setup
 
 ```bash
 cd backend
-cp .env.example .env
-# Fill MONGO_URI, JWT_SECRET, and optional AI/email keys
 npm install
-npm run seed:admin
+```
+
+Create a `.env` file in the backend folder. Example:
+
+```bash
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/campus2career
+JWT_SECRET=your_secure_secret_here
+FRONTEND_URLS=http://localhost:5173
+OPENAI_API_KEY=your_key_here
+OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
+AI_MODEL=nemotron-4-340b-instruct
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USER=example@example.com
+EMAIL_PASS=your_password
+```
+
+Then start the backend:
+
+```bash
 npm start
 ```
 
-Default admin credentials are defined in `backend/scripts/seedAdmin.js`.
+Optional seed commands:
 
-### Frontend
+```bash
+npm run seed:admin
+npm run seed:demo
+npm run seed:portal
+```
+
+### 3) Frontend setup
 
 ```bash
 cd frontend
@@ -59,138 +248,85 @@ npm install
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173` by default.
+Frontend runs typically at:
 
-### Recommendation Service (optional)
+```text
+http://localhost:5173
+```
+
+### 4) Recommendation service (optional)
 
 ```bash
 cd recommendation_service
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 python app.py
 ```
 
-## Roles
+---
 
-- `student`
-- `mentor`
-- `recruiter`
-- `admin`
-- `institution`
-- `academician`
-
-## Feature Map
-
-### Authentication & Profile
-- Registration / login with role selection
-- Token refresh
-- Profile completion and reputation scoring
-- Resume upload
-- Social links
-- Digital portfolio
-
-### Jobs & Applications
-- Job posting with recruiter approval workflow
-- AI-powered job recommendations
-- Application status tracking
-- Interview scheduling
-- Mentor approval flow
-- Recruiter application management
-- Shortlisting and hiring
-
-### Assessments & Tests
-- Admin/recruiter/institution assessment management
-- Question bank with bulk import (CSV, XLSX, XLS, JSON, DOCX)
-- Assessment templates
-- Timed student assessment attempts
-- Auto-submit on timeout
-- Integrity monitoring (tab switch, blur, fullscreen)
-- Aptitude tests
-- Results and analytics
-
-### AI Career Advisor
-- Full markdown rendering (headings, tables, code, lists)
-- Persistent per-user chat history
-- New chat / delete chat / load previous chats
-- Available as full-page route and floating widget
-- Uses NVIDIA Nemotron backend
-
-### Notifications
-- System notifications
-- Unread count badge
-- Mark as read / mark all read
-
-### Collaboration & Learning
-- Workshops and guest lectures
-- Innovation challenges
-- Live industry projects
-- Collaboration registrations
-- Learning platforms
-- Courses and certificates
-- Skill mapping
-- Learning recommendations
-
-### Analytics
-- Admin analytics
-- Skill demand trends
-- Internship participation
-- Placement readiness
-- Student skill gap reports
-- Recruiter analytics
-
-## Backend API Overview
+## Main API Areas
 
 Base path: `/api`
 
-### Core Routes
-- `/api/auth` — login, register, profile, refresh
-- `/api/jobs` — job CRUD and status toggles
-- `/api/applications` — apply, mentor/recruiter decisions
-- `/api/recommendations` — AI job recommendations
+### Authentication and access
+- `/api/auth` — login, registration, refresh, profile
 - `/api/student` — student-specific endpoints
-- `/api/mentor` — mentor approvals, progress, internships
-- `/api/recruiter` — recruiter jobs, applications, history
-- `/api/admin` — approvals, user management, activities, post
-- `/api/institutions` — institution analytics and portfolio verification
-- `/api/opportunities` — faculty programs and academician workflows
-- `/api/portfolio` — student portfolio management
-- `/api/realtime` — notifications and activity feeds
-- `/api/collaborations` — workshops, lectures, challenges, projects
-- `/api/learning-platforms` — external learning providers
-- `/api/courses` — student/enrolled courses
-- `/api/mentorship` — mentor sessions
-- `/api/notifications` — notification center
-- `/api/chat-history` — AI chat persistence
-- `/api/assessment-management` — assessment CRUD, candidates, stats
+- `/api/mentor` — mentor APIs
+- `/api/recruiter` — recruiter APIs
+- `/api/admin` — admin management and approvals
+- `/api/institutions` — institution workflows and analytics
+
+### Jobs and applications
+- `/api/jobs` — job listing, creation, approval, updates
+- `/api/applications` — application tracking and decisions
+- `/api/opportunities` — academician and opportunity management
+- `/api/recommendations` — recommendation APIs
+
+### Learning and assessment
+- `/api/assessments` — assessment handling
 - `/api/student-assessments` — student attempts and results
-- `/api/question-bank` — questions, templates, bulk import
-- `/api/ai` — AI chat
+- `/api/question-bank` — question bank management
 - `/api/aptitude` — aptitude tests
-- `/api/academician-opportunities` — academician opportunity workflows
-- `/api/internship-progress` — internship progress tracking
+- `/api/courses` — learning course records
+- `/api/learning-platforms` — external platform integration
+
+### Collaboration and community
+- `/api/collaborations` — workshops, challenges, projects
+- `/api/notifications` — notifications and unread state
+- `/api/realtime` — live event or SSE stream
+- `/api/chat-history` — AI chat persistence
+
+### AI automation routes
+- `/api/ai-automation` — orchestrator and automation endpoints
+- `/api/skill-gap` — skill-gap analysis
+- `/api/opportunity-scout` — opportunity fit scoring
+
+---
 
 ## Frontend Routes
 
-- `/` — Landing page
-- `/login` — Login
-- `/register` — Student registration
-- `/recruiter/register` — Recruiter registration
-- `/academician/register` — Academician registration
+### Public
+- `/`
+- `/login`
+- `/register`
+- `/forgot-password`
+- `/recruiter/register`
+- `/academician/register`
 
 ### Student
-- `/student` — Home
+- `/student`
 - `/student/profile`
 - `/student/jobs`
 - `/student/recommendations`
-- `/student/assessment`
-- `/student/assessments`
-- `/student/aptitude`
-- `/student/opportunities`
 - `/student/applications`
 - `/student/certificates`
 - `/student/portfolio`
 - `/student/career`
+- `/student/ai-dashboard`
+- `/student/ai-career-mission`
+- `/student/ai-skill-gap`
 - `/student/skill-mapping`
 - `/student/learning`
 - `/student/learning-platforms`
@@ -199,7 +335,6 @@ Base path: `/api`
 - `/student/challenges`
 - `/student/projects`
 - `/student/collaborations`
-- `/student/announcements`
 - `/student/notifications`
 - `/student/courses`
 - `/student/my-courses`
@@ -210,25 +345,18 @@ Base path: `/api`
 - `/recruiter/create-job`
 - `/recruiter/applications`
 - `/recruiter/students`
-- `/recruiter/history`
 - `/recruiter/analytics`
 - `/recruiter/assessments`
-- `/recruiter/announcements`
 - `/recruiter/notifications`
 
 ### Admin
 - `/admin`
-- `/admin/users`
-- `/admin/activities`
 - `/admin/job-verification`
 - `/admin/opportunity-approvals`
-- `/admin/portfolio-verification`
+- `/admin/users`
+- `/admin/analytics`
 - `/admin/question-bank`
 - `/admin/assessments`
-- `/admin/pathways`
-- `/admin/analytics`
-- `/admin/collaboration`
-- `/admin/learning-platforms`
 - `/admin/courses`
 - `/admin/notifications`
 
@@ -238,50 +366,98 @@ Base path: `/api`
 - `/institution/analytics/skill-demand`
 - `/institution/analytics/internship-participation`
 - `/institution/analytics/placement-readiness`
-- `/institution/assessments`
 - `/institution/notifications`
 
-### Mentor
+### Mentor / Academician
 - `/mentor`
 - `/mentor/mentees`
-- `/mentor/approvals`
 - `/mentor/progress`
-- `/mentor/history`
 - `/mentor/internships`
-
-### Academician
 - `/academician`
 - `/academician/opportunities`
 - `/academician/applications`
 
-## Environment Variables
+---
+
+## AI Workflow Example
+
+### Student: career planning flow
+
+1. Student opens the AI dashboard.
+2. They choose or enter a target role such as Data Analyst or Product Analyst.
+3. The AI system evaluates profile strength and skills.
+4. It produces:
+   - skill coverage %
+   - missing priorities
+   - role-fit explanation
+   - curated roadmap
+   - recommended learning actions
+5. The student can then improve their resume and interview readiness using the supporting AI insights.
+
+### Recruiter: shortlisting flow
+
+1. Recruiter reviews a target role requirement.
+2. The system ranks applicants by skills, profile strength, and role fit.
+3. Recruiter receives a shortlist with explainable rationale.
+4. Candidate quality becomes easier to compare and prioritize.
+
+### Institution: forecasting flow
+
+1. Institution looks at department readiness.
+2. AI aggregates student cohort strengths and gaps.
+3. It estimates readiness trends and forecast risk / opportunity areas.
+4. Leadership can decide where to allocate training or intervention.
+
+---
+
+## Testing and Verification
+
+The following checks were executed successfully during validation:
 
 ```bash
-# Backend
-MONGO_URI=
-JWT_SECRET=
-PORT=5000
-OPENAI_API_KEY=
-OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
-AI_MODEL=nemotron-4-340b-instruct
-FRONTEND_URLS=https://campus2career.zayacodehub.in,https://campus2career-cpe2.onrender.com
-EMAIL_HOST=
-EMAIL_PORT=
-EMAIL_USER=
-EMAIL_PASS=
+cd backend
+node --test tests/*.test.js
 ```
 
-## Deployment
+Result:
+- 10 tests passed
+- 0 failed
 
-Backend is deployed on Render. Frontend should be deployed on Vercel or Netlify with `VITE_API_URL` set to the backend URL.
+Frontend validation:
+
+```bash
+cd frontend
+npm run build
+```
+
+Result:
+- Vite production build succeeded
+- output ended with: "✓ built in 3.42s"
+
+---
+
+## Production Readiness Notes
+
+The AI automation and app layers are functional and validated, but the overall project still has some roadmap items remaining before full production launch, including:
+
+- reliability hardening for external services and database connectivity
+- test coverage expansion and CI pipeline
+- deployment configuration and security cleanup
+- additional workflow completion for mentorship and collaboration modules
+
+This README reflects the implemented state of the project and the current AI automation flow.
+
+---
 
 ## Contributing
 
-1. Create a feature branch
-2. Make changes
-3. Run `npm run build` in frontend
-4. Run `node --check server.js` in backend
-5. Open a pull request
+1. Create a feature branch.
+2. Keep changes focused and well-documented.
+3. Validate backend tests where relevant.
+4. Validate frontend build before merge.
+5. Update documentation when adding routes, workflows, or AI features.
+
+---
 
 ## License
 

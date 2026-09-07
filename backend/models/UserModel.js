@@ -95,9 +95,14 @@ const userSchema = new mongoose.Schema({
     skillProfile: {
         strengths: { type: [String], default: [] },
         gaps: { type: [String], default: [] },
-        lastAssessedAt: { type: Date }
+        lastAssessedAt: { type: Date },
+        skillConfidence: { type: Map, of: Number, default: {} },
     },
     portfolioVisibility: { type: String, enum: ["private", "institution", "public"], default: "institution" },
+
+    preferredLocations: { type: [String], default: [] },
+    remotePref: { type: String, enum: ["remote", "hybrid", "onsite", "no-preference"], default: "no-preference" },
+    targetRole: { type: String, default: "" },
 
     // ===== SOCIAL LINKS =====
     socialLinks: {

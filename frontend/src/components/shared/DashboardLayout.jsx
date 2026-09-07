@@ -5,7 +5,7 @@ import {
   Target, Compass, TrendingUp, Activity, Calendar, MessageSquare,
   Settings, HelpCircle, LogOut, Menu, X, Bell, ChevronDown, Search,
   ClipboardList, GraduationCap, Trophy, Building2, Globe, Presentation,
-  Megaphone, Shield, UserPlus, User, KeyRound
+  Megaphone, Shield, UserPlus, User, KeyRound, Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -20,6 +20,11 @@ const roleNavConfig = {
     menu: [
       { group: "Overview", items: [
         { label: "Dashboard", icon: BarChart3, path: "/student" },
+      ]},
+      { group: "AI Automation", items: [
+        { label: "AI Dashboard", icon: Sparkles, path: "/student/ai-dashboard" },
+        { label: "AI Career Mission", icon: Target, path: "/student/ai-career-mission" },
+        { label: "AI Skill Gap", icon: Activity, path: "/student/ai-skill-gap" },
       ]},
       { group: "Career", items: [
         { label: "Job Openings", icon: Briefcase, path: "/student/jobs" },
