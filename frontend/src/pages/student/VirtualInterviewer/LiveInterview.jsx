@@ -164,22 +164,6 @@ export default function LiveInterview({
     setInterviewState(STATES.LISTENING);
   }, []);
 
-  const handleListeningEnd = useCallback(() => {
-    if (stateRef.current === STATES.COMPLETED) return;
-    if (processingRef.current) return;
-
-    const answer = finalTranscript.trim();
-    if (answer.length >= 3 && (stateRef.current === STATES.LISTENING || bargeInRef.current)) {
-      processAnswer(answer);
-      return;
-    }
-
-    if (stateRef.current !== STATES.PROCESSING && stateRef.current !== STATES.COMPLETED) {
-      setInterviewState(STATES.LISTENING);
-      voiceRef.current?.startListening();
-    }
-  }, [finalTranscript, processAnswer]);
-
   const handleSpeechError = useCallback((msg) => {
     setError(msg);
     setInterviewState(STATES.ERROR);
@@ -266,6 +250,21 @@ export default function LiveInterview({
       }, 500);
     }
   }, [activeSessionId, currentQuestion, speakAI]);
+
+  const handleListeningEnd = useCallback(() => {
+    if (stateRef.current === STATES.COMPLETED || processingRef.current) return;
+
+    const answer = finalTranscript.trim();
+    if (answer.length >= 3 && (stateRef.current === STATES.LISTENING || bargeInRef.current)) {
+      processAnswer(answer);
+      return;
+    }
+
+    if (stateRef.current !== STATES.PROCESSING && stateRef.current !== STATES.COMPLETED) {
+      setInterviewState(STATES.LISTENING);
+      voiceRef.current?.startListening();
+    }
+  }, [finalTranscript, processAnswer]);
 
   // ── Manual finish answer button ──────────────────────────────────────────────
 
