@@ -165,6 +165,83 @@
   @keyframes caret-blink {
     50% { opacity: 0; }
   }
+
+  /* Virtual interviewer avatar motions */
+  .avatar-breathe {
+    animation: avatarBreathe 4s ease-in-out infinite;
+  }
+  .avatar-speak-motion {
+    animation: avatarSpeakBob 0.35s ease-in-out infinite alternate;
+  }
+  .avatar-listen-idle {
+    animation: avatarListenIdle 5s ease-in-out infinite;
+  }
+  .avatar-listen-active {
+    animation: avatarListenActive 2.5s ease-in-out infinite;
+  }
+  .avatar-think-motion {
+    animation: avatarThink 3s ease-in-out infinite;
+  }
+  .avatar-reaction-motion {
+    animation: avatarReaction 0.8s ease-out;
+  }
+  .avatar-nod {
+    animation: avatarNod 0.45s ease-in-out;
+  }
+  .avatar-mouth-talk {
+    animation: mouthTalk 0.12s ease-in-out infinite alternate;
+  }
+  .avatar-speak-ring {
+    animation: avatarSpeakRing 0.5s ease-in-out infinite alternate;
+  }
+  .avatar-listen-ring {
+    animation: avatarListenRing 2s ease-in-out infinite;
+  }
+
+  @keyframes avatarBreathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.008); }
+  }
+  @keyframes avatarSpeakBob {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-2px); }
+  }
+  @keyframes avatarListenIdle {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-1px) rotate(0.5deg); }
+  }
+  @keyframes avatarListenActive {
+    0%, 100% { transform: scale(1) translateY(0); }
+    40% { transform: scale(1.01) translateY(-2px); }
+    70% { transform: scale(1.005) translateY(0); }
+  }
+  @keyframes avatarThink {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    33% { transform: translateX(-2px) rotate(-1deg); }
+    66% { transform: translateX(1px) rotate(0.5deg); }
+  }
+  @keyframes avatarReaction {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+  }
+  @keyframes avatarNod {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    35% { transform: translateY(5px) rotate(2deg); }
+    70% { transform: translateY(1px) rotate(0.5deg); }
+  }
+  @keyframes mouthTalk {
+    0% { transform: scaleY(0.85); }
+    100% { transform: scaleY(1.15); }
+  }
+  @keyframes avatarSpeakRing {
+    0% { transform: scale(0.98); opacity: 0.3; }
+    100% { transform: scale(1.02); opacity: 0.6; }
+  }
+  @keyframes avatarListenRing {
+    0%, 100% { transform: scale(1); opacity: 0.25; }
+    50% { transform: scale(1.03); opacity: 0.5; }
+  }
 }
 
 html.dark {

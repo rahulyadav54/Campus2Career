@@ -87,7 +87,7 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  const speakAI = useCallback((text, onDone, pauseMs = 0) => {
+  const speakAI = useCallback((text, onDone, pauseMs = 0, reactionEmotion = null) => {
     if (!text?.trim()) { onDone?.(); return; }
     setDisplayCaption(text);
     if (!speakerEnabled) {
@@ -107,7 +107,8 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
 
     if (pauseMs > 0) {
       setState(INTERVIEWER_STATES.THINKING);
-      setEmotion("thinking");
+      // Keep API reaction visible during the thinking pause (impressed, curious, etc.)
+      setEmotion(reactionEmotion || "thinking");
       setTimeout(startSpeak, pauseMs);
     } else {
       startSpeak();
@@ -125,13 +126,22 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
   }, [waitingForReady]);
 
   const activateListening = useCallback(() => {
-    if (!micEnabled) {
-      setError("Microphone is off. Turn it on to respond.");
-      return;
-    }
-    setTranscript("");
-    setFinalTranscript("");
-    beginListening();
+    const tryActivate = (attempt = 0) => {
+      if (speechRef.current?.isSpeaking?.()) {
+        if (attempt < 30) {
+          setTimeout(() => tryActivate(attempt + 1), 400);
+        }
+        return;
+      }
+      if (!micEnabled) {
+        setError("Microphone is off. Turn it on to respond.");
+        return;
+      }
+      setTranscript("");
+      setFinalTranscript("");
+      beginListening();
+    };
+    tryActivate();
   }, [micEnabled, beginListening]);
 
   // Opening sequence — welcome + wait for ready
@@ -256,7 +266,8 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
           processingRef.current = false;
           activateListening();
         },
-        res.thinkingPauseMs || 800
+        res.thinkingPauseMs || 800,
+        res.emotion || "thinking"
       );
     } catch {
       setAnsweredCount((c) => c + 1);
@@ -272,12 +283,13 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
         setCurrentQuestion((q) => ({ ...q, index: q.index + 1, text: line }));
         processingRef.current = false;
         activateListening();
-      }, 900);
+      }, 900, "curious");
     }
   }, [activeSessionId, currentQuestion, waitingForReady, session, speakAI, activateListening, answeredCount, phase]);
 
   const handleListeningEnd = useCallback(() => {
     if (stateRef.current === INTERVIEWER_STATES.COMPLETED || processingRef.current) return;
+    if (speechRef.current?.isSpeaking?.()) return;
     const answer = finalTranscript.trim();
     if (answer.length >= 2 && stateRef.current === INTERVIEWER_STATES.LISTENING) {
       processAnswer(answer);
@@ -354,7 +366,17 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
           setEmotion("listening");
         }}
         onAudioLevel={setAudioLevel}
-        onSpeechStarted={() => setNodTrigger((n) => n + 1)}
+        onSpeechStarted={() => {
+          setNodTrigger((n) => n + 1);
+          if (stateRef.current === INTERVIEWER_STATES.LISTENING) {
+            setEmotion("curious");
+            setTimeout(() => {
+              if (stateRef.current === INTERVIEWER_STATES.LISTENING) {
+                setEmotion("listening");
+              }
+            }, 1400);
+          }
+        }}
         onError={(msg) => { setError(msg); toast.error(msg); }}
       />
 
@@ -387,6 +409,8 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
               audioLevel={audioLevel}
               presenterUrl={presenterUrl}
               nodTrigger={nodTrigger}
+              candidateActive={Boolean(transcript?.trim() || finalTranscript?.trim())}
+              isProcessing={state === INTERVIEWER_STATES.ANALYZING || state === INTERVIEWER_STATES.THINKING}
             />
             {!speakerEnabled && (
               <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">

@@ -1,6 +1,6 @@
 /**
  * SpeechPipeline — STT/TTS with interruption support.
- * Browser speechSynthesis is the primary voice path (reliable in Chrome/Edge).
+ * Browser speechSynthesis with sentence chunking (Chrome drops long utterances).
  */
 
 import { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from "react";
@@ -11,7 +11,50 @@ const SpeechRecognition =
     ? window.SpeechRecognition || window.webkitSpeechRecognition || null
     : null;
 
-const MAX_SPEAK_MS = 60000;
+const MAX_CHUNK_MS = 30000;
+const CHUNK_GAP_MS = 60;
+
+/** Split into short chunks so Chrome TTS does not cut off mid-sentence */
+function splitSpeechChunks(text) {
+  const trimmed = String(text || "").trim();
+  if (!trimmed) return [];
+
+  const sentences = trimmed.match(/[^.!?…]+[.!?…]+|[^.!?…]+$/g) || [trimmed];
+  const chunks = [];
+  let buffer = "";
+
+  for (const sentence of sentences) {
+    const part = sentence.trim();
+    if (!part) continue;
+
+    const candidate = buffer ? `${buffer} ${part}` : part;
+    if (candidate.length <= 140) {
+      buffer = candidate;
+      continue;
+    }
+
+    if (buffer) chunks.push(buffer);
+    if (part.length <= 180) {
+      buffer = part;
+    } else {
+      const words = part.split(/\s+/);
+      let slice = "";
+      for (const word of words) {
+        const next = slice ? `${slice} ${word}` : word;
+        if (next.length > 140 && slice) {
+          chunks.push(slice);
+          slice = word;
+        } else {
+          slice = next;
+        }
+      }
+      buffer = slice;
+    }
+  }
+
+  if (buffer) chunks.push(buffer);
+  return chunks.length ? chunks : [trimmed];
+}
 
 const SpeechPipeline = forwardRef(function SpeechPipeline(
   {
@@ -40,6 +83,7 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
   const hadSpeechRef = useRef(false);
   const unlockedRef = useRef(false);
   const doneRef = useRef(null);
+  const speakStartedRef = useRef(false);
 
   useEffect(() => {
     if (!synthRef.current) return undefined;
@@ -101,6 +145,7 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
       /* ignore */
     }
     speakingRef.current = false;
+    speakStartedRef.current = false;
     onAudioLevel?.(0);
   }, [clearKeepAlive, onAudioLevel]);
 
@@ -110,6 +155,91 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
     hardStopSpeech();
     onSpeakEnd?.();
   }, [hardStopSpeech, onSpeakEnd]);
+
+  const startSpeakKeepAlive = useCallback((token) => {
+    clearKeepAlive();
+    keepAliveRef.current = setInterval(() => {
+      if (token !== speakTokenRef.current) {
+        clearKeepAlive();
+        return;
+      }
+      const synth = synthRef.current;
+      if (!synth) return;
+      // Only resume — never call finish() here. Chrome falsely reports
+      // !speaking between chunks and cuts audio short if we finish early.
+      if (synth.paused) synth.resume();
+    }, 250);
+
+    levelTimerRef.current = setInterval(() => {
+      if (!speakingRef.current) return;
+      onAudioLevel?.(0.25 + Math.random() * 0.55);
+    }, 120);
+  }, [clearKeepAlive, onAudioLevel]);
+
+  const speakChunk = useCallback((chunk, token, voice) => new Promise((resolve) => {
+    if (token !== speakTokenRef.current || !synthRef.current) {
+      resolve(false);
+      return;
+    }
+
+    let settled = false;
+    const settle = (ok) => {
+      if (settled || token !== speakTokenRef.current) return;
+      settled = true;
+      resolve(ok);
+    };
+
+    const utterance = new SpeechSynthesisUtterance(chunk);
+    utterance.rate = 0.93;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang || "en-US";
+    } else {
+      utterance.lang = "en-US";
+    }
+
+    const maxMs = Math.min(MAX_CHUNK_MS, Math.max(4000, chunk.length * 100));
+    const safety = setTimeout(() => settle(true), maxMs);
+
+    utterance.onstart = () => {
+      if (token !== speakTokenRef.current) return;
+      speakingRef.current = true;
+      if (!speakStartedRef.current) {
+        speakStartedRef.current = true;
+        onSpeakStart?.();
+        onAudioLevel?.(0.45);
+        startSpeakKeepAlive(token);
+      }
+    };
+
+    utterance.onend = () => {
+      clearTimeout(safety);
+      settle(true);
+    };
+
+    utterance.onerror = (event) => {
+      clearTimeout(safety);
+      if (event?.error && event.error !== "interrupted" && event.error !== "canceled") {
+        console.warn("[SpeechPipeline] TTS chunk error:", event.error, chunk.slice(0, 40));
+      }
+      settle(event?.error !== "interrupted" && event?.error !== "canceled");
+    };
+
+    try {
+      const synth = synthRef.current;
+      synth.resume();
+      synth.speak(utterance);
+      setTimeout(() => {
+        if (token === speakTokenRef.current) synth.resume();
+      }, 40);
+    } catch (err) {
+      clearTimeout(safety);
+      console.warn("[SpeechPipeline] speak chunk failed:", err);
+      settle(false);
+    }
+  }), [onAudioLevel, onSpeakStart, startSpeakKeepAlive]);
 
   const speak = useCallback(async (text, onDone) => {
     const trimmed = String(text || "").trim();
@@ -131,99 +261,43 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
     await ensureUnlocked();
     await waitForVoices();
 
-    // Another speak/stop happened while we waited
     if (token !== speakTokenRef.current) return;
 
-    // Brief pause after cancel so Chrome accepts the next utterance
-    await new Promise((r) => setTimeout(r, 80));
+    await new Promise((r) => setTimeout(r, 100));
     if (token !== speakTokenRef.current) return;
 
-    let finished = false;
-    const finish = () => {
-      if (finished || token !== speakTokenRef.current) return;
-      finished = true;
-      clearKeepAlive();
-      speakingRef.current = false;
-      onAudioLevel?.(0);
-      onSpeakEnd?.();
-      const cb = doneRef.current;
-      doneRef.current = null;
-      cb?.();
-    };
-
-    const utterance = new SpeechSynthesisUtterance(trimmed);
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
-    utterance.volume = 1;
+    const chunks = splitSpeechChunks(trimmed);
     const voice = getPreferredVoice();
-    if (voice) {
-      utterance.voice = voice;
-      utterance.lang = voice.lang || "en-US";
-    } else {
-      utterance.lang = "en-US";
-    }
-
-    const maxMs = Math.min(MAX_SPEAK_MS, Math.max(6000, trimmed.length * 90));
-    const safety = setTimeout(finish, maxMs);
-
-    utterance.onstart = () => {
-      if (token !== speakTokenRef.current) return;
-      speakingRef.current = true;
-      onSpeakStart?.();
-      onAudioLevel?.(0.45);
-
-      // Chrome bug: speechSynthesis can freeze unless periodically resumed
-      clearKeepAlive();
-      keepAliveRef.current = setInterval(() => {
-        if (token !== speakTokenRef.current) {
-          clearKeepAlive();
-          return;
-        }
-        const synth = synthRef.current;
-        if (!synth) return;
-        if (synth.paused) synth.resume();
-        if (!synth.speaking && !synth.pending) {
-          clearKeepAlive();
-          finish();
-        }
-      }, 200);
-
-      // Fake lip-sync amplitude while speaking
-      levelTimerRef.current = setInterval(() => {
-        if (!speakingRef.current) return;
-        onAudioLevel?.(0.25 + Math.random() * 0.55);
-      }, 120);
-    };
-
-    utterance.onend = () => {
-      clearTimeout(safety);
-      finish();
-    };
-
-    utterance.onerror = (event) => {
-      clearTimeout(safety);
-      // "interrupted" / "canceled" are expected when we stop or replace speech
-      if (event?.error && event.error !== "interrupted" && event.error !== "canceled") {
-        console.warn("[SpeechPipeline] TTS error:", event.error);
-      }
-      finish();
-    };
 
     try {
-      const synth = synthRef.current;
-      synth.cancel();
-      synth.resume();
-      synth.speak(utterance);
-      // Second resume helps some Chrome builds start audio
-      setTimeout(() => {
-        if (token === speakTokenRef.current) synth.resume();
-      }, 30);
-    } catch (err) {
-      clearTimeout(safety);
-      console.warn("[SpeechPipeline] speak failed:", err);
-      onError?.("Could not play interviewer voice. Check speaker volume and try Chrome/Edge.");
-      finish();
+      synthRef.current.cancel();
+      synthRef.current.resume();
+    } catch {
+      /* ignore */
     }
+
+    for (let i = 0; i < chunks.length; i += 1) {
+      if (token !== speakTokenRef.current) return;
+
+      const ok = await speakChunk(chunks[i], token, voice);
+      if (!ok || token !== speakTokenRef.current) break;
+
+      if (i < chunks.length - 1) {
+        await new Promise((r) => setTimeout(r, CHUNK_GAP_MS));
+      }
+    }
+
+    if (token !== speakTokenRef.current) return;
+
+    clearKeepAlive();
+    speakingRef.current = false;
+    speakStartedRef.current = false;
+    onAudioLevel?.(0);
+    onSpeakEnd?.();
+
+    const cb = doneRef.current;
+    doneRef.current = null;
+    cb?.();
   }, [
     clearKeepAlive,
     ensureUnlocked,
@@ -232,7 +306,7 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
     onAudioLevel,
     onError,
     onSpeakEnd,
-    onSpeakStart,
+    speakChunk,
     waitForVoices,
   ]);
 
@@ -252,6 +326,8 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
   }, [onSpeechEnded]);
 
   const startListening = useCallback(() => {
+    if (speakingRef.current) return;
+
     if (!SpeechRecognition) {
       onError?.("Speech recognition needs Chrome or Edge.");
       return;
@@ -276,10 +352,11 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
     };
 
     recognition.onresult = (event) => {
-      if (speakingRef.current) {
+      // Barge-in only when mic is intentionally active and interviewer is speaking
+      if (speakingRef.current && listeningRef.current) {
         const latest = event.results[event.results.length - 1];
         const txt = latest?.[0]?.transcript?.trim() || "";
-        if (latest?.isFinal && txt.split(/\s+/).length >= 2) {
+        if (latest?.isFinal && txt.split(/\s+/).filter(Boolean).length >= 4) {
           stopSpeaking();
           onBargeIn?.();
         }
@@ -304,7 +381,7 @@ const SpeechPipeline = forwardRef(function SpeechPipeline(
 
       clearTimeout(silenceTimerRef.current);
       if (finalTranscript.trim().length > 3) {
-        silenceTimerRef.current = setTimeout(() => stopListening(), 2200);
+        silenceTimerRef.current = setTimeout(() => stopListening(), 2800);
       }
     };
 
