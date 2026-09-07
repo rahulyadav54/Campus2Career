@@ -22,7 +22,13 @@ import {
   FileText,
   TrendingUp,
   Cpu,
+  Monitor,
   Users2,
+  Route,
+  GitBranch,
+  Database,
+  Gauge,
+  FileOutput,
   Mail,
   Phone,
   MapPin
@@ -154,6 +160,23 @@ export default function Landing() {
     }
   ];
 
+  const aiWorkflowStages = [
+    { label: "Frontend UI", icon: <Monitor className="w-4 h-4" /> },
+    { label: "API Route", icon: <Route className="w-4 h-4" /> },
+    { label: "Controller", icon: <GitBranch className="w-4 h-4" /> },
+    { label: "AI Orchestrator", icon: <Brain className="w-4 h-4" /> }
+  ];
+
+  const aiAgents = [
+    "Skill Gap Engine",
+    "Career Mission Agent",
+    "Resume / Interview Agent",
+    "Placement Readiness Agent",
+    "Opportunity Scout",
+    "Recruiter Intelligence",
+    "Institution Insights"
+  ];
+
   const testimonials = [
     {
       name: "Student",
@@ -200,6 +223,7 @@ export default function Landing() {
 
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-gray-700 hover:text-gray-900 transition-colors text-sm font-medium">Features</a>
+              <a href="#ai-workflow" className="text-gray-700 hover:text-gray-900 transition-colors text-sm font-medium">AI Workflow</a>
               <a href="#process" className="text-gray-700 hover:text-gray-900 transition-colors text-sm font-medium">Process</a>
               <a href="#results" className="text-gray-700 hover:text-gray-900 transition-colors text-sm font-medium">Results</a>
               <a href="#testimonials" className="text-gray-700 hover:text-gray-900 transition-colors text-sm font-medium">Testimonials</a>
@@ -231,6 +255,7 @@ export default function Landing() {
             >
               <div className="px-4 py-4 space-y-3">
                 <a href="#features" className="block text-gray-700 py-2 hover:text-gray-900 font-medium">Features</a>
+                <a href="#ai-workflow" className="block text-gray-700 py-2 hover:text-gray-900 font-medium">AI Workflow</a>
                 <a href="#process" className="block text-gray-700 py-2 hover:text-gray-900 font-medium">Process</a>
                 <a href="#results" className="block text-gray-700 py-2 hover:text-gray-900 font-medium">Results</a>
                 <a href="#testimonials" className="block text-gray-700 py-2 hover:text-gray-900 font-medium">Testimonials</a>
@@ -359,6 +384,97 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* AI Execution Workflow */}
+      <section id="ai-workflow" className="relative overflow-hidden border-y border-gray-200 bg-gray-50 py-16 text-gray-900">
+        <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(148,163,184,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.12)_1px,transparent_1px)] [background-size:42px_42px]" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="mb-10 text-xl font-bold text-gray-900 sm:text-2xl">Core execution pattern</h2>
+
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-col items-center gap-3">
+              {aiWorkflowStages.map((stage, index) => (
+                <div key={stage.label} className="flex flex-col items-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ delay: index * 0.16, duration: 0.4 }}
+                    className="flex w-44 items-center justify-center gap-2 border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-800 shadow-sm"
+                  >
+                    <span className="text-cyan-300">{stage.icon}</span>{stage.label}
+                  </motion.div>
+                  {index < aiWorkflowStages.length - 1 && (
+                    <motion.div
+                      aria-hidden="true"
+                      animate={{ backgroundPositionY: [0, 18] }}
+                      transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                      className="relative h-7 w-px overflow-visible bg-[linear-gradient(to_bottom,#94a3b8_50%,transparent_50%)] bg-[length:1px_8px]"
+                    >
+                      <span className="absolute -left-1 top-0 h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_10px_#67e8f9]" />
+                    </motion.div>
+                  )}
+                </div>
+              ))}
+
+              <motion.div
+                initial={{ opacity: 0, rotate: 45, scale: 0.8 }}
+                whileInView={{ opacity: 1, rotate: 45, scale: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.5 }}
+                className="my-4 flex h-20 w-20 items-center justify-center border border-gray-400 bg-white shadow-sm"
+              >
+                <span className="-rotate-45 text-center text-[10px] font-medium text-gray-700">Select matched agent</span>
+              </motion.div>
+            </div>
+
+            <div className="relative mt-8 grid grid-cols-2 gap-x-3 gap-y-3 md:grid-cols-4 lg:grid-cols-7">
+              <div className="absolute left-1/2 top-[-32px] h-8 w-px -translate-x-1/2 bg-gray-400" />
+              {aiAgents.map((agent, index) => (
+                <motion.div
+                  key={agent}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.25 }}
+                  transition={{ delay: index * 0.08, duration: 0.35 }}
+                  className="relative flex min-h-16 items-center justify-center border border-gray-300 bg-white px-2 text-center text-[11px] font-medium text-gray-700 shadow-sm"
+                >
+                  <span className="absolute -top-2 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-amber-300 shadow-[0_0_10px_#fcd34d]" />
+                  {agent}
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="my-8 flex justify-center">
+              <motion.div
+                aria-hidden="true"
+                animate={{ backgroundPositionY: [0, 18] }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                className="relative h-8 w-px bg-[linear-gradient(to_bottom,#94a3b8_50%,transparent_50%)] bg-[length:1px_8px]"
+              />
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {[
+                { title: "Role-Skill Map + Student Data", icon: <Database className="h-5 w-5" />, tone: "text-cyan-300" },
+                { title: "Scoring + Recommendations", icon: <Gauge className="h-5 w-5" />, tone: "text-emerald-300" },
+                { title: "Structured Response", icon: <FileOutput className="h-5 w-5" />, tone: "text-amber-300" }
+              ].map((stage, index) => (
+                <motion.div
+                  key={stage.title}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.25 }}
+                  transition={{ delay: index * 0.12, duration: 0.4 }}
+                  className="flex items-center gap-3 border border-gray-300 bg-white px-5 py-5 text-sm font-semibold text-gray-800 shadow-sm"
+                >
+                  <span className={stage.tone}>{stage.icon}</span>{stage.title}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Process Section */}
       <section id="process" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -372,19 +488,33 @@ export default function Landing() {
           </AnimatedSection>
 
           <div className="relative">
-            <div className="hidden lg:block absolute top-16 left-1/4 right-1/4 h-0.5 bg-gray-300"></div>
-            <div className="grid md:grid-cols-3 gap-8">
+            <motion.div
+              aria-hidden="true"
+              initial={{ scaleX: 0, opacity: 0 }}
+              whileInView={{ scaleX: 1, opacity: 1 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 1, ease: "easeInOut" }}
+              className="hidden lg:block absolute top-16 left-[12.5%] right-[12.5%] h-px origin-left bg-gradient-to-r from-gray-300 via-gray-900 to-gray-300"
+            />
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-5">
               {processSteps.map((step, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.2 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.25 }}
+                  transition={{ delay: index * 0.15, duration: 0.55, ease: "easeOut" }}
                   className="relative bg-white rounded-xl border border-gray-200 p-8 hover:shadow-lg transition-shadow duration-300"
                 >
-                  <div className="w-14 h-14 bg-gray-900 text-white rounded-full flex items-center justify-center text-lg font-bold mb-6">
+                  <motion.div
+                    initial={{ scale: 0.7 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true, amount: 0.25 }}
+                    transition={{ delay: index * 0.15 + 0.15, type: "spring", stiffness: 220, damping: 14 }}
+                    className="relative z-10 w-14 h-14 bg-gray-900 text-white rounded-full flex items-center justify-center text-lg font-bold mb-6 ring-8 ring-gray-50"
+                  >
                     {step.step}
-                  </div>
+                  </motion.div>
                   <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
                     {step.icon}
                   </div>
@@ -517,7 +647,7 @@ export default function Landing() {
               <ul className="space-y-4">
                 <li className="flex items-center text-sm">
                   <Mail className="w-4 h-4 mr-2" />
-                  supportt@hamrolearning.com
+                  support@hamrolearning.com
                 </li>
                 <li className="flex items-center text-sm">
                   <Phone className="w-4 h-4 mr-2" />
