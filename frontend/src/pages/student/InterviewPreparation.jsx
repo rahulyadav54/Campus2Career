@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   AlertCircle,
   BookOpen,
@@ -6,6 +7,12 @@ import {
   ExternalLink,
   PlayCircle,
   RefreshCw,
+  Sparkles,
+  Video,
+  Mic,
+  Bot,
+  ArrowRight,
+  Lightbulb,
 } from "lucide-react";
 import { apiClient } from "../../services/apiClient";
 
@@ -86,6 +93,36 @@ export default function InterviewPreparation() {
             </div>
           </div>
         </header>
+
+        {/* AI Virtual Interviewer Featured Card */}
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 p-6 sm:p-8 text-white shadow-2xl">
+          <div className="absolute -top-24 -right-24 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-semibold uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> New • Production AI Feature
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent">
+                AI Virtual Interviewer
+              </h2>
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                Experience a realistic, 1-on-1 interview simulation with a live AI avatar, voice recognition, context-aware follow-up questions, and an in-depth performance analytics report.
+              </p>
+              <div className="flex flex-wrap gap-4 pt-1 text-xs text-indigo-200">
+                <span className="flex items-center gap-1.5"><Video className="w-4 h-4 text-indigo-400" /> HeyGen WebRTC / 3D Avatar</span>
+                <span className="flex items-center gap-1.5"><Mic className="w-4 h-4 text-cyan-400" /> Realtime Voice Input & Synthesis</span>
+                <span className="flex items-center gap-1.5"><Bot className="w-4 h-4 text-purple-400" /> Nemotron AI Context Engine</span>
+              </div>
+            </div>
+
+            <Link
+              to="/student/virtual-interview"
+              className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 bg-gradient-to-r from-indigo-500 via-purple-600 to-indigo-600 hover:from-indigo-400 hover:to-purple-500 text-white font-bold text-sm sm:text-base rounded-2xl transition shadow-xl shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98] shrink-0"
+            >
+              <Video className="w-5 h-5" /> Start Virtual Interview <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </section>
 
         {error && (
           <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">

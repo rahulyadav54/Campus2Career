@@ -35,6 +35,7 @@ import chatHistoryRoutes from "./routes/chatHistoryRoutes.js";
 import aiOrchestratorRoutes from "./routes/aiOrchestratorRoutes.js";
 import skillGapRoutes from "./routes/skillGapRoutes.js";
 import opportunityScoutRoutes from "./routes/opportunityScoutRoutes.js";
+import interviewRoutes from "./routes/interviewRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -134,6 +135,7 @@ app.use("/api/internship-progress", internshipProgressRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/ai-automation", aiOrchestratorRoutes);
 app.use("/api/skill-gap", skillGapRoutes);
+app.use("/api/interviews", interviewRoutes);
 app.use("/api/opportunity-scout", opportunityScoutRoutes);
 app.use("/api/aptitude", aptitudeRoutes);
 app.use("/api/academician-opportunities", academicianOpportunityRoutes);

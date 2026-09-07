@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Briefcase, FileText, Award, Target, TrendingUp, BookOpen,
   BarChart3, Calendar, Sparkles, CheckCircle, AlertCircle,
-  ChevronRight, ExternalLink,
+  ChevronRight, ExternalLink, Video, Bot, Play,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import apiClient from "../../services/apiClient";
@@ -301,6 +301,30 @@ const StudentHome = () => {
 
         {/* Right Sidebar (1/3 width) */}
         <div className="space-y-6">
+          {/* AI Virtual Interviewer Card */}
+          <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-xl border border-indigo-500/30 p-5 text-white shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-3 opacity-10">
+              <Bot className="w-24 h-24 text-indigo-400" />
+            </div>
+            <div className="relative space-y-3">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[11px] font-semibold uppercase tracking-wider">
+                <Sparkles className="w-3 h-3 text-indigo-400" /> AI Interview Simulation
+              </div>
+              <h3 className="text-base font-bold text-white leading-snug">
+                Practice with AI Avatar Interviewer
+              </h3>
+              <p className="text-slate-300 text-xs leading-relaxed">
+                Test your skills in a real-time, voice-enabled mock interview with instant AI evaluation.
+              </p>
+              <button
+                onClick={() => navigate("/student/virtual-interview")}
+                className="w-full mt-2 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-semibold text-xs rounded-lg transition flex items-center justify-center gap-2 shadow-md shadow-indigo-600/30"
+              >
+                <Video className="w-4 h-4" /> Start AI Mock Session
+              </button>
+            </div>
+          </div>
+
           {/* Profile Completion */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Profile Completion</h3>
