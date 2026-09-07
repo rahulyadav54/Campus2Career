@@ -5,6 +5,7 @@ import { Play, Clock, CheckCircle, XCircle, FileText, Shield } from "lucide-reac
 import apiClient from "../../services/apiClient";
 
 const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
+const asArray = (value) => Array.isArray(value) ? value : [];
 
 export default function StudentAssessments() {
   const [assessments, setAssessments] = useState([]);
@@ -25,7 +26,7 @@ export default function StudentAssessments() {
     setLoading(true);
     try {
       const data = await apiClient.get("/api/student-assessments/me");
-      setAssessments(data.assessments || []);
+      setAssessments(asArray(data.assessments));
     } catch (e) { toast.error(e.message); }
     setLoading(false);
   };
@@ -33,7 +34,7 @@ export default function StudentAssessments() {
   const fetchResults = async () => {
     try {
       const data = await apiClient.get("/api/student-assessments/results");
-      setResults(data.attempts || []);
+      setResults(asArray(data.attempts));
     } catch (e) { toast.error(e.message); }
   };
 
@@ -77,11 +78,22 @@ export default function StudentAssessments() {
     setAnswers({ ...answers, [questionId]: answerData });
     try {
       await apiClient.post(`/api/student-assessments/attempts/${attemptId}/save`, { questionId, ...answerData });
-    } catch (e) { /* silent auto-save */ }
+    } catch { /* silent auto-save */ }
   };
 
   if (view === "attempt" && activeAssessment) {
     const q = questions[currentQ];
+    if (!q) {
+      return (
+        <main className="max-w-4xl mx-auto p-6">
+          <div className="bg-white border rounded-xl p-6 space-y-3">
+            <h2 className="text-xl font-semibold text-gray-900">Assessment unavailable</h2>
+            <p className="text-gray-600">This assessment has no questions available right now.</p>
+            <button onClick={() => { setView("available"); setActiveAssessment(null); }} className="px-4 py-2 border rounded-lg text-sm">Back to Assessments</button>
+          </div>
+        </main>
+      );
+    }
     const answeredCount = Object.keys(answers).filter((k) => answers[k]?.selectedOption !== undefined || answers[k]?.answerText || answers[k]?.ratingValue !== undefined).length;
     return (
       <main className="max-w-4xl mx-auto p-6 space-y-6">

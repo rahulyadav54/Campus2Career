@@ -4,6 +4,8 @@ import { CheckCircle, Target, BookOpen, Clock, History, Play } from "lucide-reac
 import apiClient from "../../services/apiClient";
 
 const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
+const asArray = (value) => Array.isArray(value) ? value : [];
+const joinValues = (value, fallback = "—") => asArray(value).join(", ") || fallback;
 
 function TimedAttempt({ template, onDone }) {
   const [questions, setQuestions] = useState([]);
@@ -96,8 +98,8 @@ function AttemptResult({ attempt, onRetake }) {
         ))}
       </div>
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="p-4 bg-green-50 rounded-lg"><Target className="text-green-700" /><h3 className="font-semibold mt-2">Strengths</h3><p className="text-sm mt-1">{attempt.strengths.join(", ") || "Keep building"}</p></div>
-        <div className="p-4 bg-amber-50 rounded-lg"><BookOpen className="text-amber-700" /><h3 className="font-semibold mt-2">Skill Gaps</h3><p className="text-sm mt-1">{attempt.gaps.join(", ") || "No gaps identified"}</p></div>
+        <div className="p-4 bg-green-50 rounded-lg"><Target className="text-green-700" /><h3 className="font-semibold mt-2">Strengths</h3><p className="text-sm mt-1">{joinValues(attempt.strengths, "Keep building")}</p></div>
+        <div className="p-4 bg-amber-50 rounded-lg"><BookOpen className="text-amber-700" /><h3 className="font-semibold mt-2">Skill Gaps</h3><p className="text-sm mt-1">{joinValues(attempt.gaps, "No gaps identified")}</p></div>
       </div>
       {attempt.timeTakenSeconds && <p className="text-sm text-gray-500">Time taken: {formatTime(attempt.timeTakenSeconds)}</p>}
       <button onClick={onRetake} className="px-4 py-2 border rounded-lg text-sm">Take another assessment</button>
@@ -136,18 +138,18 @@ function LegacyAssessment() {
     <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
       <div className="flex items-center gap-3"><CheckCircle className="text-green-600" /><h2 className="text-xl font-semibold">Assessment complete</h2></div>
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="p-4 bg-green-50 rounded-lg"><Target className="text-green-700" /><h3 className="font-semibold mt-2">Strengths</h3><p className="text-sm mt-1">{result.strengths.join(", ") || "Keep building your foundation"}</p></div>
-        <div className="p-4 bg-amber-50 rounded-lg"><BookOpen className="text-amber-700" /><h3 className="font-semibold mt-2">Skill gaps</h3><p className="text-sm mt-1">{result.gaps.join(", ") || "No immediate gaps identified"}</p></div>
+        <div className="p-4 bg-green-50 rounded-lg"><Target className="text-green-700" /><h3 className="font-semibold mt-2">Strengths</h3><p className="text-sm mt-1">{joinValues(result.strengths, "Keep building your foundation")}</p></div>
+        <div className="p-4 bg-amber-50 rounded-lg"><BookOpen className="text-amber-700" /><h3 className="font-semibold mt-2">Skill gaps</h3><p className="text-sm mt-1">{joinValues(result.gaps, "No immediate gaps identified")}</p></div>
       </div>
       <div>
         <h3 className="font-semibold">Recommended learning resources</h3>
-        {result.learningRecommendations.length > 0 ? (
+        {asArray(result.learningRecommendations).length > 0 ? (
           <div className="grid md:grid-cols-2 gap-3 mt-2">
-            {result.learningRecommendations.map((item) => (
+            {asArray(result.learningRecommendations).map((item) => (
               <a key={item.resourceId} href={item.url || "#"} target="_blank" rel="noopener noreferrer" className="border rounded-lg p-3 hover:border-indigo-400">
                 <p className="font-medium text-gray-900">{item.title}</p>
                 <p className="text-sm text-gray-500">{item.provider} · {item.type}</p>
-                <p className="text-xs text-gray-500 mt-1">{(item.skills || []).join(", ")} {item.isFree ? "· Free" : ""}</p>
+                <p className="text-xs text-gray-500 mt-1">{joinValues(item.skills, "")} {item.isFree ? "· Free" : ""}</p>
               </a>
             ))}
           </div>
@@ -181,8 +183,8 @@ export default function SkillAssessment() {
   const [view, setView] = useState("home"); // home | attempt | history
 
   useEffect(() => {
-    apiClient.get("/api/question-bank/templates").then((d) => setTemplates(d.templates || [])).catch(() => {});
-    apiClient.get("/api/question-bank/attempts/history").then((d) => setHistory(d.attempts || [])).catch(() => {});
+    apiClient.get("/api/question-bank/templates").then((d) => setTemplates(asArray(d.templates))).catch(() => {});
+    apiClient.get("/api/question-bank/attempts/history").then((d) => setHistory(asArray(d.attempts))).catch(() => {});
   }, []);
 
   if (view === "attempt" && selected) {
@@ -209,7 +211,7 @@ export default function SkillAssessment() {
                 <div>
                   <p className="font-medium">{a.template?.title || "Self Assessment"}</p>
                   <p className="text-sm text-gray-500">{new Date(a.submittedAt).toLocaleDateString()} · {formatTime(a.timeTakenSeconds || 0)}</p>
-                  <p className="text-sm mt-1">Strengths: {a.strengths.join(", ") || "—"} · Gaps: {a.gaps.join(", ") || "—"}</p>
+                  <p className="text-sm mt-1">Strengths: {joinValues(a.strengths)} · Gaps: {joinValues(a.gaps)}</p>
                 </div>
                 <span className={`text-lg font-bold ${a.passed ? "text-green-600" : "text-amber-500"}`}>{pct}%</span>
               </div>
