@@ -9,7 +9,7 @@ const Certificates = () => {
 
   useEffect(() => {
     apiClient.get("/api/internship-progress/me")
-      .then((data) => setRecords(data.records || []))
+      .then((data) => setRecords(Array.isArray(data?.records) ? data.records : []))
       .catch((err) => toast.error(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -74,7 +74,7 @@ const Certificates = () => {
                       Certificate no: <span className="font-mono text-gray-800 certificate-number">{rec.certificateNumber}</span>
                     </div>
                   )}
-                  {(rec.skillsGained || []).length > 0 && (
+                  {Array.isArray(rec.skillsGained) && rec.skillsGained.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {rec.skillsGained.map((s) => <span key={s} className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded">{s}</span>)}
                     </div>
@@ -82,10 +82,10 @@ const Certificates = () => {
                   {rec.finalRating && getRatingStars(rec.finalRating)}
                 </div>
 
-                {rec.mentorFeedback?.length > 0 && (
+                {Array.isArray(rec.mentorFeedback) && rec.mentorFeedback.length > 0 && (
                   <div className="mb-4">
                     <p className="text-sm font-medium text-gray-700 mb-1">Mentor Feedback:</p>
-                    <p className="text-sm text-gray-600 italic bg-gray-50 certificate-feedback p-2 rounded">"{rec.mentorFeedback[rec.mentorFeedback.length - 1].text}"</p>
+                    <p className="text-sm text-gray-600 italic bg-gray-50 certificate-feedback p-2 rounded">"{rec.mentorFeedback[rec.mentorFeedback.length - 1]?.text || "No written feedback provided."}"</p>
                   </div>
                 )}
 
