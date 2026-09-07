@@ -415,7 +415,14 @@ const getLocalInterviewerUrl = (req) => {
     for (const p of pathsToTry) {
       if (fs.existsSync(p)) {
         const backendUrl = (process.env.BACKEND_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
-        return `${backendUrl}/uploads/interviewer.jpeg`;
+        const imageUrl = `${backendUrl}/uploads/interviewer.jpeg`;
+        
+        // Only use local URL if it's publicly accessible (not localhost/127.0.0.1)
+        const isPublic = !backendUrl.includes("localhost") && !backendUrl.includes("127.0.0.1") && !backendUrl.includes("0.0.0.0");
+        if (isPublic) {
+          return imageUrl;
+        }
+        break;
       }
     }
   } catch (e) {
