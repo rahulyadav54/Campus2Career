@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { protect, studentOnly } from "../middleware/authMiddleware.js";
 import {
   startInterview,
+  synthesizeInterviewSpeech,
   submitAnswer,
   endInterview,
   getSession,
@@ -43,6 +44,7 @@ router.delete("/did/stream/:streamId",  closeDIDStream);
 
 // Session lifecycle
 router.post("/start",                   aiLimiter, startInterview);
+router.post("/tts",                     aiLimiter, synthesizeInterviewSpeech);
 router.post("/:sessionId/answer",       aiLimiter, submitAnswer);
 router.post("/:sessionId/end",          aiLimiter, endInterview);
 

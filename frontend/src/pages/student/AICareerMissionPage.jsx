@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { Sparkles, Target, Gauge, ArrowRight, Briefcase, BookOpen, BrainCircuit, CheckCircle2 } from "lucide-react";
 import { apiClient } from "../../services/apiClient";
+import { StatCard, LoadingSkeleton } from "../../components/ui";
+import {
+  AIActionBar,
+  AIContentCard,
+  AIPageHeader,
+  AIReadinessBadge,
+  SkillChip,
+} from "../../components/ai/AIStudentUI";
 
 export default function AICareerMissionPage() {
   const [mission, setMission] = useState(null);
@@ -43,123 +51,130 @@ export default function AICareerMissionPage() {
   };
 
   if (loading && !mission) {
-    return <div className="p-8 text-slate-600">Loading your AI Career Mission...</div>;
+    return (
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
+        <LoadingSkeleton lines={3} />
+        <div className="grid md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <LoadingSkeleton key={i} lines={2} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (!mission) {
-    return <div className="p-8 text-slate-600">No mission generated yet.</div>;
-  }
-
-  return (
-    <div className="p-6 space-y-6">
-      <div className="rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-sky-500 p-6 text-white shadow-xl">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-wide text-indigo-100">AI Career Mission</p>
-            <h1 className="text-3xl font-bold mt-2">{mission.targetRole}</h1>
-          </div>
-          <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
-            <div className="flex items-center gap-2">
-              <Gauge className="w-5 h-5" />
-              <span className="text-sm">Current readiness</span>
-            </div>
-            <div className="text-3xl font-bold mt-1">{mission.currentReadiness || 0}%</div>
-          </div>
-        </div>
-
-        <div className="mt-6 flex flex-wrap gap-3 items-center">
+    return (
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
+        <AIPageHeader
+          eyebrow="AI Career Mission"
+          title="Build your placement roadmap"
+          description="Set a target role and generate a personalised mission with skills, learning paths, and weekly milestones."
+        />
+        <AIActionBar>
           <input
             value={targetRole}
             onChange={(e) => setTargetRole(e.target.value)}
-            className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-white placeholder:text-indigo-100 focus:outline-none focus:ring-2 focus:ring-white/40"
-            placeholder="Target role"
+            className="flex-1 min-w-[200px] rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Target role, e.g. Data Analyst"
           />
           <button
             onClick={generateMission}
-            className="inline-flex items-center gap-2 bg-white text-indigo-700 rounded-xl px-4 py-2 font-semibold hover:bg-indigo-50 transition"
+            className="inline-flex items-center gap-2 bg-indigo-600 text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-indigo-700 transition-colors"
           >
             <Sparkles className="w-4 h-4" />
-            Generate AI Mission
+            Generate mission
           </button>
-        </div>
+        </AIActionBar>
+        <p className="text-sm text-gray-500">No mission generated yet. Enter a role above to get started.</p>
       </div>
+    );
+  }
 
-      <div className="grid md:grid-cols-4 gap-4">
-        <StatCard icon={<Gauge className="w-5 h-5" />} title="Skill Coverage" value={`${mission.skillCoverage || 0}%`} />
-        <StatCard icon={<Target className="w-5 h-5" />} title="Skill Gaps" value={mission.skillGaps?.length || 0} />
-        <StatCard icon={<Briefcase className="w-5 h-5" />} title="Priority Skills" value={mission.prioritySkills?.length || 0} />
-        <StatCard icon={<BrainCircuit className="w-5 h-5" />} title="Confidence" value={`${Math.round(mission.confidence || 0)}%`} />
+  return (
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <AIPageHeader
+        eyebrow="AI Career Mission"
+        title={mission.targetRole}
+        description="Personalised roadmap based on your skills, profile completeness, and role requirements."
+        meta={
+          <AIReadinessBadge
+            label="Current readiness"
+            value={`${mission.currentReadiness || 0}%`}
+            icon={Gauge}
+          />
+        }
+      />
+
+      <AIActionBar>
+        <input
+          value={targetRole}
+          onChange={(e) => setTargetRole(e.target.value)}
+          className="flex-1 min-w-[200px] rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          placeholder="Target role"
+        />
+        <button
+          onClick={generateMission}
+          disabled={loading}
+          className="inline-flex items-center gap-2 bg-indigo-600 text-white rounded-lg px-4 py-2.5 text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-60"
+        >
+          <Sparkles className="w-4 h-4" />
+          Regenerate mission
+        </button>
+      </AIActionBar>
+
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard icon={Gauge} iconColor="indigo" value={`${mission.skillCoverage || 0}%`} label="Skill coverage" />
+        <StatCard icon={Target} iconColor="amber" value={mission.skillGaps?.length || 0} label="Skill gaps" />
+        <StatCard icon={Briefcase} iconColor="blue" value={mission.prioritySkills?.length || 0} label="Priority skills" />
+        <StatCard icon={BrainCircuit} iconColor="purple" value={`${Math.round(mission.confidence || 0)}%`} label="Confidence" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card title="Why this AI recommendation?" icon={<BrainCircuit className="w-5 h-5" />}>
-          <ul className="space-y-3 text-sm text-slate-700">
-            <li><strong>Coverage:</strong> {mission.why?.coverage || "Profile data is being evaluated."}</li>
-            <li><strong>Readiness:</strong> {mission.why?.readiness || "Readiness is based on role coverage and profile completeness."}</li>
-            <li><strong>Gap signal:</strong> {mission.why?.missing || "No major missing skill was detected."}</li>
+        <AIContentCard title="Why this recommendation?" icon={BrainCircuit}>
+          <ul className="space-y-3 text-sm text-gray-700">
+            <li><span className="font-medium text-gray-900">Coverage:</span> {mission.why?.coverage || "Profile data is being evaluated."}</li>
+            <li><span className="font-medium text-gray-900">Readiness:</span> {mission.why?.readiness || "Readiness is based on role coverage and profile completeness."}</li>
+            <li><span className="font-medium text-gray-900">Gap signal:</span> {mission.why?.missing || "No major missing skill was detected."}</li>
           </ul>
-        </Card>
+        </AIContentCard>
 
-        <Card title="Recommended learning" icon={<BookOpen className="w-5 h-5" />}>
+        <AIContentCard title="Recommended learning" icon={BookOpen}>
           <div className="space-y-3">
             {(mission.recommendedCourses || []).slice(0, 4).map((course, index) => (
-              <div key={index} className="border rounded-xl p-3 bg-slate-50">
-                <div className="font-semibold text-slate-800">{course.title}</div>
-                <div className="text-xs text-slate-500 mt-1">{course.provider}</div>
-                <div className="text-sm text-slate-600 mt-2">{course.reason}</div>
+              <div key={index} className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div className="font-medium text-gray-900">{course.title}</div>
+                <div className="text-xs text-gray-500 mt-1">{course.provider}</div>
+                <div className="text-sm text-gray-600 mt-2">{course.reason}</div>
               </div>
             ))}
           </div>
-        </Card>
+        </AIContentCard>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card title="Skill gaps" icon={<Target className="w-5 h-5" />}>
+        <AIContentCard title="Skill gaps" icon={Target}>
           <div className="flex flex-wrap gap-2">
             {(mission.skillGaps || []).length ? mission.skillGaps.map((skill) => (
-              <span key={skill} className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-medium">{skill}</span>
-            )) : <span className="text-slate-500">No major gaps identified.</span>}
+              <SkillChip key={skill} variant="gap">{skill}</SkillChip>
+            )) : <span className="text-sm text-gray-500">No major gaps identified.</span>}
           </div>
-        </Card>
+        </AIContentCard>
 
-        <Card title="Roadmap" icon={<ArrowRight className="w-5 h-5" />}>
+        <AIContentCard title="Roadmap" icon={ArrowRight}>
           <div className="space-y-3">
             {(mission.roadmap || []).map((step) => (
-              <div key={step.week} className="border rounded-xl p-3 bg-white">
-                <div className="flex items-center justify-between">
-                  <div className="font-semibold text-slate-800">Week {step.week}: {step.title}</div>
-                  {step.completed ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : null}
+              <div key={step.week} className="rounded-lg border border-gray-200 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-medium text-gray-900">Week {step.week}: {step.title}</div>
+                  {step.completed ? <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" /> : null}
                 </div>
-                <div className="text-sm text-slate-600 mt-2">{step.description}</div>
+                <div className="text-sm text-gray-600 mt-2">{step.description}</div>
               </div>
             ))}
           </div>
-        </Card>
+        </AIContentCard>
       </div>
-    </div>
-  );
-}
-
-function StatCard({ icon, title, value }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex items-center gap-3 text-slate-600">
-        {icon}
-        <span className="text-sm font-medium">{title}</span>
-      </div>
-      <div className="text-2xl font-bold text-slate-900 mt-3">{value}</div>
-    </div>
-  );
-}
-
-function Card({ title, icon, children }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
-      <div className="flex items-center gap-2 font-semibold text-slate-800 mb-4">
-        {icon}
-        {title}
-      </div>
-      {children}
     </div>
   );
 }

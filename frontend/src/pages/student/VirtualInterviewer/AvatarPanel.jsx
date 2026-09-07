@@ -13,43 +13,43 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Mic, Volume2, Brain, CheckCircle, Wifi, WifiOff, Sparkles } from "lucide-react";
-import { interviewService } from "../../../services/interviewService";
+import { interviewService, unwrapInterviewResponse } from "../../../services/interviewService";
 
 // ── State configuration ───────────────────────────────────────────────────────
 
 const STATE_CONFIG = {
   idle: {
     label:      "Waiting",
-    color:      "from-slate-600 to-slate-700",
-    ringColor:  "ring-slate-400",
+    color:      "from-slate-100 to-slate-200",
+    ringColor:  "ring-slate-300",
     icon:       null,
     pulse:      false,
   },
   speaking: {
     label:      "Speaking",
-    color:      "from-indigo-600 to-violet-700",
+    color:      "from-indigo-100 to-indigo-200",
     ringColor:  "ring-indigo-400",
     icon:       Volume2,
     pulse:      true,
   },
   listening: {
     label:      "Listening",
-    color:      "from-emerald-600 to-teal-700",
+    color:      "from-emerald-50 to-emerald-100",
     ringColor:  "ring-emerald-400",
     icon:       Mic,
     pulse:      true,
   },
   thinking: {
     label:      "Thinking...",
-    color:      "from-amber-600 to-orange-700",
+    color:      "from-amber-50 to-amber-100",
     ringColor:  "ring-amber-400",
     icon:       Brain,
     pulse:      true,
   },
   completed: {
-    label:      "Interview Complete",
-    color:      "from-emerald-600 to-green-700",
-    ringColor:  "ring-emerald-400",
+    label:      "Interview complete",
+    color:      "from-green-50 to-green-100",
+    ringColor:  "ring-green-400",
     icon:       CheckCircle,
     pulse:      false,
   },
@@ -92,8 +92,8 @@ function AnimatedAvatar({ state }) {
       {/* Main circle — interviewer avatar representation */}
       <div
         className={`relative w-56 h-56 sm:w-72 sm:h-72 rounded-full bg-gradient-to-br ${cfg.color}
-          ring-4 ${cfg.ringColor} ring-offset-4 ring-offset-gray-900
-          flex items-center justify-center shadow-2xl overflow-hidden
+          ring-4 ${cfg.ringColor} ring-offset-4 ring-offset-gray-50
+          flex items-center justify-center shadow-lg overflow-hidden
           transition-all duration-500`}
       >
         {/* Professional portrait silhouette */}
@@ -158,11 +158,11 @@ function AnimatedAvatar({ state }) {
 
       {/* State indicator below avatar */}
       <div className={`mt-4 flex items-center gap-2 px-4 py-2 rounded-full
-        bg-white/10 backdrop-blur-sm border border-white/20 text-white`}>
-        {Icon && <Icon className="w-4 h-4 animate-pulse" />}
+        bg-white border border-gray-200 text-gray-700 shadow-sm`}>
+        {Icon && <Icon className="w-4 h-4 text-indigo-600" />}
         <span className="text-sm font-medium">{cfg.label}</span>
-        {isSpeaking && <WaveformBars active color="bg-white/70" />}
-        {isListening && <WaveformBars active color="bg-emerald-300/70" />}
+        {isSpeaking && <WaveformBars active color="bg-indigo-400" />}
+        {isListening && <WaveformBars active color="bg-emerald-500" />}
       </div>
     </div>
   );
@@ -183,12 +183,12 @@ function DIDAvatar({ state, speakText, presenterUrl, onReady, onError }) {
 
     const initDID = async () => {
       try {
-        const streamRes = await interviewService.createDIDStream(presenterUrl);
-        if (!streamRes.data?.success || !streamRes.data?.available) {
-          throw new Error(streamRes.data?.message || "D-ID Stream unavailable");
+        const streamRes = unwrapInterviewResponse(await interviewService.createDIDStream(presenterUrl));
+        if (!streamRes?.success || !streamRes?.available) {
+          throw new Error(streamRes?.message || "D-ID Stream unavailable");
         }
 
-        const { streamId, offer, iceServers, sessionId } = streamRes.data;
+        const { streamId, offer, iceServers, sessionId } = streamRes;
         streamInfoRef.current = { streamId, sessionId };
 
         const pc = new RTCPeerConnection({ iceServers: iceServers || [{ urls: "stun:stun.l.google.com:19302" }] });
@@ -272,7 +272,7 @@ function DIDAvatar({ state, speakText, presenterUrl, onReady, onError }) {
         autoPlay
         playsInline
         muted
-        className={`w-72 h-72 sm:w-80 sm:h-80 rounded-full object-cover ring-4 ring-indigo-500 ring-offset-4 ring-offset-slate-950 transition-opacity duration-500 shadow-2xl ${
+        className={`w-72 h-72 sm:w-80 sm:h-80 rounded-full object-cover ring-4 ring-indigo-200 ring-offset-4 ring-offset-gray-50 transition-opacity duration-500 shadow-lg ${
           connected ? "opacity-100" : "opacity-0"
         }`}
       />
@@ -282,14 +282,14 @@ function DIDAvatar({ state, speakText, presenterUrl, onReady, onError }) {
         </div>
       )}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 backdrop-blur border border-indigo-500/30 text-white text-xs shadow-lg">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 text-xs shadow-sm">
           {connected ? (
-            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-              <Wifi className="w-3.5 h-3.5" /> D-ID Photorealistic Stream
+            <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+              <Wifi className="w-3.5 h-3.5" /> Live avatar connected
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-amber-400">
-              <WifiOff className="w-3.5 h-3.5" /> Connecting D-ID WebRTC...
+            <span className="flex items-center gap-1.5 text-amber-600">
+              <WifiOff className="w-3.5 h-3.5" /> Connecting avatar…
             </span>
           )}
         </div>
@@ -339,14 +339,14 @@ export default function AvatarPanel({
 
       {/* Mode Badge */}
       {!didFailed && didReady && (
-        <p className="text-xs text-indigo-400 font-medium flex items-center gap-1.5 mt-1">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-300" /> Active Provider: D-ID Realtime Avatar
+        <p className="text-xs text-gray-500 font-medium flex items-center gap-1.5 mt-1">
+          <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Live interviewer avatar
         </p>
       )}
 
       {didFailed && (
-        <p className="text-xs text-amber-400 text-center mt-1">
-          Avatar stream standby — running in interactive voice mode
+        <p className="text-xs text-amber-600 text-center mt-1">
+          Avatar stream unavailable — voice interview mode is active
         </p>
       )}
     </div>

@@ -196,15 +196,88 @@ const buildUserContext = (user) => {
   };
 };
 
+const buildTemplateCareerAdvice = (userPrompt, {
+  userSkills = "General software development",
+  userGaps = "Not assessed yet",
+  userInterests = "General",
+  profileCompletion = 0,
+  readinessScore = 0,
+} = {}) => {
+  const lowerPrompt = String(userPrompt || "").toLowerCase();
+
+  if (lowerPrompt.includes("data science") || lowerPrompt.includes("data analyst") || lowerPrompt.includes("machine learning")) {
+    return `### 📊 Career Guidance: Data Science & Analytics
+Based on your profile and current industry requirements:
+
+**Your current skills:** ${userSkills}
+**Identified gaps:** ${userGaps}
+**Interests:** ${userInterests}
+
+**Recommended actions:**
+1. Strengthen Python, SQL, and Statistics through the Learning Recommendations section.
+2. Complete the skill assessment to update your gap analysis.
+3. Explore internships and projects tagged with "Data Science" or "Machine Learning".
+4. Use the Digital Portfolio to showcase any data projects or certifications.
+
+💡 **Tip:** If your profile completion is ${profileCompletion}%, updating your skills and resume can improve your job matching score.`;
+  }
+
+  if (lowerPrompt.includes("web development") || lowerPrompt.includes("react") || lowerPrompt.includes("frontend") || lowerPrompt.includes("backend")) {
+    return `### 💻 Career Guidance: Web Development
+Based on your profile and current industry requirements:
+
+**Your current skills:** ${userSkills}
+**Identified gaps:** ${userGaps}
+
+**Recommended actions:**
+1. Build projects in React, Node.js, or full-stack workflows and add them to your Portfolio.
+2. Check Learning Recommendations for courses aligned with your skill gaps.
+3. Apply for internships or live projects in web development.
+4. Complete the aptitude and skill assessments to improve placement readiness analytics.
+
+💡 **Tip:** Uploading a resume and enabling AI Resume Import can auto-enrich your profile faster.`;
+  }
+
+  if (
+    lowerPrompt.includes("internship") ||
+    lowerPrompt.includes("placement") ||
+    lowerPrompt.includes("job") ||
+    lowerPrompt.includes("prep plan") ||
+    lowerPrompt.includes("interview")
+  ) {
+    return `### 🎯 Career Guidance: Internships & Placements
+Based on your current portal profile:
+
+**Profile completion:** ${profileCompletion}%
+**Placement readiness score:** ${readinessScore}
+
+**Recommended actions:**
+1. Complete your profile, skills, and resume for better matching.
+2. Explore recommended jobs and internships based on your skill profile.
+3. Use Skill Mapping to see which roles best match your strengths.
+4. Track applications and follow up through My Applications.
+
+💡 **Tip:** Students with verified portfolios and completed assessments receive higher-quality recommendations.`;
+  }
+
+  return `### 🎯 Career Guidance
+Based on your query: *"${userPrompt}"*
+
+**Your current skills:** ${userSkills}
+**Identified gaps:** ${userGaps}
+**Interests:** ${userInterests}
+
+**Recommended actions:**
+1. Complete the Skill Assessment and Aptitude tests to refresh your skill profile.
+2. Review Learning Recommendations aligned with your gaps and interests.
+3. Explore Jobs, Internships, and Learning Programs from the dashboard.
+4. Update your Portfolio with verified skills, projects, and certifications.
+
+💡 **Tip:** Keep your profile updated and upload your resume for AI-based profile enrichment.`;
+};
+
 export const chatWithAI = async (req, res) => {
   try {
-    if (!isGeminiConfigured()) {
-      return res.status(503).json({
-        success: false,
-        message: "AI service is not configured. Please try again later.",
-      });
-    }
-
     const { message, prompt, context, history, attachments } = req.body;
     const userPrompt = message || prompt;
 
@@ -256,47 +329,56 @@ export const chatWithAI = async (req, res) => {
 
     // Optional additional context from the client (e.g. job description, skill gaps)
     const extraContext = typeof context === "object" && context !== null ? context : null;
+    const effectiveContext = extraContext || userContext;
 
-    const result = await chatWithGemini({
-      messages,
-      systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
-      userContext,
-      ...(extraContext ? { userContext: extraContext } : {}),
-    });
+    let aiResponse = null;
+    let source = "Campus2Career AI Advisor";
+
+    if (isGeminiConfigured()) {
+      try {
+        const result = await chatWithGemini({
+          messages,
+          systemPrompt: CAREER_ADVISOR_SYSTEM_PROMPT,
+          userContext: effectiveContext,
+        });
+        aiResponse = result.response;
+        if (result.usage) {
+          return res.json({
+            success: true,
+            source,
+            response: aiResponse,
+            usage: result.usage,
+          });
+        }
+      } catch (geminiError) {
+        console.error("Gemini chat failed, using template fallback:", geminiError.message || geminiError);
+      }
+    } else {
+      console.warn("GEMINI_API_KEY is not configured — using template career advisor fallback");
+    }
+
+    const templateContext = {
+      userSkills: Array.isArray(effectiveContext?.skills)
+        ? effectiveContext.skills.join(", ")
+        : effectiveContext?.skills || "General software development",
+      userGaps: effectiveContext?.skillGaps || "Not assessed yet",
+      userInterests: Array.isArray(effectiveContext?.interests)
+        ? effectiveContext.interests.join(", ")
+        : effectiveContext?.interests || "General",
+      profileCompletion: effectiveContext?.profileCompletion || 0,
+      readinessScore: effectiveContext?.readinessScore || 0,
+    };
+
+    aiResponse = buildTemplateCareerAdvice(combinedPrompt, templateContext);
+    source = "Campus2Career Career Advisor (template)";
 
     return res.json({
       success: true,
-      source: "Campus2Career AI Advisor",
-      response: result.response,
-      ...(result.usage ? { usage: result.usage } : {}),
+      source,
+      response: aiResponse,
     });
   } catch (error) {
     console.error("AI chat error:", error.message || error);
-
-    // Handle specific NVIDIA API error conditions
-    const errMsg = error.message || "";
-
-    if (errMsg.includes("401") || errMsg.includes("Unauthorized") || errMsg.includes("invalid_api_key")) {
-      return res.status(503).json({
-        success: false,
-        message: "AI service authentication failed. Please contact support.",
-      });
-    }
-
-    if (errMsg.includes("429") || errMsg.includes("rate limit")) {
-      return res.status(429).json({
-        success: false,
-        message: "AI service is rate-limited. Please try again in a moment.",
-      });
-    }
-
-    if (errMsg.includes("timeout")) {
-      return res.status(504).json({
-        success: false,
-        message: "AI request timed out. Please try again with a shorter message.",
-      });
-    }
-
     return res.status(500).json({
       success: false,
       message: "Failed to generate AI response. Please try again.",
@@ -400,69 +482,13 @@ export const getCareerAdvice = async (req, res) => {
       }
     }
 
-    // --- Fallback: keyword-based template engine (used when Gemini is not configured) ---
-    const lowerPrompt = userPrompt.toLowerCase();
-    let adviceText = "";
-
-    if (lowerPrompt.includes("data science") || lowerPrompt.includes("data analyst") || lowerPrompt.includes("machine learning")) {
-      adviceText = `### 📊 Career Guidance: Data Science & Analytics
-Based on your profile and current industry requirements:
-
-**Your current skills:** ${userSkills}
-**Identified gaps:** ${userGaps}
-**Interests:** ${userInterests}
-
-**Recommended actions:**
-1. Strengthen Python, SQL, and Statistics through the Learning Recommendations section.
-2. Complete the skill assessment to update your gap analysis.
-3. Explore internships and projects tagged with "Data Science" or "Machine Learning".
-4. Use the Digital Portfolio to showcase any data projects or certifications.
-
-💡 **Tip:** If your profile completion is ${profileCompletion}%, updating your skills and resume can improve your job matching score.`;
-    } else if (lowerPrompt.includes("web development") || lowerPrompt.includes("react") || lowerPrompt.includes("frontend") || lowerPrompt.includes("backend")) {
-      adviceText = `### 💻 Career Guidance: Web Development
-Based on your profile and current industry requirements:
-
-**Your current skills:** ${userSkills}
-**Identified gaps:** ${userGaps}
-
-**Recommended actions:**
-1. Build projects in React, Node.js, or full-stack workflows and add them to your Portfolio.
-2. Check Learning Recommendations for courses aligned with your skill gaps.
-3. Apply for internships or live projects in web development.
-4. Complete the aptitude and skill assessments to improve placement readiness analytics.
-
-💡 **Tip:** Uploading a resume and enabling AI Resume Import can auto-enrich your profile faster.`;
-    } else if (lowerPrompt.includes("internship") || lowerPrompt.includes("placement") || lowerPrompt.includes("job")) {
-      adviceText = `### 🎯 Career Guidance: Internships & Placements
-Based on your current portal profile:
-
-**Profile completion:** ${profileCompletion}%
-**Placement readiness score:** ${readinessScore}
-
-**Recommended actions:**
-1. Complete your profile, skills, and resume for better matching.
-2. Explore recommended jobs and internships based on your skill profile.
-3. Use Skill Mapping to see which roles best match your strengths.
-4. Track applications and follow up through My Applications.
-
-💡 **Tip:** Students with verified portfolios and completed assessments receive higher-quality recommendations.`;
-    } else {
-      adviceText = `### 🎯 Career Guidance
-Based on your query: *"${userPrompt}"*
-
-**Your current skills:** ${userSkills}
-**Identified gaps:** ${userGaps}
-**Interests:** ${userInterests}
-
-**Recommended actions:**
-1. Complete the Skill Assessment and Aptitude tests to refresh your skill profile.
-2. Review Learning Recommendations aligned with your gaps and interests.
-3. Explore Jobs, Internships, and Learning Programs from the dashboard.
-4. Update your Portfolio with verified skills, projects, and certifications.
-
-💡 **Tip:** Keep your profile updated and upload your resume for AI-based profile enrichment.`;
-    }
+    const adviceText = buildTemplateCareerAdvice(userPrompt, {
+      userSkills,
+      userGaps,
+      userInterests,
+      profileCompletion,
+      readinessScore,
+    });
 
     return res.json({
       success: true,

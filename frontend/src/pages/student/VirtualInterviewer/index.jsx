@@ -13,18 +13,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import InterviewSetup from "./InterviewSetup";
 import LiveInterview from "./LiveInterview";
 import InterviewReport from "./InterviewReport";
-import { interviewService } from "../../../services/interviewService";
+import { interviewService, unwrapInterviewResponse } from "../../../services/interviewService";
 
 export default function VirtualInterviewer() {
   const { sessionId: paramSessionId } = useParams();
   const navigate = useNavigate();
 
-  const [view, setView] = useState(paramSessionId ? "report" : "setup"); // 'setup' | 'live' | 'report'
+  const [view, setView] = useState(paramSessionId ? "report" : "setup");
   const [activeSession, setActiveSession] = useState(null);
   const [reportData, setReportData] = useState(null);
   const [starting, setStarting] = useState(false);
 
-  // If a session ID is passed in URL, load that session/report directly
   useEffect(() => {
     if (paramSessionId) {
       loadSession(paramSessionId);
@@ -33,10 +32,12 @@ export default function VirtualInterviewer() {
 
   const loadSession = async (id) => {
     try {
-      const res = await interviewService.getReport(id);
-      if (res.data?.success) {
-        setReportData(res.data.data.report || res.data.data);
+      const res = unwrapInterviewResponse(await interviewService.getReport(id));
+      if (res?.success) {
+        setReportData(res);
         setView("report");
+      } else {
+        setView("setup");
       }
     } catch (err) {
       console.error("Failed to load past session report:", err);
@@ -47,24 +48,25 @@ export default function VirtualInterviewer() {
   const handleStartInterview = async (config) => {
     setStarting(true);
     try {
-      const res = await interviewService.start(config);
-      const data = res.data?.data || res.data;
-      if (data?.success || data?.sessionId) {
+      const res = unwrapInterviewResponse(await interviewService.start(config));
+      if (res?.success && res?.sessionId) {
         setActiveSession({
-          sessionId: data.sessionId,
-          greeting: data.greeting,
-          firstQuestion: data.question,
-          totalDurationMs: data.totalDurationMs || (config.durationMinutes * 60 * 1000),
+          sessionId: res.sessionId,
+          targetRole: config.targetRole,
+          greeting: res.greeting,
+          firstQuestion: res.question,
+          totalDurationMs: res.totalDurationMs || (config.durationMinutes * 60 * 1000),
           presenterUrl: config.presenterUrl,
         });
         setView("live");
-      } else {
-        throw new Error(data?.message || "Could not start session");
+        return;
       }
+      throw new Error(res?.message || "Could not start session");
     } catch (err) {
       console.warn("Starting interview in client session mode:", err.message);
       setActiveSession({
-        sessionId: "local-" + Date.now(),
+        sessionId: `local-${Date.now()}`,
+        targetRole: config.targetRole,
         greeting: `Welcome! I will be interviewing you today for the ${config.targetRole} position.`,
         firstQuestion: {
           index: 0,
@@ -93,7 +95,7 @@ export default function VirtualInterviewer() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-950">
+    <div className="w-full min-h-full bg-gray-50">
       {view === "setup" && (
         <InterviewSetup onStart={handleStartInterview} loading={starting} />
       )}

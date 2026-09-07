@@ -313,11 +313,14 @@ export default function CareerAdvisorChat() {
       startTypewriter(aiReply, finalMessages.length - 1);
       saveCurrentHistory(finalMessages);
     } catch (err) {
+      const serverMessage = err.data?.message || err.message;
       const errorMsg = {
         role: "assistant",
         content: err.message?.includes("timed out")
           ? "The advisor took too long to respond. Try a shorter question."
-          : "I couldn't reach the AI engine right now. Please try again in a moment.",
+          : serverMessage && !serverMessage.startsWith("Request failed")
+            ? serverMessage
+            : "I couldn't reach the AI engine right now. Please try again in a moment.",
       };
       const finalMessages = [...updated, errorMsg];
       setMessages(finalMessages);

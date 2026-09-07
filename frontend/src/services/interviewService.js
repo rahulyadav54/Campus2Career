@@ -8,6 +8,15 @@ import { apiClient } from "./apiClient";
 
 const BASE = "/api/interviews";
 
+/** apiClient returns parsed JSON directly — not an axios-style { data } wrapper. */
+export const unwrapInterviewResponse = (res) => {
+  if (!res || typeof res !== "object") return res;
+  if (res.data !== undefined && res.success === undefined && res.sessionId === undefined) {
+    return res.data;
+  }
+  return res;
+};
+
 export const interviewService = {
   /** Start a new interview session */
   start: (config) =>
@@ -19,7 +28,7 @@ export const interviewService = {
 
   /** End the interview and generate the final report */
   end: (sessionId) =>
-    apiClient.post(`${BASE}/${sessionId}/end`, {}, { timeout: 30000 }),
+    apiClient.post(`${BASE}/${sessionId}/end`, {}, { timeout: 90000 }),
 
   /** Generate natural neural speech for the interviewer */
   synthesizeSpeech: (text) =>

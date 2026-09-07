@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { BrainCircuit, Gauge, Target, BookOpen, Briefcase, Sparkles, ArrowRight, ChevronRight } from "lucide-react";
+import { BrainCircuit, Gauge, Target, BookOpen, Briefcase, Sparkles, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../../services/apiClient";
+import { StatCard, LoadingSkeleton } from "../../components/ui";
+import { AIContentCard, AIPageHeader, AIReadinessBadge } from "../../components/ai/AIStudentUI";
 
 export default function AIDashboardPage() {
   const [overview, setOverview] = useState(null);
@@ -37,112 +39,133 @@ export default function AIDashboardPage() {
   }, []);
 
   if (loading) {
-    return <div className="p-6 text-slate-600">Loading your AI dashboard...</div>;
+    return (
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
+        <LoadingSkeleton lines={2} />
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <LoadingSkeleton key={i} lines={3} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const cards = [
-    { title: "Career Mission", value: overview?.mission ? `${overview.mission.currentReadiness || 0}%` : "N/A", detail: overview?.mission?.targetRole || "Generate mission", icon: BrainCircuit, accent: "from-violet-500 to-indigo-600", href: "/student/ai-career-mission" },
-    { title: "Skill Gap", value: overview?.skillGap ? `${overview.skillGap.skillCoverage || 0}%` : "N/A", detail: overview?.skillGap?.targetRole || "Analyse gaps", icon: Target, accent: "from-amber-500 to-orange-500", href: "/student/ai-skill-gap" },
-    { title: "Placement Readiness", value: overview?.readiness ? `${overview.readiness.overallScore || 0}` : "N/A", detail: overview?.readiness?.level || "Ready", icon: Gauge, accent: "from-emerald-500 to-teal-500", href: "/student/ai-career-mission" },
-    { title: "Resume Fit", value: overview?.resume ? `${overview.resume.atsScore || 0}%` : "N/A", detail: overview?.resume?.role || "Resume analysis", icon: Briefcase, accent: "from-sky-500 to-cyan-600", href: "/student/ai-career-mission" },
+    {
+      title: "Career Mission",
+      value: overview?.mission ? `${overview.mission.currentReadiness || 0}%` : "—",
+      detail: overview?.mission?.targetRole || "Generate mission",
+      icon: BrainCircuit,
+      iconColor: "indigo",
+      href: "/student/ai-career-mission",
+    },
+    {
+      title: "Skill Gap",
+      value: overview?.skillGap ? `${overview.skillGap.skillCoverage || 0}%` : "—",
+      detail: overview?.skillGap?.targetRole || "Analyse gaps",
+      icon: Target,
+      iconColor: "amber",
+      href: "/student/ai-skill-gap",
+    },
+    {
+      title: "Placement Readiness",
+      value: overview?.readiness ? `${overview.readiness.overallScore || 0}` : "—",
+      detail: overview?.readiness?.level || "Ready",
+      icon: Gauge,
+      iconColor: "green",
+      href: "/student/ai-career-mission",
+    },
+    {
+      title: "Resume Fit",
+      value: overview?.resume ? `${overview.resume.atsScore || 0}%` : "—",
+      detail: overview?.resume?.role || "Resume analysis",
+      icon: Briefcase,
+      iconColor: "blue",
+      href: "/student/ai-career-mission",
+    },
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="rounded-3xl bg-gradient-to-br from-slate-900 via-violet-900 to-indigo-700 p-6 text-white shadow-xl">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-violet-200">Campus2Career AI</p>
-            <h1 className="mt-2 text-3xl font-bold">Smart Automation Dashboard</h1>
-          </div>
-          <div className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 backdrop-blur-sm">
-            <div className="flex items-center gap-2 text-sm text-violet-100">
-              <Sparkles className="w-4 h-4" />
-              Live orchestration
-            </div>
-            <div className="text-2xl font-bold mt-1">Active</div>
-          </div>
-        </div>
-      </div>
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <AIPageHeader
+        eyebrow="AI Automation"
+        title="Smart Automation Dashboard"
+        description="A single view of your career mission, skill gaps, placement readiness, and interview prep — powered by your profile data."
+        meta={
+          <AIReadinessBadge
+            label="Orchestration"
+            value="Active"
+            icon={Sparkles}
+          />
+        }
+      />
 
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {cards.map(({ title, value, detail, icon: Icon, accent, href }) => (
-          <Link key={title} to={href} className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition">
-            <div className={`inline-flex rounded-xl bg-gradient-to-r ${accent} p-2 text-white`}>
-              <Icon className="w-5 h-5" />
-            </div>
-            <div className="mt-4 text-sm text-slate-500">{title}</div>
-            <div className="mt-2 text-3xl font-bold text-slate-900">{value}</div>
-            <div className="mt-2 flex items-center justify-between text-sm text-slate-600">
-              <span>{detail}</span>
-              <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-            </div>
+        {cards.map(({ title, value, detail, icon, iconColor, href }) => (
+          <Link key={title} to={href} className="block">
+            <StatCard
+              icon={icon}
+              iconColor={iconColor}
+              value={value}
+              label={title}
+              sublabel={detail}
+              className="h-full hover:border-indigo-200"
+            />
           </Link>
         ))}
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Panel title="Career mission highlights" icon={<BrainCircuit className="w-5 h-5" />}>
+        <AIContentCard title="Career mission highlights" icon={BrainCircuit}>
           {overview?.mission ? (
-            <div className="space-y-3 text-sm text-slate-700">
-              <p><strong>Target role:</strong> {overview.mission.targetRole}</p>
-              <p><strong>Current readiness:</strong> {overview.mission.currentReadiness || 0}%</p>
-              <p><strong>Priority gaps:</strong> {(overview.mission.skillGaps || []).slice(0, 3).join(", ") || "None detected"}</p>
-              <p><strong>Why:</strong> {overview.mission.why?.readiness || "Profile readiness is aligned to role coverage."}</p>
+            <div className="space-y-3 text-sm text-gray-700">
+              <p><span className="font-medium text-gray-900">Target role:</span> {overview.mission.targetRole}</p>
+              <p><span className="font-medium text-gray-900">Current readiness:</span> {overview.mission.currentReadiness || 0}%</p>
+              <p><span className="font-medium text-gray-900">Priority gaps:</span> {(overview.mission.skillGaps || []).slice(0, 3).join(", ") || "None detected"}</p>
+              <p><span className="font-medium text-gray-900">Why:</span> {overview.mission.why?.readiness || "Profile readiness is aligned to role coverage."}</p>
             </div>
           ) : (
-            <div className="text-slate-500">No mission available yet.</div>
+            <p className="text-sm text-gray-500">No mission available yet. Open Career Mission to generate one.</p>
           )}
-        </Panel>
+        </AIContentCard>
 
-        <Panel title="Mock interview readiness" icon={<BookOpen className="w-5 h-5" />}>
+        <AIContentCard title="Mock interview readiness" icon={BookOpen}>
           {overview?.interview ? (
-            <div className="space-y-3 text-sm text-slate-700">
-              <p><strong>Overall score:</strong> {overview.interview.overallScore || 0}/100</p>
-              <p><strong>Readiness label:</strong> {overview.interview.readinessLabel || "Not set"}</p>
-              <p><strong>Difficulty:</strong> {overview.interview.difficulty || "Mixed"}</p>
-              <p><strong>Guidance:</strong> {overview.interview.guidance || "Practice clear STAR stories."}</p>
+            <div className="space-y-3 text-sm text-gray-700">
+              <p><span className="font-medium text-gray-900">Overall score:</span> {overview.interview.overallScore || 0}/100</p>
+              <p><span className="font-medium text-gray-900">Readiness label:</span> {overview.interview.readinessLabel || "Not set"}</p>
+              <p><span className="font-medium text-gray-900">Difficulty:</span> {overview.interview.difficulty || "Mixed"}</p>
+              <p><span className="font-medium text-gray-900">Guidance:</span> {overview.interview.guidance || "Practice clear STAR stories."}</p>
             </div>
           ) : (
-            <div className="text-slate-500">No interview plan available yet.</div>
+            <p className="text-sm text-gray-500">No interview plan available yet.</p>
           )}
-        </Panel>
+        </AIContentCard>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Panel title="Resume fit insights" icon={<Briefcase className="w-5 h-5" />}>
+        <AIContentCard title="Resume fit insights" icon={Briefcase}>
           {overview?.resume ? (
-            <div className="space-y-3 text-sm text-slate-700">
-              <p><strong>ATS score:</strong> {overview.resume.atsScore || 0}%</p>
-              <p><strong>Strengths:</strong> {(overview.resume.strengths || []).slice(0, 3).join(", ") || "None"}</p>
-              <p><strong>Recommendation:</strong> {overview.resume.recommendation || "Keep your resume role-focused."}</p>
+            <div className="space-y-3 text-sm text-gray-700">
+              <p><span className="font-medium text-gray-900">ATS score:</span> {overview.resume.atsScore || 0}%</p>
+              <p><span className="font-medium text-gray-900">Strengths:</span> {(overview.resume.strengths || []).slice(0, 3).join(", ") || "None"}</p>
+              <p><span className="font-medium text-gray-900">Recommendation:</span> {overview.resume.recommendation || "Keep your resume role-focused."}</p>
             </div>
           ) : (
-            <div className="text-slate-500">Resume analysis not generated.</div>
+            <p className="text-sm text-gray-500">Resume analysis not generated.</p>
           )}
-        </Panel>
+        </AIContentCard>
 
-        <Panel title="Next actions" icon={<ArrowRight className="w-5 h-5" />}>
-          <div className="space-y-3 text-sm text-slate-700">
-            <p>1. Improve the strongest missing skills from your AI mission.</p>
-            <p>2. Update resume bullets with measurable project outcomes.</p>
-            <p>3. Practice the mock interview questions from your role plan.</p>
-            <p>4. Keep applying to opportunities with high fit scores.</p>
-          </div>
-        </Panel>
+        <AIContentCard title="Next actions" icon={ArrowRight}>
+          <ol className="space-y-2.5 text-sm text-gray-700 list-decimal list-inside">
+            <li>Improve the strongest missing skills from your AI mission.</li>
+            <li>Update resume bullets with measurable project outcomes.</li>
+            <li>Practice the mock interview questions from your role plan.</li>
+            <li>Keep applying to opportunities with high fit scores.</li>
+          </ol>
+        </AIContentCard>
       </div>
-    </div>
-  );
-}
-
-function Panel({ title, icon, children }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex items-center gap-2 font-semibold text-slate-800">
-        {icon}
-        {title}
-      </div>
-      {children}
     </div>
   );
 }

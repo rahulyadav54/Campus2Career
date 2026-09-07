@@ -13,7 +13,38 @@ import {
 import toast from "react-hot-toast";
 import AvatarPanel from "./AvatarPanel";
 import VoiceEngine from "./VoiceEngine";
-import interviewService from "../../../services/interviewService";
+import { interviewService, unwrapInterviewResponse } from "../../../services/interviewService";
+
+const buildLocalReport = (targetRole, answeredCount, avgScore) => {
+  const score = avgScore ?? (answeredCount > 0 ? 68 : 0);
+  return {
+    success: true,
+    targetRole,
+    durationMinutes: 10,
+    createdAt: new Date().toISOString(),
+    summary: {
+      overallScore: score,
+      technicalScore: Math.max(0, score - 5),
+      communicationScore: Math.max(0, score - 2),
+      confidenceScore: Math.max(0, score - 8),
+      problemSolvingScore: Math.max(0, score - 6),
+      answerRelevanceScore: Math.max(0, score - 3),
+    },
+    strengths: answeredCount > 0
+      ? ["You completed spoken answers during the practice session"]
+      : [],
+    weaknesses: answeredCount > 0
+      ? ["Connect to the server for full AI evaluation and detailed feedback"]
+      : ["No substantive answers were recorded during this session"],
+    recommendations: [
+      "Practice STAR-based answers with measurable outcomes",
+      `Review core skills expected for ${targetRole || "your target role"}`,
+      "Retry the interview while connected to generate a full AI report",
+    ],
+    readinessLevel: score >= 75 ? "Ready with Improvement" : score >= 60 ? "Needs More Practice" : "Not Yet Ready",
+    evaluations: [],
+  };
+};
 
 // ── Interview state machine states ────────────────────────────────────────────
 
@@ -63,6 +94,7 @@ export default function LiveInterview({
   session,
 }) {
   const activeSessionId    = sessionId || session?.sessionId;
+  const activeTargetRole   = session?.targetRole || "Software Engineer";
   const activeGreeting     = greeting || session?.greeting;
   const activeFirstQ       = firstQuestion || session?.firstQuestion;
   const activeDuration     = totalDurationMs || session?.totalDurationMs || 600000;
@@ -187,17 +219,17 @@ export default function LiveInterview({
       if (activeSessionId?.startsWith("local-")) {
         throw new Error("Client session mode");
       }
-      const res = await interviewService.submitAnswer(activeSessionId, {
+      const res = unwrapInterviewResponse(await interviewService.submitAnswer(activeSessionId, {
         transcript:    answer,
         questionIndex: currentQuestion.index,
-      });
+      }));
 
       setAnsweredCount(prev => prev + 1);
-      const data = res.data?.data || res.data || res;
+      const data = res;
       if (data?.avgScore) setAvgScore(data.avgScore);
 
-      const nextQ = data?.nextQuestion || res.nextQuestion;
-      const speakText = data?.speakText || res.speakText || nextQ?.text || "Great job. Let's move to the next question.";
+      const nextQ = data?.nextQuestion;
+      const speakText = data?.speakText || nextQ?.text || "Great job. Let's move to the next question.";
 
       setCurrentQuestion({
         index:   nextQ?.index ?? currentQuestion.index + 1,
@@ -296,16 +328,18 @@ export default function LiveInterview({
 
     try {
       let reportData = null;
-      if (!activeSessionId?.startsWith("local-")) {
-        const res = await interviewService.end(activeSessionId);
-        reportData = res.data?.data || res.data || res;
+      if (activeSessionId?.startsWith("local-")) {
+        reportData = buildLocalReport(activeTargetRole, answeredCount, avgScore);
+      } else {
+        const res = unwrapInterviewResponse(await interviewService.end(activeSessionId));
+        if (res?.success) reportData = res;
       }
       setTimeout(() => activeOnFinish?.(reportData), 2500);
     } catch (err) {
       console.error("[LiveInterview] endInterview error:", err);
-      activeOnFinish?.(null);
+      activeOnFinish?.(buildLocalReport(activeTargetRole, answeredCount, avgScore));
     }
-  }, [activeSessionId, activeOnFinish]);
+  }, [activeSessionId, activeTargetRole, activeOnFinish, answeredCount, avgScore]);
 
   // ── Pause / resume ───────────────────────────────────────────────────────────
 
@@ -329,7 +363,7 @@ export default function LiveInterview({
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-full bg-gray-950 text-white flex flex-col">
+    <div className="min-h-full bg-gray-50 text-gray-900 flex flex-col relative">
       {/* VoiceEngine — non-rendering */}
       <VoiceEngine
         ref={voiceRef}
@@ -343,15 +377,15 @@ export default function LiveInterview({
       />
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-white/10 bg-gray-900/80 backdrop-blur flex-shrink-0">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-200 bg-white flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-sm font-semibold text-gray-200">AI Virtual Interview</span>
-          <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-white/10 text-gray-400 capitalize">
+          <span className="text-sm font-semibold text-gray-900">AI Virtual Interview</span>
+          <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">
             {currentQuestion.section}
           </span>
         </div>
-        <div className={`flex items-center gap-1.5 text-sm font-mono font-bold ${isTimeLow ? "text-red-400 animate-pulse" : "text-gray-200"}`}>
+        <div className={`flex items-center gap-1.5 text-sm font-mono font-bold ${isTimeLow ? "text-red-600 animate-pulse" : "text-gray-700"}`}>
           <Clock className="w-4 h-4" />
           {fmt(timeLeft)}
         </div>
@@ -373,18 +407,18 @@ export default function LiveInterview({
 
           {/* Current question */}
           <div className="max-w-lg w-full">
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-5 backdrop-blur-sm">
+            <div className="rounded-xl bg-white border border-gray-200 p-5 shadow-sm">
               {interviewState === STATES.AI_THINKING || interviewState === STATES.PROCESSING ? (
-                <div className="flex items-center gap-3 text-indigo-300">
+                <div className="flex items-center gap-3 text-indigo-600">
                   <Loader className="w-5 h-5 animate-spin" />
                   <span className="text-sm">Analyzing your answer…</span>
                 </div>
               ) : interviewState === STATES.PAUSED ? (
-                <p className="text-amber-300 text-sm font-medium flex items-center gap-2">
+                <p className="text-amber-700 text-sm font-medium flex items-center gap-2">
                   <Pause className="w-4 h-4" /> Interview paused
                 </p>
               ) : (
-                <p className="text-white text-base sm:text-lg leading-relaxed font-medium">
+                <p className="text-gray-900 text-base sm:text-lg leading-relaxed font-medium">
                   {currentQuestion.text || "Preparing your next question…"}
                 </p>
               )}
@@ -397,9 +431,9 @@ export default function LiveInterview({
               <span>Question {answeredCount + 1}</span>
               <span>{progress}% through</span>
             </div>
-            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
+                className="h-full bg-indigo-600 rounded-full transition-all duration-700"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -407,25 +441,23 @@ export default function LiveInterview({
         </div>
 
         {/* Right: Transcript + controls */}
-        <div className="w-full lg:w-96 flex flex-col border-t lg:border-t-0 lg:border-l border-white/10 bg-gray-900/50">
-
-          {/* Transcript panel */}
+        <div className="w-full lg:w-96 flex flex-col border-t lg:border-t-0 lg:border-l border-gray-200 bg-white">
           <div className="flex-1 p-5 overflow-y-auto">
             <div className="flex items-center gap-2 mb-3">
               <div className={`w-2 h-2 rounded-full transition-colors ${
-                interviewState === STATES.LISTENING ? "bg-emerald-400 animate-pulse" : "bg-gray-600"
+                interviewState === STATES.LISTENING ? "bg-emerald-500 animate-pulse" : "bg-gray-300"
               }`} />
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 {interviewState === STATES.LISTENING ? "Listening…" : "Your Answer"}
               </span>
             </div>
 
             {transcript || finalTranscript ? (
-              <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+              <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
                 {transcript || finalTranscript}
               </p>
             ) : (
-              <p className="text-gray-600 text-sm italic">
+              <p className="text-gray-400 text-sm italic">
                 {interviewState === STATES.LISTENING
                   ? "Speak now — I'm listening…"
                   : interviewState === STATES.WAITING
@@ -435,23 +467,22 @@ export default function LiveInterview({
             )}
 
             {error && (
-              <div className="mt-4 flex items-start gap-2 p-3 rounded-xl bg-red-900/40 border border-red-700/50">
-                <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                <p className="text-red-300 text-xs">{error}</p>
+              <div className="mt-4 flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200">
+                <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                <p className="text-red-700 text-xs">{error}</p>
               </div>
             )}
 
             {avgScore !== null && (
-              <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-                <BarChart2 className="w-4 h-4 text-indigo-400" />
-                <span className="text-xs text-gray-400">Running score:</span>
-                <span className="text-sm font-bold text-indigo-300">{avgScore}/100</span>
+              <div className="mt-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-100">
+                <BarChart2 className="w-4 h-4 text-indigo-600" />
+                <span className="text-xs text-gray-500">Running score:</span>
+                <span className="text-sm font-bold text-indigo-700">{avgScore}/100</span>
               </div>
             )}
           </div>
 
-          {/* Controls */}
-          <div className="p-4 border-t border-white/10 flex flex-col gap-3">
+          <div className="p-4 border-t border-gray-200 flex flex-col gap-3">
             {/* Finish answer (manual fallback) */}
             {interviewState === STATES.LISTENING && (
               <button
@@ -471,33 +502,31 @@ export default function LiveInterview({
                 <button
                   onClick={() => setMicEnabled(v => !v)}
                   title={micEnabled ? "Mute microphone" : "Unmute microphone"}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${
-                    micEnabled ? "bg-white/10 hover:bg-white/20" : "bg-red-900/50 hover:bg-red-900/70"
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition border ${
+                    micEnabled ? "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200" : "bg-red-50 border-red-200 text-red-600"
                   }`}
                 >
-                  {micEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4 text-red-400" />}
+                  {micEnabled ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                 </button>
 
-                {/* Speaker toggle */}
                 <button
                   onClick={() => {
                     setSpeakerEnabled(v => !v);
                     if (speakerEnabled) voiceRef.current?.stopSpeaking();
                   }}
                   title={speakerEnabled ? "Mute speaker" : "Unmute speaker"}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition ${
-                    speakerEnabled ? "bg-white/10 hover:bg-white/20" : "bg-red-900/50 hover:bg-red-900/70"
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition border ${
+                    speakerEnabled ? "bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200" : "bg-red-50 border-red-200 text-red-600"
                   }`}
                 >
-                  {speakerEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4 text-red-400" />}
+                  {speakerEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                 </button>
 
-                {/* Pause / resume */}
                 <button
                   onClick={handlePause}
                   disabled={interviewState === STATES.COMPLETED}
                   title={interviewState === STATES.PAUSED ? "Resume" : "Pause"}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 hover:bg-white/20 transition disabled:opacity-30"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100 border border-gray-200 text-gray-700 hover:bg-gray-200 transition disabled:opacity-30"
                 >
                   {interviewState === STATES.PAUSED
                     ? <Play className="w-4 h-4" />
@@ -512,7 +541,7 @@ export default function LiveInterview({
                 }}
                 disabled={interviewState === STATES.COMPLETED}
                 id="end-interview-btn"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-900/60 hover:bg-red-700 text-red-300 hover:text-white text-sm font-semibold transition disabled:opacity-30"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 border border-red-200 hover:bg-red-100 text-red-700 text-sm font-semibold transition disabled:opacity-30"
               >
                 <Square className="w-3.5 h-3.5" />
                 End Interview
@@ -524,12 +553,12 @@ export default function LiveInterview({
 
       {/* Completed overlay */}
       {interviewState === STATES.COMPLETED && (
-        <div className="absolute inset-0 bg-gray-950/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="text-center space-y-4">
-            <CheckCircle className="w-16 h-16 text-emerald-400 mx-auto" />
-            <h2 className="text-2xl font-bold text-white">Interview Complete</h2>
-            <p className="text-gray-400">Generating your performance report…</p>
-            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="text-center space-y-4 bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+            <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto" />
+            <h2 className="text-2xl font-bold text-gray-900">Interview Complete</h2>
+            <p className="text-gray-500">Generating your performance report…</p>
+            <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
           </div>
         </div>
       )}

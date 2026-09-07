@@ -16,6 +16,7 @@ import {
   generateFinalReport,
   generateTransition,
 } from "../services/virtualInterviewService.js";
+import { synthesizeGeminiSpeech } from "../services/geminiSpeechService.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -26,6 +27,23 @@ const rollingAvgScore = (session) => {
     .filter(q => q.evaluation?.overallScore > 0)
     .map(q => q.evaluation.overallScore);
   return evals.length ? Math.round(evals.reduce((a, b) => a + b, 0) / evals.length) : 70;
+};
+
+export const synthesizeInterviewSpeech = async (req, res) => {
+  try {
+    const text = String(req.body.text || "").trim().slice(0, 1200);
+    if (!text) return res.status(400).json({ message: "Speech text is required" });
+
+    const audio = await synthesizeGeminiSpeech(text);
+    res.set({
+      "Content-Type": "audio/wav",
+      "Cache-Control": "private, max-age=300",
+    });
+    return res.send(audio);
+  } catch (error) {
+    console.warn("[Interview] Gemini TTS unavailable:", error.message);
+    return res.status(503).json({ message: "Neural speech is temporarily unavailable" });
+  }
 };
 
 // ── POST /api/interviews/start ─────────────────────────────────────────────────
@@ -639,6 +657,7 @@ export const closeDIDStream = async (req, res) => {
 
 export default {
   startInterview,
+  synthesizeInterviewSpeech,
   submitAnswer,
   endInterview,
   getSession,

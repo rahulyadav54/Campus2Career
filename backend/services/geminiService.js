@@ -25,9 +25,27 @@ export const chatWithGemini = async ({
       maxOutputTokens: maxTokens,
     },
   });
-  const context = userContext ? `User profile context: ${JSON.stringify(userContext)}\n\n` : "";
-  const prompt = context + messages.map(({ role, content }) => `${role}: ${content}`).join("\n\n");
-  const result = await model.generateContent(prompt);
+
+  const history = [];
+  const safeMessages = Array.isArray(messages) ? messages : [];
+  const lastMessage = safeMessages[safeMessages.length - 1];
+
+  if (safeMessages.length > 1) {
+    for (const msg of safeMessages.slice(0, -1)) {
+      const role = msg.role === "assistant" ? "model" : "user";
+      if (typeof msg.content === "string" && msg.content.trim()) {
+        history.push({ role, parts: [{ text: msg.content }] });
+      }
+    }
+  }
+
+  let prompt = typeof lastMessage?.content === "string" ? lastMessage.content : "";
+  if (userContext) {
+    prompt = `User profile context: ${JSON.stringify(userContext)}\n\n${prompt}`;
+  }
+
+  const chat = model.startChat({ history });
+  const result = await chat.sendMessage(prompt);
   const response = result.response.text()?.trim();
 
   if (!response) throw new Error("Empty response from Gemini API");

@@ -243,21 +243,21 @@ export default function InterviewSetup({ onStart, loading = false }) {
           </div>
 
           {/* Permanent Interviewer Avatar Card */}
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 text-white shadow-md">
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-indigo-50 border border-indigo-100">
             <img
               src="/interviewer.jpeg"
               alt="AI Interviewer"
-              className="w-14 h-14 rounded-full object-cover ring-2 ring-indigo-400 shrink-0 border border-white/20"
+              className="w-14 h-14 rounded-full object-cover ring-2 ring-indigo-200 shrink-0 border border-white"
             />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-white">AI Virtual Interviewer</span>
-                <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-semibold uppercase tracking-wider border border-indigo-500/30">
-                  D-ID Realtime Avatar
+                <span className="font-semibold text-sm text-gray-900">AI Virtual Interviewer</span>
+                <span className="px-2 py-0.5 rounded-full bg-white text-indigo-600 text-[10px] font-semibold uppercase tracking-wider border border-indigo-200">
+                  Live avatar
                 </span>
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
-                Your interview will be conducted live by your permanent custom interviewer avatar.
+              <p className="text-xs text-gray-600 mt-0.5">
+                Your interview is conducted by an interactive AI interviewer with voice recognition.
               </p>
             </div>
           </div>
@@ -324,9 +324,9 @@ export default function InterviewSetup({ onStart, loading = false }) {
             onClick={handleStart}
             disabled={loading || !effectiveRole.trim()}
             id="start-virtual-interview-btn"
-            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl
-              bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-lg
-              hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-200
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-xl
+              bg-indigo-600 text-white font-semibold text-lg
+              hover:bg-indigo-700 transition-all shadow-sm
               disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
           >
             {loading ? (

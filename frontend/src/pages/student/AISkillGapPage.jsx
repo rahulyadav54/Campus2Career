@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Target, Sparkles } from "lucide-react";
+import { CheckCircle2, Target, Sparkles } from "lucide-react";
 import { apiClient } from "../../services/apiClient";
+import { StatCard, LoadingSkeleton } from "../../components/ui";
+import { AIContentCard, AIPageHeader, SkillChip } from "../../components/ai/AIStudentUI";
 
 export default function AISkillGapPage() {
   const [analysis, setAnalysis] = useState(null);
@@ -23,86 +25,85 @@ export default function AISkillGapPage() {
   };
 
   if (loading) {
-    return <div className="p-6 text-slate-600">Checking your skill gaps...</div>;
+    return (
+      <div className="max-w-6xl mx-auto p-6 space-y-6">
+        <LoadingSkeleton lines={3} />
+        <div className="grid md:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <LoadingSkeleton key={i} lines={2} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (!analysis) {
-    return <div className="p-6 text-slate-600">No skill gap data available yet.</div>;
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <AIPageHeader
+          eyebrow="AI Skill Gap"
+          title="Skill gap analysis"
+          description="Complete your profile and assessments to see how your skills align with your target role."
+        />
+        <p className="mt-6 text-sm text-gray-500">No skill gap data available yet.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="rounded-3xl bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-white shadow-lg">
-        <div className="flex items-center gap-2 text-sm uppercase tracking-wide text-orange-100">
-          <AlertTriangle className="w-4 h-4" />
-          AI Skill Gap Engine
-        </div>
-        <h1 className="text-3xl font-bold mt-2">
-          {analysis.targetRole || "Choose a target role to begin"}
-        </h1>
-        <p className="mt-3 text-orange-50">{analysis.why}</p>
-      </div>
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <AIPageHeader
+        eyebrow="AI Skill Gap"
+        title={analysis.targetRole || "Choose a target role"}
+        description={analysis.why || "Skill coverage is calculated from your profile, assessments, and role requirements."}
+      />
 
       <div className="grid md:grid-cols-3 gap-4">
-        <Metric label="Skill Coverage" value={`${analysis.skillCoverage || 0}%`} />
-        <Metric label="Strong Skills" value={analysis.strongSkills?.length || 0} />
-        <Metric label="Missing Skills" value={analysis.missingSkills?.length || 0} />
+        <StatCard icon={Target} iconColor="indigo" value={`${analysis.skillCoverage || 0}%`} label="Skill coverage" />
+        <StatCard icon={CheckCircle2} iconColor="green" value={analysis.strongSkills?.length || 0} label="Strong skills" />
+        <StatCard icon={Target} iconColor="amber" value={analysis.missingSkills?.length || 0} label="Missing skills" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card title="Strong Skills" icon={<CheckCircle2 className="w-5 h-5" />}>
+        <AIContentCard title="Strong skills" icon={CheckCircle2}>
           <div className="flex flex-wrap gap-2">
             {(analysis.strongSkills || []).length ? analysis.strongSkills.map((skill) => (
-              <span key={skill} className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">{skill}</span>
-            )) : <span className="text-slate-500">No strong skill matches from the role map.</span>}
+              <SkillChip key={skill} variant="strong">{skill}</SkillChip>
+            )) : <span className="text-sm text-gray-500">No strong skill matches from the role map.</span>}
           </div>
-        </Card>
+        </AIContentCard>
 
-        <Card title="Missing / Priority Skills" icon={<Target className="w-5 h-5" />}>
+        <AIContentCard title="Missing / priority skills" icon={Target}>
           <div className="flex flex-wrap gap-2">
             {(analysis.missingSkills || []).length ? analysis.missingSkills.map((skill) => (
-              <span key={skill} className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">{skill}</span>
-            )) : <span className="text-slate-500">
-              {analysis.targetRole ? "You are well-aligned with this role." : "Select a target role to identify priority skills."}
-            </span>}
+              <SkillChip key={skill} variant="gap">{skill}</SkillChip>
+            )) : (
+              <span className="text-sm text-gray-500">
+                {analysis.targetRole ? "You are well-aligned with this role." : "Select a target role to identify priority skills."}
+              </span>
+            )}
           </div>
-        </Card>
+        </AIContentCard>
       </div>
 
-      <Card title="Why these recommendations were generated" icon={<Sparkles className="w-5 h-5" />}>
+      <AIContentCard title="Why these recommendations were generated" icon={Sparkles}>
         <div className="space-y-3">
           {(analysis.recommendations || []).length ? analysis.recommendations.map((item, index) => (
-            <div key={index} className="rounded-xl border border-slate-200 p-4 bg-slate-50">
-              <div className="flex items-center justify-between gap-4">
-                <div className="font-semibold text-slate-800">{item.skill}</div>
-                <span className="text-xs uppercase tracking-wide rounded-full px-2 py-1 bg-orange-100 text-orange-700">{item.priority}</span>
+            <div key={index} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="font-medium text-gray-900">{item.skill}</div>
+                <SkillChip variant="priority">{item.priority}</SkillChip>
               </div>
-              <div className="text-sm text-slate-600 mt-2">{item.reason}</div>
-              <div className="text-xs text-slate-500 mt-2">{item.why}</div>
+              <div className="text-sm text-gray-600 mt-2">{item.reason}</div>
+              <div className="text-xs text-gray-500 mt-2">{item.why}</div>
             </div>
-          )) : <p className="text-slate-500">
-            {analysis.targetRole ? "No additional recommendations are needed for this role." : "Recommendations will appear after you select a target role."}
-          </p>}
+          )) : (
+            <p className="text-sm text-gray-500">
+              {analysis.targetRole ? "No additional recommendations are needed for this role." : "Recommendations will appear after you select a target role."}
+            </p>
+          )}
         </div>
-      </Card>
-    </div>
-  );
-}
-
-function Metric({ label, value }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="text-sm text-slate-500">{label}</div>
-      <div className="text-2xl font-bold text-slate-900 mt-2">{value}</div>
-    </div>
-  );
-}
-
-function Card({ title, icon, children }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
-      <div className="flex items-center gap-2 font-semibold text-slate-800 mb-4">{icon}{title}</div>
-      {children}
+      </AIContentCard>
     </div>
   );
 }
