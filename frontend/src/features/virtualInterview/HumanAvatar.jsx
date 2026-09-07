@@ -20,15 +20,16 @@ const EMOTION_STYLES = {
   [AVATAR_EMOTIONS.GOODBYE]: { ring: "ring-indigo-300", bg: "from-indigo-50 to-violet-100", label: "Wrapping up" },
 };
 
-function Waveform({ active, color = "bg-indigo-400" }) {
+function Waveform({ active, level = 0, color = "bg-indigo-400" }) {
   const bars = [0.35, 0.6, 1, 0.75, 0.5, 0.85, 0.55];
+  const intensity = active ? Math.max(0.2, Math.min(1, level || 0.45)) : 0.15;
   return (
     <div className="flex items-end gap-0.5 h-6" aria-hidden="true">
       {bars.map((h, i) => (
         <div
           key={i}
           className={`w-1 rounded-full ${color} ${active ? "animate-pulse" : "opacity-30"}`}
-          style={{ height: active ? `${h * 100}%` : "20%", animationDelay: `${i * 80}ms` }}
+          style={{ height: `${h * intensity * 100}%`, animationDelay: `${i * 80}ms` }}
         />
       ))}
     </div>
@@ -116,7 +117,7 @@ export default function HumanAvatar({
       <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm text-gray-700">
         <Icon className="w-4 h-4 text-indigo-600" />
         <span className="text-sm font-medium">{cfg.label}</span>
-        {isSpeaking && <Waveform active color="bg-indigo-400" />}
+        {isSpeaking && <Waveform active={audioLevel > 0.05} level={audioLevel} color="bg-indigo-400" />}
         {isListening && <Waveform active color="bg-emerald-500" />}
       </div>
     </div>

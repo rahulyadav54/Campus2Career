@@ -95,10 +95,10 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
       return;
     }
     speechRef.current?.stopListening();
-    setState(INTERVIEWER_STATES.SPEAKING);
-    setEmotion("speaking");
 
     const startSpeak = () => {
+      // Do NOT mark Speaking here — wait for SpeechPipeline onSpeakStart
+      // so the UI matches real audio playback.
       speechRef.current?.speak(text, () => {
         setEmotion("listening");
         onDone?.();
@@ -164,7 +164,7 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
       const runWelcome = async () => {
         await unlockAudioOutput();
         await speechRef.current?.unlockAudio?.();
-        setState(INTERVIEWER_STATES.SPEAKING);
+        setDisplayCaption(greeting);
         setEmotion("speaking");
 
         speechRef.current.speak(greeting, () => {
@@ -181,7 +181,9 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
       runWelcome();
     };
 
-    const timer = setTimeout(startWelcome, 250);
+    // Slight delay so SpeechPipeline ref is mounted; audio unlock happens
+    // from the earlier "Enter interview room" click.
+    const timer = setTimeout(startWelcome, 400);
     return () => clearTimeout(timer);
   }, [session?.sessionId]);
 
@@ -342,7 +344,10 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
         }}
         onListeningStart={() => setState(INTERVIEWER_STATES.LISTENING)}
         onListeningEnd={handleListeningEnd}
-        onSpeakStart={() => { setState(INTERVIEWER_STATES.SPEAKING); setEmotion("speaking"); }}
+        onSpeakStart={() => {
+          setState(INTERVIEWER_STATES.SPEAKING);
+          setEmotion("speaking");
+        }}
         onSpeakEnd={() => setAudioLevel(0)}
         onBargeIn={() => {
           setState(INTERVIEWER_STATES.LISTENING);
@@ -383,6 +388,11 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
               presenterUrl={presenterUrl}
               nodTrigger={nodTrigger}
             />
+            {!speakerEnabled && (
+              <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+                Speaker is muted — unmute to hear the interviewer.
+              </p>
+            )}
             <div className="mt-4 w-full max-w-md rounded-xl bg-gray-50 border border-gray-200 p-3 min-h-[72px]">
               {state === INTERVIEWER_STATES.ANALYZING || state === INTERVIEWER_STATES.THINKING ? (
                 <div className="flex items-center gap-2 text-indigo-600 text-sm">
@@ -430,6 +440,23 @@ export default function LiveInterview({ session, media, onFinish, onExit }) {
           </button>
           <button type="button" onClick={() => { setSpeakerEnabled((v) => !v); if (speakerEnabled) speechRef.current?.stopSpeaking(); }} className="p-2.5 rounded-lg border bg-gray-100">
             {speakerEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              await unlockAudioOutput();
+              await speechRef.current?.unlockAudio?.();
+              const line = displayCaption || session?.speakText || session?.greeting || currentQuestion?.text;
+              if (!line?.trim()) {
+                toast.error("Nothing to play yet");
+                return;
+              }
+              speakAI(line);
+            }}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-sm font-medium"
+          >
+            <Volume2 className="w-4 h-4" />
+            Replay voice
           </button>
           <button type="button" onClick={handlePause} className="p-2.5 rounded-lg border bg-gray-100">
             {state === INTERVIEWER_STATES.PAUSED ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}

@@ -180,20 +180,20 @@ export function hasLiveVideo(stream) {
   return Boolean(track && track.readyState === "live" && track.enabled);
 }
 
-/** Unlock speaker output after a user click (required by Chrome autoplay rules). */
+/** Unlock speaker + speechSynthesis after a user click (Chrome autoplay rules). */
 export async function unlockAudioOutput() {
   if (typeof window === "undefined") return;
 
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    await ctx.resume();
+    if (ctx.state === "suspended") await ctx.resume();
     const buffer = ctx.createBuffer(1, 1, 22050);
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(ctx.destination);
     source.start(0);
-    await new Promise((r) => setTimeout(r, 10));
-    await ctx.close();
+    await new Promise((r) => setTimeout(r, 20));
+    await ctx.close().catch(() => {});
   } catch {
     /* ignore */
   }
@@ -208,8 +208,18 @@ export async function unlockAudioOutput() {
     /* ignore */
   }
 
+  // Critical for Chrome: unlock speechSynthesis itself with a silent utterance
   if (window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    try {
+      window.speechSynthesis.cancel();
+      const warm = new SpeechSynthesisUtterance(" ");
+      warm.volume = 0;
+      warm.rate = 2;
+      window.speechSynthesis.speak(warm);
+      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+    } catch {
+      /* ignore */
+    }
   }
 }
