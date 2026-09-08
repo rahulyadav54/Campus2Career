@@ -9,9 +9,9 @@ import {
   Mic, TrendingUp, Plus, ArrowRight, BarChart3,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { resumeOptimizerService } from "../../services/resumeOptimizerService";
-import { AIPageHeader, AIContentCard, AIReadinessBadge } from "../../components/ai/AIStudentUI";
-import { LoadingSkeleton, StatCard } from "../../components/ui";
+import { resumeOptimizerService } from "../../../services/resumeOptimizerService";
+import { AIPageHeader, AIContentCard, AIReadinessBadge } from "../../../components/ai/AIStudentUI";
+import { LoadingSkeleton, StatCard } from "../../../components/ui";
 
 export default function ResumeCenter() {
   const navigate = useNavigate();

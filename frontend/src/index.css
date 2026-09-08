@@ -413,7 +413,7 @@ html.dark textarea::placeholder {
   }
   .resume-preview-outer { background: white !important; padding: 0 !important; }
   .resume-page-break { page-break-before: always; }
-  .print\\:hidden { display: none !important; }
+  .no-print { display: none !important; }
 }
 
 .resume-page-break {
