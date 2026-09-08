@@ -10,6 +10,8 @@ import { matchJob, findMatchingJobs } from "../services/resumeOptimizer/jobMatch
 import { analyzeSkillGaps } from "../services/resumeOptimizer/skillGapAnalyzer.js";
 import { recommendCompanies } from "../services/resumeOptimizer/companyMatcher.js";
 import { toPlainText, toExportHtml } from "../services/resumeOptimizer/resumeExport.js";
+import NotificationService from "../services/notificationService.js";
+import { EVENTS } from "../constants/notificationEvents.js";
 
 const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
 
@@ -274,6 +276,19 @@ export const analyzeResume = async (req, res) => {
     }
 
     await resume.save();
+
+    setImmediate(() => {
+      NotificationService.notify({
+        userId: req.user._id,
+        event: EVENTS.RESUME_ANALYZED,
+        data: {
+          resumeId: resume._id,
+          atsScore: analysis.atsScore,
+          sendEmail: req.body.sendEmail === true,
+          role: "student",
+        },
+      }).catch((e) => console.error("[analyzeResume] notification error:", e.message));
+    });
 
     res.json({
       success: true,

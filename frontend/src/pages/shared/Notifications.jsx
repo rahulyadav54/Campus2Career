@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { API_URL } from "../../config/api";
-import { Bell, CheckCheck, Filter } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, CheckCheck, Filter, Settings } from "lucide-react";
 import apiClient from "../../services/apiClient";
 
 const TYPE_ICONS = {
@@ -9,12 +9,41 @@ const TYPE_ICONS = {
   job_rejected: "❌",
   application_received: "📨",
   interview_scheduled: "📅",
+  interview_completed: "🎯",
   application_status_update: "🔄",
   recruiter_registered: "🏢",
   system_announcement: "📢",
+  account_approved: "🎉",
+  account_rejected: "ℹ️",
+  security_alert: "🔒",
+  resume_analyzed: "📄",
+  job_recommendations: "💼",
 };
 
+function resolveDeepLink(n, role = "student") {
+  if (n.actionUrl) return n.actionUrl;
+  const d = n.data || {};
+  if (d.sessionId) return `/${role}/virtual-interview/${d.sessionId}`;
+  if (d.resumeId) return `/${role}/resume-center/builder/${d.resumeId}`;
+  if (d.applicationId) return `/${role}/applications`;
+  if (d.jobId) return `/${role}/jobs`;
+  const typeMap = {
+    interview_scheduled: `/${role}/applications`,
+    interview_completed: d.sessionId ? `/${role}/virtual-interview/${d.sessionId}` : `/${role}/virtual-interview`,
+    application_status_update: `/${role}/applications`,
+    application_received: `/${role}/applications`,
+    resume_analyzed: `/${role}/resume-center`,
+    job_recommendations: `/${role}/recommendations`,
+    job_submitted: `/${role}/job-verification`,
+    recruiter_registered: `/${role}/user-approvals`,
+    account_approved: `/${role}`,
+  };
+  return typeMap[n.type] || `/${role}/notifications`;
+}
+
 export default function Notifications() {
+  const navigate = useNavigate();
+  const role = localStorage.getItem("role") || "student";
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -58,6 +87,16 @@ export default function Notifications() {
     } catch (e) { console.error(e); }
   };
 
+  const handleClick = async (n) => {
+    if (!n.isRead) await markAsRead(n._id);
+    const link = resolveDeepLink(n, role);
+    if (link.startsWith("http")) {
+      window.location.href = link;
+    } else {
+      navigate(link);
+    }
+  };
+
   return (
     <main className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -67,8 +106,17 @@ export default function Notifications() {
           {unreadCount > 0 && <p className="text-sm text-gray-500 mt-1">{unreadCount} unread</p>}
         </div>
         <div className="flex flex-wrap gap-3">
-          <button onClick={() => setUnreadOnly((v) => !v)} className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg text-sm ${unreadOnly ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "hover:bg-gray-50"}`}><Filter size={16} /> {unreadOnly ? "Showing unread" : "All notifications"}</button>
-          {unreadCount > 0 && <button onClick={markAllAsRead} className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium"><CheckCheck size={16} /> Mark all read</button>}
+          <button onClick={() => navigate(`/${role}/notification-preferences`)} className="inline-flex items-center gap-2 px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">
+            <Settings size={16} /> Preferences
+          </button>
+          <button onClick={() => setUnreadOnly((v) => !v)} className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg text-sm ${unreadOnly ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "hover:bg-gray-50"}`}>
+            <Filter size={16} /> {unreadOnly ? "Showing unread" : "All notifications"}
+          </button>
+          {unreadCount > 0 && (
+            <button onClick={markAllAsRead} className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">
+              <CheckCheck size={16} /> Mark all read
+            </button>
+          )}
         </div>
       </div>
 
@@ -80,17 +128,25 @@ export default function Notifications() {
       ) : (
         <div className="space-y-3">
           {notifications.map((n) => (
-            <div key={n._id} onClick={() => !n.isRead && markAsRead(n._id)} className={`bg-white border rounded-xl p-5 flex flex-col md:flex-row md:items-start gap-4 cursor-pointer transition-colors ${n.isRead ? "opacity-75" : "border-indigo-200 bg-indigo-50/30"}`}>
+            <div
+              key={n._id}
+              onClick={() => handleClick(n)}
+              className={`bg-white border rounded-xl p-5 flex flex-col md:flex-row md:items-start gap-4 cursor-pointer transition-colors hover:border-indigo-300 ${n.isRead ? "opacity-75" : "border-indigo-200 bg-indigo-50/30"}`}
+            >
               <div className="text-2xl">{TYPE_ICONS[n.type] || "🔔"}</div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-gray-900">{n.title}</h3>
-                  {!n.isRead && <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>}
+                  {!n.isRead && <span className="w-2 h-2 bg-indigo-600 rounded-full" />}
                 </div>
                 <p className="text-sm text-gray-600 mt-1">{n.message}</p>
                 <p className="text-xs text-gray-400 mt-2">{new Date(n.createdAt).toLocaleString()}</p>
               </div>
-              {!n.isRead && <button onClick={(e) => { e.stopPropagation(); markAsRead(n._id); }} className="text-xs text-indigo-600 hover:underline">Mark read</button>}
+              {!n.isRead && (
+                <button onClick={(e) => { e.stopPropagation(); markAsRead(n._id); }} className="text-xs text-indigo-600 hover:underline">
+                  Mark read
+                </button>
+              )}
             </div>
           ))}
         </div>

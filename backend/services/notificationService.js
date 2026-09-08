@@ -1,8 +1,83 @@
 import Notification from "../models/NotificationModel.js";
 import User from "../models/UserModel.js";
+import EmailLog from "../models/EmailLog.js";
 import { publishToUser } from "./realtimeService.js";
+import EmailService from "./email/EmailService.js";
+import PreferenceService from "./notifications/preferenceService.js";
+import resolveEventPayload from "./notifications/eventHandlers.js";
+import { EVENTS } from "../constants/notificationEvents.js";
 
 class NotificationService {
+  /**
+   * Central notification entry point.
+   * All feature modules should call this — never Resend directly.
+   */
+  static async notify({ userId, event, data = {}, email: emailOverride = null, inApp: inAppOverride = null }) {
+    try {
+      if (!userId || !event) return { success: false, reason: "missing_params" };
+
+      const user = await User.findById(userId).select("email name role");
+      if (!user) return { success: false, reason: "user_not_found" };
+
+      const role = data.role || user.role || "student";
+      const payload = resolveEventPayload(event, { ...data, userName: user.name, role });
+      const variables = payload.variables || {};
+
+      const results = { inApp: null, email: null };
+
+      // In-app notification
+      const inAppConfig = inAppOverride !== null ? inAppOverride : payload.inApp;
+      if (inAppConfig) {
+        const sendInApp = await PreferenceService.shouldSendInApp(userId, event);
+        if (sendInApp) {
+          results.inApp = await this.createNotification({
+            recipient: userId,
+            sender: data.senderId || null,
+            type: inAppConfig.type,
+            title: inAppConfig.title,
+            message: inAppConfig.message,
+            category: inAppConfig.category || "general",
+            actionUrl: inAppConfig.actionUrl || "",
+            data: { event, ...data },
+            priority: inAppConfig.priority || "medium",
+          });
+        }
+      }
+
+      // Email notification
+      const emailConfig = emailOverride !== null ? emailOverride : payload.email;
+      if (emailConfig) {
+        const sendEmail = await PreferenceService.shouldSendEmail(userId, event);
+
+        if (sendEmail && user.email) {
+          results.email = await EmailService.queueEmail({
+              userId,
+              recipient: user.email,
+              eventType: event,
+              templateKey: emailConfig.templateKey,
+              variables,
+              idempotencyKey: emailConfig.idempotencyKey,
+              metadata: { userId, event },
+            });
+        }
+      }
+
+      return { success: true, ...results };
+    } catch (error) {
+      console.error(`[NotificationService] notify(${event}) failed:`, error.message);
+      return { success: false, reason: error.message };
+    }
+  }
+
+  /** Notify multiple users for the same event */
+  static async notifyMany({ userIds, event, data = {} }) {
+    const results = [];
+    for (const userId of userIds) {
+      results.push(await this.notify({ userId, event, data }));
+    }
+    return results;
+  }
+
   // Create a notification
   static async createNotification({
     recipient,
@@ -10,6 +85,8 @@ class NotificationService {
     type,
     title,
     message,
+    category = "general",
+    actionUrl = "",
     data = {},
     priority = "medium",
     expiresAt = null
@@ -21,13 +98,14 @@ class NotificationService {
         type,
         title,
         message,
+        category,
+        actionUrl,
         data,
         priority,
         expiresAt
       });
 
       publishToUser(recipient, "notification", notification);
-
       return notification;
     } catch (error) {
       console.error("Error creating notification:", error);
@@ -38,20 +116,15 @@ class NotificationService {
   // Notify placement cell about new job submission
   static async notifyJobSubmission(jobId, recruiterId, jobTitle) {
     try {
-      // Find all admin users (placement cell)
       const admins = await User.find({ role: "admin", isActive: true });
-      
-      const notifications = admins.map(admin => ({
-        recipient: admin._id,
-        sender: recruiterId,
-        type: "job_submitted",
-        title: "New Job Posting Submitted",
-        message: `A new job posting "${jobTitle}" has been submitted for approval.`,
-        data: { jobId, recruiterId },
-        priority: "high"
-      }));
 
-      await Notification.insertMany(notifications);
+      for (const admin of admins) {
+        await this.notify({
+          userId: admin._id,
+          event: EVENTS.JOB_CREATED,
+          data: { jobId, recruiterId, jobTitle, senderId: recruiterId },
+        });
+      }
       console.log(`Job submission notifications sent to ${admins.length} admins`);
     } catch (error) {
       console.error("Error notifying job submission:", error);
@@ -61,17 +134,12 @@ class NotificationService {
   // Notify recruiter about job approval/rejection
   static async notifyJobStatus(jobId, recruiterId, status, jobTitle, comments = "") {
     try {
-      const isApproved = status === "approved";
-      
-      await this.createNotification({
-        recipient: recruiterId,
-        type: isApproved ? "job_approved" : "job_rejected",
-        title: `Job Posting ${isApproved ? "Approved" : "Rejected"}`,
-        message: `Your job posting "${jobTitle}" has been ${status.toLowerCase()}.${comments ? ` Comments: ${comments}` : ""}`,
-        data: { jobId, status },
-        priority: isApproved ? "medium" : "high"
+      const event = status === "approved" ? EVENTS.JOB_APPROVED : EVENTS.JOB_REJECTED;
+      await this.notify({
+        userId: recruiterId,
+        event,
+        data: { jobId, status, jobTitle, comments, role: "recruiter" },
       });
-
       console.log(`Job ${status} notification sent to recruiter`);
     } catch (error) {
       console.error("Error notifying job status:", error);
@@ -79,40 +147,54 @@ class NotificationService {
   }
 
   // Notify about new application
-  static async notifyNewApplication(applicationId, studentId, recruiterId, jobTitle) {
+  static async notifyNewApplication(applicationId, studentId, recruiterId, jobTitle, jobId, companyName, studentName) {
     try {
-      await this.createNotification({
-        recipient: recruiterId,
-        sender: studentId,
-        type: "application_received",
-        title: "New Job Application",
-        message: `You have received a new application for "${jobTitle}".`,
-        data: { applicationId, studentId },
-        priority: "medium"
+      await this.notify({
+        userId: studentId,
+        event: EVENTS.APPLICATION_SUBMITTED,
+        data: { applicationId, jobId, jobTitle, companyName, role: "student" },
       });
 
-      console.log("New application notification sent to recruiter");
+      await this.notify({
+        userId: recruiterId,
+        event: EVENTS.APPLICATION_RECEIVED_EMPLOYER,
+        data: { applicationId, jobId, jobTitle, studentName, studentId, role: "recruiter" },
+      });
+
+      console.log("Application submitted notifications sent");
     } catch (error) {
       console.error("Error notifying new application:", error);
     }
   }
 
   // Notify student about application status update
-  static async notifyApplicationStatus(applicationId, studentId, status, jobTitle, note = "") {
+  static async notifyApplicationStatus(applicationId, studentId, status, jobTitle, note = "", extra = {}) {
     try {
-      const statusMessages = {
-        "interview scheduled": "Your application has been shortlisted for an interview!",
-        "hired": "Congratulations! You have been selected for the position.",
-        "rejected by recruiter": "Your application was not selected this time."
+      const statusEventMap = {
+        "interview scheduled": EVENTS.INTERVIEW_SCHEDULED,
+        "hired": EVENTS.APPLICATION_SELECTED,
+        "rejected by recruiter": EVENTS.APPLICATION_REJECTED,
+        "rejected by mentor": EVENTS.APPLICATION_REJECTED,
+        "pending recruiter review": EVENTS.APPLICATION_SHORTLISTED,
       };
 
-      await this.createNotification({
-        recipient: studentId,
-        type: "application_status_update",
-        title: "Application Status Update",
-        message: `${statusMessages[status] || "Your application status has been updated"} Job: "${jobTitle}".${note ? ` Note: ${note}` : ""}`,
-        data: { applicationId, status },
-        priority: status === "hired" ? "high" : "medium"
+      const event = statusEventMap[status] || EVENTS.APPLICATION_REVIEWED;
+
+      await this.notify({
+        userId: studentId,
+        event,
+        data: {
+          applicationId,
+          status,
+          jobTitle,
+          comments: note,
+          role: "student",
+          interviewDate: extra.interviewDate,
+          interviewTime: extra.interviewTime,
+          interviewMode: extra.interviewMode,
+          interviewMeetingLink: extra.interviewMeetingLink,
+          companyName: extra.companyName,
+        },
       });
 
       console.log("Application status notification sent to student");
@@ -134,9 +216,9 @@ class NotificationService {
         .skip((page - 1) * limit);
 
       const total = await Notification.countDocuments(filter);
-      const unreadCount = await Notification.countDocuments({ 
-        recipient: userId, 
-        isRead: false 
+      const unreadCount = await Notification.countDocuments({
+        recipient: userId,
+        isRead: false
       });
 
       return {
@@ -156,27 +238,18 @@ class NotificationService {
   static async notifyRecruiterRegistration(recruiterId, companyName, recruiterName) {
     try {
       const admins = await User.find({ role: "admin", isActive: true });
-      
-      if (admins.length === 0) {
-        console.log("No admin users found for notification");
-        return;
+      if (admins.length === 0) return;
+
+      for (const admin of admins) {
+        await this.notify({
+          userId: admin._id,
+          event: EVENTS.RECRUITER_REGISTERED,
+          data: { recruiterId, companyName, recruiterName, role: "admin" },
+        });
       }
-
-      const notifications = admins.map(admin => ({
-        recipient: admin._id,
-        sender: recruiterId,
-        type: "recruiter_registered",
-        title: "New Recruiter Registration",
-        message: `${recruiterName} from "${companyName}" has registered and is awaiting approval.`,
-        data: { recruiterId },
-        priority: "medium"
-      }));
-
-      await Notification.insertMany(notifications);
       console.log(`Recruiter registration notifications sent to ${admins.length} admins`);
     } catch (error) {
       console.error("Error notifying recruiter registration:", error);
-      // Don't throw error to prevent registration failure
     }
   }
 
@@ -185,7 +258,7 @@ class NotificationService {
     try {
       await Notification.findOneAndUpdate(
         { _id: notificationId, recipient: userId },
-        { isRead: true }
+        { isRead: true, readAt: new Date() }
       );
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -198,12 +271,23 @@ class NotificationService {
     try {
       await Notification.updateMany(
         { recipient: userId, isRead: false },
-        { isRead: true }
+        { isRead: true, readAt: new Date() }
       );
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
       throw error;
     }
+  }
+
+  /** User email history (no internal API details) */
+  static async getUserEmailHistory(userId, { page = 1, limit = 20 } = {}) {
+    const logs = await EmailLog.find({ userId })
+      .select("eventType templateKey subject status sentAt createdAt")
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip((page - 1) * limit);
+    const total = await EmailLog.countDocuments({ userId });
+    return { emails: logs, total, totalPages: Math.ceil(total / limit), currentPage: page };
   }
 }
 

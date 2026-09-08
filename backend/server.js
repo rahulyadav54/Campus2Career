@@ -32,6 +32,9 @@ import collaborationRoutes from "./routes/collaborationRoutes.js";
 import learningPlatformRoutes from "./routes/learningPlatformRoutes.js";
 import mentorshipRoutes from "./routes/mentorshipRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import notificationPreferenceRoutes from "./routes/notificationPreferenceRoutes.js";
+import emailAdminRoutes from "./routes/emailAdminRoutes.js";
+import emailWebhookRoutes from "./routes/emailWebhookRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import chatHistoryRoutes from "./routes/chatHistoryRoutes.js";
 import aiOrchestratorRoutes from "./routes/aiOrchestratorRoutes.js";
@@ -154,6 +157,9 @@ app.use("/api/learning-platforms", learningPlatformRoutes);
 app.use("/api/mentorship", mentorshipRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/notifications", notificationPreferenceRoutes);
+app.use("/api/admin/email", emailAdminRoutes);
+app.use("/api/webhooks", emailWebhookRoutes);
 app.use("/api/chat-history", chatHistoryRoutes);
 
 // 404 handler for unknown routes
@@ -226,6 +232,22 @@ const startServer = async () => {
       }
     } catch (seedErr) {
       console.error("Collaboration auto-seed check failed:", seedErr.message);
+    }
+
+    // Email + notification system startup
+    try {
+      const EmailService = (await import("./services/email/EmailService.js")).default;
+      await EmailService.seedTemplates();
+      console.log("[EmailService] Templates seeded");
+
+      setInterval(() => {
+        EmailService.processQueue(25).catch((e) => console.error("[EmailQueue]", e.message));
+      }, 60_000);
+
+      const { startInterviewReminderJob } = await import("./jobs/interviewReminderJob.js");
+      startInterviewReminderJob();
+    } catch (emailErr) {
+      console.error("Email system startup warning:", emailErr.message);
     }
   } catch (error) {
     console.error("❌ Backend startup stopped:", error.message);

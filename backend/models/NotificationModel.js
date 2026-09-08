@@ -7,20 +7,29 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     enum: [
       "job_submitted",
-      "job_approved", 
+      "job_approved",
       "job_rejected",
       "application_received",
       "interview_scheduled",
+      "interview_completed",
       "application_status_update",
       "recruiter_registered",
-      "system_announcement"
+      "system_announcement",
+      "account_approved",
+      "account_rejected",
+      "security_alert",
+      "resume_analyzed",
+      "job_recommendations",
     ],
     required: true
   },
   title: { type: String, required: true },
   message: { type: String, required: true },
-  data: { type: mongoose.Schema.Types.Mixed }, // Additional data like job ID, application ID
+  category: { type: String, default: "general" },
+  actionUrl: { type: String, default: "" },
+  data: { type: mongoose.Schema.Types.Mixed },
   isRead: { type: Boolean, default: false },
+  readAt: { type: Date, default: null },
   priority: { type: String, enum: ["low", "medium", "high"], default: "medium" },
   expiresAt: { type: Date }
 }, { timestamps: true });

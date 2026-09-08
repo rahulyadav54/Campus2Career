@@ -4,6 +4,7 @@ import Application from "../models/ApplicationModel.js";
 import Notification from "../models/NotificationModel.js";
 import NotificationService from "../services/notificationService.js";
 import AuditService from "../services/auditService.js";
+import { EVENTS } from "../constants/notificationEvents.js";
 
 // User Account Management
 export const getPendingUsers = async (req, res) => {
@@ -66,6 +67,15 @@ export const approveUser = async (req, res) => {
     res.json({
       message: `User ${approved ? 'approved' : 'rejected'} successfully`,
       user: user.getPublicProfile()
+    });
+
+    // Notify user (non-blocking)
+    setImmediate(() => {
+      NotificationService.notify({
+        userId: user._id,
+        event: approved ? EVENTS.USER_APPROVED : EVENTS.USER_REJECTED,
+        data: { userId: user._id, comments, role: user.role },
+      }).catch((e) => console.error("[approveUser] notification error:", e.message));
     });
   } catch (error) {
     console.error("Approve user error:", error);

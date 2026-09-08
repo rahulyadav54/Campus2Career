@@ -5,7 +5,7 @@ import {
   Target, Compass, TrendingUp, Activity, Calendar, MessageSquare,
   Settings, HelpCircle, LogOut, Menu, X, Bell, ChevronDown, Search,
   ClipboardList, GraduationCap, Trophy, Building2, Globe, Presentation,
-  Megaphone, Shield, UserPlus, User, KeyRound, Sparkles
+  Megaphone, Shield, UserPlus, User, KeyRound, Sparkles, Mail
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -90,6 +90,7 @@ const roleNavConfig = {
         { label: "Activity Monitor", icon: Activity, path: "/admin/activities" },
         { label: "Collaborations", icon: Building2, path: "/admin/collaboration" },
         { label: "Notifications", icon: Bell, path: "/admin/notifications" },
+        { label: "Email Management", icon: Mail, path: "/admin/email-management" },
       ]},
       { group: "Account", items: [
         { label: "Profile", icon: User, path: "/admin/profile" },

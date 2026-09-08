@@ -7,6 +7,8 @@
 
 import InterviewSession from "../models/InterviewSession.js";
 import UserModel        from "../models/UserModel.js";
+import NotificationService from "../services/notificationService.js";
+import { EVENTS } from "../constants/notificationEvents.js";
 import { evaluateSkillGap }          from "../services/skillGapEngine.js";
 import {
   generateOpeningGreeting,
@@ -321,6 +323,18 @@ export const endInterview = async (req, res) => {
     await session.save();
 
     console.log(`[Interview] Session completed: ${sessionId} | Score: ${report.summary.overallScore}`);
+
+    setImmediate(() => {
+      NotificationService.notify({
+        userId: session.studentId,
+        event: EVENTS.INTERVIEW_COMPLETED,
+        data: {
+          sessionId,
+          targetRole: session.targetRole,
+          role: "student",
+        },
+      }).catch((e) => console.error("[endInterview] notification error:", e.message));
+    });
 
     return res.json({
       success: true,

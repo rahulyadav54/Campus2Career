@@ -1,6 +1,9 @@
 import User from "../models/UserModel.js";
 import AuthSession from "../models/AuthSession.js";
 import AuditService from "../services/auditService.js";
+import NotificationService from "../services/notificationService.js";
+import { EVENTS } from "../constants/notificationEvents.js";
+import { getFrontendBaseUrl } from "../utils/frontendUrl.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { clientIp } from "../utils/userAgent.js";
@@ -401,6 +404,14 @@ export const changePassword = async (req, res) => {
       message: "Password updated successfully",
       token,
     });
+
+    setImmediate(() => {
+      NotificationService.notify({
+        userId: user._id,
+        event: EVENTS.PASSWORD_CHANGED,
+        data: { userId: user._id, role: user.role },
+      }).catch((e) => console.error("[changePassword] notification error:", e.message));
+    });
   } catch (err) {
     res.status(500).json({ message: "Failed to change password", error: err.message });
   }
@@ -429,14 +440,24 @@ export const forgotPassword = async (req, res) => {
     if (!email) return res.status(400).json({ message: "Email is required" });
 
     const user = await User.findOne({ email });
+    let rawToken = null;
     if (user) {
-      const raw = crypto.randomBytes(32).toString("hex");
-      user.resetPasswordToken = crypto.createHash("sha256").update(raw).digest("hex");
+      rawToken = crypto.randomBytes(32).toString("hex");
+      user.resetPasswordToken = crypto.createHash("sha256").update(rawToken).digest("hex");
       user.resetPasswordExpire = new Date(Date.now() + 60 * 60 * 1000);
       await user.save({ validateBeforeSave: false });
+
+      const resetUrl = `${getFrontendBaseUrl()}/forgot-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
+      setImmediate(() => {
+        NotificationService.notify({
+          userId: user._id,
+          event: EVENTS.PASSWORD_RESET,
+          data: { userId: user._id, resetUrl, expiryMinutes: "60", role: user.role },
+        }).catch((e) => console.error("[forgotPassword] notification error:", e.message));
+      });
     }
 
-    const emailConfigured = Boolean(process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS);
+    const emailConfigured = Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL);
     res.json({
       success: true,
       message: emailConfigured

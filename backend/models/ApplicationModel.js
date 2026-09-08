@@ -32,6 +32,8 @@ const applicationSchema = new mongoose.Schema({
   interviewMeetingLink: { type: String }, // For online interviews
   interviewNotes: { type: String }, // Additional interview instructions
   rejectedAt: { type: Date }, // Track when application was rejected
+  reminder24hSent: { type: Boolean, default: false },
+  reminder1hSent: { type: Boolean, default: false },
 }, { timestamps: true });
 
 applicationSchema.index({ student: 1, job: 1 }, { unique: true });

@@ -2,6 +2,7 @@
 import Application from "../models/ApplicationModel.js";
 import Job from "../models/JobModel.js";
 import User from "../models/UserModel.js";
+import NotificationService from "../services/notificationService.js";
 
 export const applyToJob = async (req, res) => {
   try {
@@ -43,9 +44,9 @@ export const applyToJob = async (req, res) => {
       await Application.findByIdAndDelete(existing._id);
     }
 
-    const student = await User.findById(studentId).select('assignedMentor');
+    const student = await User.findById(studentId).select('assignedMentor name');
     
-    await Application.create({
+    const application = await Application.create({
       student: studentId,
       job: jobId,
       mentor: student?.assignedMentor || null,
@@ -63,6 +64,20 @@ export const applyToJob = async (req, res) => {
     // Add activity log
     await User.findByIdAndUpdate(studentId, {
       $push: { activityLog: { action: `Applied to job: ${job.title}`, date: new Date() } }
+    });
+
+    // Notify student + recruiter (non-blocking)
+    const recruiter = await User.findById(job.recruiter).select("company name");
+    setImmediate(() => {
+      NotificationService.notifyNewApplication(
+        application._id,
+        studentId,
+        job.recruiter,
+        job.title,
+        jobId,
+        recruiter?.company || recruiter?.name || "",
+        student?.name || ""
+      ).catch((e) => console.error("[applyToJob] notification error:", e.message));
     });
 
     res.status(201).json({ message: "Applied successfully" });
@@ -272,6 +287,25 @@ export const recruiterDecision = async (req, res) => {
                       action === 'schedule' ? 'Scheduled interview' : 'Hired candidate';
     await User.findByIdAndUpdate(req.user._id, {
       $push: { activityLog: { action: actionText, date: new Date() } }
+    });
+
+    // Notify student (non-blocking — email failure must not affect response)
+    const recruiter = await User.findById(app.recruiter).select("company name");
+    setImmediate(() => {
+      NotificationService.notifyApplicationStatus(
+        app._id,
+        app.student._id || app.student,
+        app.status,
+        app.job?.title || "",
+        app.recruiterNote || "",
+        {
+          interviewDate: app.interviewDate?.toLocaleDateString(),
+          interviewTime: app.interviewTime,
+          interviewMode: app.interviewMode,
+          interviewMeetingLink: app.interviewMeetingLink,
+          companyName: recruiter?.company || recruiter?.name || "",
+        }
+      ).catch((e) => console.error("[recruiterDecision] notification error:", e.message));
     });
     
     res.json(app);

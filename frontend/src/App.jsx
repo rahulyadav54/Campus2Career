@@ -89,6 +89,8 @@ import MyCourses from "./pages/student/MyCourses";
 import AdminCourses from "./pages/admin/AdminCourses";
 import Announcements from "./pages/shared/Announcements";
 import Notifications from "./pages/shared/Notifications";
+import NotificationPreferences from "./pages/shared/NotificationPreferences";
+import AdminEmailManagement from "./pages/admin/AdminEmailManagement";
 import AdminSettings from "./pages/admin/AdminSettings";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResumeCenter from "./pages/student/ResumeCenter";
@@ -155,6 +157,7 @@ function App() {
           <Route path="collaborations" element={<CollaborationRegistrations />} />
           <Route path="announcements" element={<Announcements />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="notification-preferences" element={<NotificationPreferences />} />
           <Route path="courses" element={<StudentCourses />} />
           <Route path="courses/:id" element={<CourseDetail />} />
           <Route path="my-courses" element={<MyCourses />} />
@@ -196,6 +199,7 @@ function App() {
           <Route path="assessments" element={<AssessmentManagement />} />
           <Route path="announcements" element={<Announcements />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="notification-preferences" element={<NotificationPreferences />} />
         </Route>
         
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><DashboardLayout userRole="admin" /></ProtectedRoute>}>
@@ -220,6 +224,8 @@ function App() {
           <Route path="learning-platforms" element={<AdminLearningPlatforms />} />
           <Route path="courses" element={<AdminCourses />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="notification-preferences" element={<NotificationPreferences />} />
+          <Route path="email-management" element={<AdminEmailManagement />} />
           <Route path="profile" element={<AdminProfile />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
@@ -233,6 +239,7 @@ function App() {
           <Route path="analytics/placement-readiness" element={<InstitutionPlacementReadiness />} />
           <Route path="assessments" element={<AssessmentManagement />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="notification-preferences" element={<NotificationPreferences />} />
         </Route>
 
         <Route path="*" element={<UnderDevelopment />} />

@@ -78,6 +78,14 @@ export const registerRecruiter = async (req, res) => {
         verificationStatus: recruiter.verificationStatus
       }
     });
+
+    setImmediate(() => {
+      NotificationService.notifyRecruiterRegistration(
+        user._id,
+        companyProfile?.displayName || companyProfile?.legalName || "",
+        name
+      ).catch((e) => console.error("[registerRecruiter] notification error:", e.message));
+    });
   } catch (error) {
     console.error("Recruiter registration error:", error);
     if (error.name === 'ValidationError') {
