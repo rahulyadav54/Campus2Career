@@ -90,6 +90,8 @@ import AdminCourses from "./pages/admin/AdminCourses";
 import Announcements from "./pages/shared/Announcements";
 import Notifications from "./pages/shared/Notifications";
 import NotificationPreferences from "./pages/shared/NotificationPreferences";
+import AccountProfile from "./pages/shared/AccountProfile";
+import AccountSettings from "./pages/shared/AccountSettings";
 import AdminEmailManagement from "./pages/admin/AdminEmailManagement";
 import AdminSettings from "./pages/admin/AdminSettings";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -158,6 +160,7 @@ function App() {
           <Route path="announcements" element={<Announcements />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="notification-preferences" element={<NotificationPreferences />} />
+          <Route path="settings" element={<AccountSettings />} />
           <Route path="courses" element={<StudentCourses />} />
           <Route path="courses/:id" element={<CourseDetail />} />
           <Route path="my-courses" element={<MyCourses />} />
@@ -169,6 +172,10 @@ function App() {
           <Route path="opportunities" element={<AcademicianOpportunities />} />
           <Route path="opportunities/:id" element={<AcademicianOpportunityDetail />} />
           <Route path="applications" element={<AcademicianMyApplications />} />
+          <Route path="profile" element={<AccountProfile />} />
+          <Route path="settings" element={<AccountSettings />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="notification-preferences" element={<NotificationPreferences />} />
         </Route>
         
         <Route path="/mentor" element={<ProtectedRoute><DashboardLayout userRole="mentor" /></ProtectedRoute>}>
@@ -180,6 +187,10 @@ function App() {
           <Route path="history" element={<MentorHistory />} />
           <Route path="internships" element={<MentorInternships />} />
           <Route path="student/:studentId" element={<Profile />} />
+          <Route path="profile" element={<AccountProfile />} />
+          <Route path="settings" element={<AccountSettings />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="notification-preferences" element={<NotificationPreferences />} />
         </Route>
         
         <Route path="/recruiter" element={<ProtectedRoute><DashboardLayout userRole="recruiter" /></ProtectedRoute>}>
@@ -200,6 +211,8 @@ function App() {
           <Route path="announcements" element={<Announcements />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="notification-preferences" element={<NotificationPreferences />} />
+          <Route path="profile" element={<AccountProfile />} />
+          <Route path="settings" element={<AccountSettings />} />
         </Route>
         
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><DashboardLayout userRole="admin" /></ProtectedRoute>}>
@@ -240,6 +253,8 @@ function App() {
           <Route path="assessments" element={<AssessmentManagement />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="notification-preferences" element={<NotificationPreferences />} />
+          <Route path="profile" element={<AccountProfile />} />
+          <Route path="settings" element={<AccountSettings />} />
         </Route>
 
         <Route path="*" element={<UnderDevelopment />} />

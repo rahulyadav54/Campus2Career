@@ -291,7 +291,7 @@ export const updateProfile = async (req, res) => {
       'name', 'phone', 'department', 'year', 'cgpa',
       'description', 'skills', 'socialLinks', 'projects',
       'experiences', 'course', 'specialization', 'backlogs',
-      'designation', 'employeeId'
+      'designation', 'employeeId', 'company'
     ];
 
     // Update only allowed fields
