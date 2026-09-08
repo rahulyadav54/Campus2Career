@@ -70,7 +70,6 @@ export const approveUser = async (req, res) => {
     });
 
     // Notify user automatically (non-blocking)
-    const userId = user._id;
     const userRole = user.role;
     setImmediate(() => {
       NotificationService.notify({
