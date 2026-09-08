@@ -38,6 +38,9 @@ const roleNavConfig = {
       { group: "Learning", items: [
         { label: "My Courses", icon: BookOpen, path: "/student/my-courses" },
         { label: "Explore Courses", icon: GraduationCap, path: "/student/courses" },
+        { label: "Recommended For You", icon: Sparkles, path: "/student/my-courses?tab=recommended" },
+        { label: "Learning Paths", icon: Compass, path: "/student/my-courses?tab=paths" },
+        { label: "Skill Gap Courses", icon: Target, path: "/student/my-courses?tab=skill-gaps" },
         { label: "Skill Assessment", icon: Activity, path: "/student/assessment" },
         { label: "Assessments", icon: FileText, path: "/student/assessments" },
         { label: "Aptitude Tests", icon: ClipboardList, path: "/student/aptitude" },

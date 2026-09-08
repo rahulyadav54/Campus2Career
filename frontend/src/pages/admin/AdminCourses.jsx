@@ -7,6 +7,7 @@ const levelLabel = { beginner: "Beginner", intermediate: "Intermediate", advance
 
 export default function AdminCourses() {
   const [courses, setCourses] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -29,8 +30,8 @@ export default function AdminCourses() {
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get("/api/courses");
-      setCourses(res.data.data || []);
+      const res = await apiClient.get("/api/courses/admin/all");
+      setCourses(res.data || []);
     } catch (err) {
       toast.error(err.message || "Failed to load courses");
     } finally {
@@ -40,6 +41,7 @@ export default function AdminCourses() {
 
   useEffect(() => {
     fetchCourses();
+    apiClient.get("/api/courses/admin/stats").then((res) => setStats(res.data)).catch(() => {});
   }, []);
 
   const handleSubmit = async (e) => {
@@ -123,6 +125,23 @@ export default function AdminCourses() {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-2">Course Management</h1>
         <p className="text-gray-600 mt-2 text-sm sm:text-base">Create and manage courses for the learning hub.</p>
       </header>
+
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          {[
+            { label: "Total", value: stats.total },
+            { label: "Published", value: stats.published },
+            { label: "Draft", value: stats.draft },
+            { label: "Enrollments", value: stats.enrollments },
+            { label: "Completion Rate", value: `${stats.completionRate}%` },
+          ].map((s) => (
+            <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-4 text-center">
+              <p className="text-xl font-bold text-gray-900">{s.value}</p>
+              <p className="text-xs text-gray-500">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       <button
         onClick={() => {

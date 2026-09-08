@@ -36,6 +36,7 @@ import notificationPreferenceRoutes from "./routes/notificationPreferenceRoutes.
 import emailAdminRoutes from "./routes/emailAdminRoutes.js";
 import emailWebhookRoutes from "./routes/emailWebhookRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
+import learningHubRoutes from "./routes/learningHubRoutes.js";
 import chatHistoryRoutes from "./routes/chatHistoryRoutes.js";
 import aiOrchestratorRoutes from "./routes/aiOrchestratorRoutes.js";
 import skillGapRoutes from "./routes/skillGapRoutes.js";
@@ -156,6 +157,7 @@ app.use("/api/collaborations", collaborationRoutes);
 app.use("/api/learning-platforms", learningPlatformRoutes);
 app.use("/api/mentorship", mentorshipRoutes);
 app.use("/api/courses", courseRoutes);
+app.use("/api/learning", learningHubRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/notifications", notificationPreferenceRoutes);
 app.use("/api/admin/email", emailAdminRoutes);

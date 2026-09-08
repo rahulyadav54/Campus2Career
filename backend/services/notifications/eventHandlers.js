@@ -112,6 +112,26 @@ export function resolveEventPayload(event, data = {}) {
       inApp: { type: "recruiter_registered", title: "New Recruiter Registration", message: `${vars.recruiter_name} from ${vars.company_name} is awaiting approval.`, actionUrl: buildFrontendUrl("/user-approvals", "admin"), priority: "medium", category: "account" },
       email: { templateKey: TK.RECRUITER_REGISTERED, idempotencyKey: `recruiter_registered_${data.recruiterId}` },
     }),
+    [EVENTS.COURSE_ENROLLED]: () => ({
+      inApp: { type: "course_enrolled", title: "Course Enrolled", message: `You enrolled in ${data.courseTitle || "a course"}. Start learning when you're ready.`, actionUrl: buildFrontendUrl(`/courses/${data.courseId}`, "student"), priority: "low", category: "learning" },
+      email: null,
+    }),
+    [EVENTS.COURSE_PROGRESS_MILESTONE]: () => ({
+      inApp: { type: "course_progress", title: "Learning Progress", message: `Your course "${data.courseTitle}" reached ${data.progress}% completion.`, actionUrl: buildFrontendUrl(`/courses/${data.courseId}`, "student"), priority: "low", category: "learning" },
+      email: null,
+    }),
+    [EVENTS.COURSE_COMPLETED]: () => ({
+      inApp: { type: "course_completed", title: "Course Completed!", message: `Congratulations! You completed ${data.courseTitle || "your course"}.`, actionUrl: buildFrontendUrl("/my-courses", "student"), priority: "medium", category: "learning" },
+      email: null,
+    }),
+    [EVENTS.COURSE_CERTIFICATE_READY]: () => ({
+      inApp: { type: "certificate_ready", title: "Certificate Ready", message: `Your certificate for ${data.courseTitle} is ready to view.`, actionUrl: buildFrontendUrl(`/certificates/verify/${data.certificateId}`, "student"), priority: "medium", category: "learning" },
+      email: null,
+    }),
+    [EVENTS.COURSE_RECOMMENDATIONS_READY]: () => ({
+      inApp: { type: "course_recommendations", title: "New Course Recommendations", message: "Personalized courses based on your career goals are ready.", actionUrl: buildFrontendUrl("/my-courses?tab=recommended", "student"), priority: "low", category: "learning" },
+      email: null,
+    }),
   };
 
   const handler = handlers[event];

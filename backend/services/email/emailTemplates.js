@@ -1,6 +1,54 @@
 import { TEMPLATE_KEYS } from "../../constants/notificationEvents.js";
 import { buildEmailLayout, buildBodyParagraphs, renderTemplateString } from "./templateRenderer.js";
 
+/** Placeholders used when storing templates in DB (substituted at send time). */
+export const TEMPLATE_PLACEHOLDER_VARS = {
+  user_name: "{{user_name}}",
+  job_title: "{{job_title}}",
+  company_name: "{{company_name}}",
+  application_date: "{{application_date}}",
+  interview_date: "{{interview_date}}",
+  interview_time: "{{interview_time}}",
+  interview_type: "{{interview_type}}",
+  interview_url: "{{interview_url}}",
+  application_url: "{{application_url}}",
+  dashboard_url: "{{dashboard_url}}",
+  job_url: "{{job_url}}",
+  resume_url: "{{resume_url}}",
+  ats_score: "{{ats_score}}",
+  count: "{{count}}",
+  student_name: "{{student_name}}",
+  recruiter_name: "{{recruiter_name}}",
+  reset_url: "{{reset_url}}",
+  expiry_minutes: "{{expiry_minutes}}",
+  rejection_reason: "{{rejection_reason}}",
+  jobs_html: "{{jobs_html}}",
+};
+
+/** Sample values for admin preview / test emails only */
+export const TEMPLATE_SAMPLE_VARS = {
+  user_name: "Rahul",
+  job_title: "AI/ML Intern",
+  company_name: "Example Company",
+  application_date: new Date().toLocaleDateString(),
+  interview_date: "Tomorrow",
+  interview_time: "10:00 AM",
+  interview_type: "Online",
+  interview_url: "https://meet.example.com/abc",
+  application_url: "https://campus2career.zayacodehub.in/student/applications",
+  dashboard_url: "https://campus2career.zayacodehub.in/student",
+  job_url: "https://campus2career.zayacodehub.in/student/jobs",
+  resume_url: "https://campus2career.zayacodehub.in/student/resume-center",
+  ats_score: "84",
+  count: "5",
+  student_name: "Priya Sharma",
+  recruiter_name: "John Recruiter",
+  reset_url: "https://campus2career.zayacodehub.in/forgot-password?token=sample",
+  expiry_minutes: "60",
+  rejection_reason: "Incomplete profile information",
+  jobs_html: "<ul><li>AI/ML Intern — Example Company</li><li>Data Analyst — Tech Corp</li></ul>",
+};
+
 /** Default email template definitions (seeded to DB on startup) */
 export const DEFAULT_TEMPLATES = [
   {

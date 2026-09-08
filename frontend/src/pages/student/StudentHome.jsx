@@ -18,21 +18,25 @@ const StudentHome = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const [profileRes, appsRes, jobsRes, coursesRes, recommendationsRes] = await Promise.allSettled([
+        const [profileRes, appsRes, jobsRes, coursesRes, recommendationsRes, courseRecsRes] = await Promise.allSettled([
           apiClient.get("/api/auth/profile"),
           apiClient.get("/api/applications/me"),
           apiClient.get("/api/jobs"),
           apiClient.get("/api/courses/my/enrollments"),
           apiClient.get("/api/recommendations/jobs"),
+          apiClient.get("/api/learning/recommendations?limit=3"),
         ]);
 
         const profile = profileRes.status === "fulfilled" ? (profileRes.value?.user || profileRes.value) : null;
         const applications = appsRes.status === "fulfilled" ? (Array.isArray(appsRes.value) ? appsRes.value : appsRes.value?.applications || []) : [];
         const jobs = jobsRes.status === "fulfilled" ? jobsRes.value : [];
-        const enrollments = coursesRes.status === "fulfilled" ? (Array.isArray(coursesRes.value) ? coursesRes.value : coursesRes.value?.enrollments || []) : [];
+        const enrollments = coursesRes.status === "fulfilled"
+          ? (Array.isArray(coursesRes.value?.data) ? coursesRes.value.data : coursesRes.value?.data || [])
+          : [];
         const recommendations = recommendationsRes.status === "fulfilled" ? recommendationsRes.value : [];
+        const courseRecommendations = courseRecsRes.status === "fulfilled" ? (courseRecsRes.value?.data || []) : [];
 
-        setDashboardData({ profile, applications, jobs, enrollments, recommendations });
+        setDashboardData({ profile, applications, jobs, enrollments, recommendations, courseRecommendations });
       } catch (error) {
         console.error("Dashboard fetch error:", error);
         toast.error("Could not load some dashboard data");
@@ -44,7 +48,7 @@ const StudentHome = () => {
     fetchDashboard();
   }, []);
 
-  const { profile, applications, enrollments, recommendations } = dashboardData || {};
+  const { profile, applications, enrollments, recommendations, courseRecommendations } = dashboardData || {};
 
   const stats = {
     enrolledCourses: enrollments?.length || 0,
@@ -78,7 +82,9 @@ const StudentHome = () => {
     return "Good evening";
   };
 
-  const inProgressCourse = enrollments?.find(e => e.status !== "completed");
+  const inProgressCourse = enrollments
+    ?.filter((e) => e.status !== "completed")
+    ?.sort((a, b) => new Date(b.lastAccessedAt || b.updatedAt || 0) - new Date(a.lastAccessedAt || a.updatedAt || 0))[0];
 
   if (loading) {
     return (
@@ -178,19 +184,25 @@ const StudentHome = () => {
                     </p>
                     <div className="mt-2">
                       <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                        <span>Progress: {inProgressCourse.progress || 0}%</span>
-                        <span>Module {inProgressCourse.currentModule || 1} of {inProgressCourse.course?.modules?.length || "?"}</span>
+                        <span>Progress: {inProgressCourse.progressPercent || 0}%</span>
+                        {inProgressCourse.lastLessonTitle && (
+                          <span className="truncate max-w-[140px]">{inProgressCourse.lastLessonTitle}</span>
+                        )}
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                           className="h-2 bg-indigo-600 rounded-full transition-all"
-                          style={{ width: `${inProgressCourse.progress || 0}%` }}
+                          style={{ width: `${inProgressCourse.progressPercent || 0}%` }}
                         />
                       </div>
                     </div>
                   </div>
                   <button
-                    onClick={() => navigate(`/student/courses/${inProgressCourse.course?._id}`)}
+                    onClick={() => navigate(
+                      inProgressCourse.course?.courseType === "internal"
+                        ? `/student/courses/${inProgressCourse.course?._id}/learn`
+                        : `/student/courses/${inProgressCourse.course?._id}`
+                    )}
                     className="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 transition"
                   >
                     Continue
@@ -324,6 +336,30 @@ const StudentHome = () => {
               </button>
             </div>
           </div>
+
+          {/* Recommended Courses */}
+          {courseRecommendations?.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-700">Recommended For You</h3>
+                <button onClick={() => navigate("/student/my-courses?tab=recommended")} className="text-xs text-indigo-600 hover:text-indigo-700">
+                  View all
+                </button>
+              </div>
+              <div className="space-y-3">
+                {courseRecommendations.map((rec) => (
+                  <button
+                    key={rec.course?._id}
+                    onClick={() => navigate(`/student/courses/${rec.course?._id}`)}
+                    className="w-full text-left border border-gray-100 rounded-lg p-3 hover:bg-gray-50 transition"
+                  >
+                    <p className="font-medium text-sm text-gray-900 line-clamp-1">{rec.course?.title}</p>
+                    <p className="text-xs text-emerald-600 mt-0.5">{rec.relevanceScore}% relevance</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Profile Completion */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">

@@ -85,6 +85,8 @@ import LearningPlatforms from "./pages/shared/LearningPlatforms";
 import AdminLearningPlatforms from "./pages/admin/AdminLearningPlatforms";
 import StudentCourses from "./pages/student/StudentCourses";
 import CourseDetail from "./pages/student/CourseDetail";
+import CourseLearn from "./pages/student/CourseLearn";
+import CertificateVerify from "./pages/student/CertificateVerify";
 import MyCourses from "./pages/student/MyCourses";
 import AdminCourses from "./pages/admin/AdminCourses";
 import Announcements from "./pages/shared/Announcements";
@@ -119,6 +121,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/certificates/verify/:certificateId" element={<CertificateVerify />} />
         <Route path="/recruiter/register" element={<RecruiterRegistration />} />
         <Route path="/academician/register" element={<AcademicianRegistration />} />
         
@@ -163,6 +166,7 @@ function App() {
           <Route path="settings" element={<AccountSettings />} />
           <Route path="courses" element={<StudentCourses />} />
           <Route path="courses/:id" element={<CourseDetail />} />
+          <Route path="courses/:id/learn" element={<CourseLearn />} />
           <Route path="my-courses" element={<MyCourses />} />
         </Route>
 

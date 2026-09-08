@@ -13,37 +13,63 @@ class EmailService {
     return provider.isConfigured();
   }
 
-  /** Seed default templates into DB if missing */
+  /** Seed default templates into DB if missing; repair baked sample names (e.g. "Rahul"). */
   static async seedTemplates() {
-    const { DEFAULT_TEMPLATES } = await import("./emailTemplates.js");
+    const { DEFAULT_TEMPLATES, TEMPLATE_PLACEHOLDER_VARS } = await import("./emailTemplates.js");
     for (const def of DEFAULT_TEMPLATES) {
+      const stored = def.build(TEMPLATE_PLACEHOLDER_VARS);
       const existing = await EmailTemplate.findOne({ key: def.key });
+
+      const needsRepair = existing && (
+        existing.htmlBody?.includes("Hi Rahul") ||
+        existing.textBody?.includes("Hi Rahul") ||
+        (def.variables?.includes("user_name") && !existing.htmlBody?.includes("{{user_name}}"))
+      );
+
       if (!existing) {
-        const sample = def.build({ user_name: "Rahul", job_title: "AI/ML Intern", company_name: "Example Company" });
         await EmailTemplate.create({
           key: def.key,
           name: def.name,
-          subject: def.subject,
-          htmlBody: sample.html,
-          textBody: sample.text,
+          subject: stored.subject || def.subject,
+          htmlBody: stored.html,
+          textBody: stored.text,
           category: def.category || "transactional",
           variables: def.variables || [],
           description: def.description || "",
         });
+      } else if (needsRepair) {
+        await EmailTemplate.findOneAndUpdate(
+          { key: def.key },
+          {
+            $set: {
+              subject: stored.subject || def.subject,
+              htmlBody: stored.html,
+              textBody: stored.text,
+              variables: def.variables || [],
+            },
+          }
+        );
+        console.log(`[EmailService] Repaired template placeholders: ${def.key}`);
       }
     }
   }
 
   /** Render template from DB or fallback to code defaults */
   static async renderTemplate(templateKey, variables = {}) {
+    const vars = {
+      ...variables,
+      user_name: variables.user_name || variables.userName || variables.name || "",
+    };
+    if (!vars.user_name) vars.user_name = "there";
+
     const dbTemplate = await EmailTemplate.findOne({ key: templateKey, isActive: true });
     if (dbTemplate) {
-      const subject = renderTemplateString(dbTemplate.subject, variables);
-      const html = renderTemplateString(dbTemplate.htmlBody, variables);
-      const text = renderTemplateString(dbTemplate.textBody || "", variables);
+      const subject = renderTemplateString(dbTemplate.subject, vars);
+      const html = renderTemplateString(dbTemplate.htmlBody, vars);
+      const text = renderTemplateString(dbTemplate.textBody || "", vars);
       return { subject, html, text };
     }
-    const rendered = renderDefaultTemplate(templateKey, variables);
+    const rendered = renderDefaultTemplate(templateKey, vars);
     if (!rendered) throw new Error(`Unknown email template: ${templateKey}`);
     return rendered;
   }

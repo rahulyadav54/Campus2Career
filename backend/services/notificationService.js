@@ -20,8 +20,11 @@ class NotificationService {
       if (!user) return { success: false, reason: "user_not_found" };
 
       const role = data.role || user.role || "student";
-      const payload = resolveEventPayload(event, { ...data, userName: user.name, role });
-      const variables = payload.variables || {};
+      const payload = resolveEventPayload(event, { ...data, userName: user.name, name: user.name, role });
+      const variables = {
+        ...(payload.variables || {}),
+        user_name: payload.variables?.user_name || user.name || "there",
+      };
 
       const results = { inApp: null, email: null };
 

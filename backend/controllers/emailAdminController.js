@@ -2,29 +2,9 @@ import EmailService from "../services/email/EmailService.js";
 import EmailLog from "../models/EmailLog.js";
 import EmailTemplate from "../models/EmailTemplate.js";
 import AuditService from "../services/auditService.js";
+import { TEMPLATE_SAMPLE_VARS } from "../services/email/emailTemplates.js";
 
-const SAMPLE_VARS = {
-  user_name: "Rahul",
-  job_title: "AI/ML Intern",
-  company_name: "Example Company",
-  application_date: new Date().toLocaleDateString(),
-  interview_date: "Tomorrow",
-  interview_time: "10:00 AM",
-  interview_type: "Online",
-  interview_url: "https://meet.example.com/abc",
-  application_url: "https://campus2career.zayacodehub.in/student/applications",
-  dashboard_url: "https://campus2career.zayacodehub.in/student",
-  job_url: "https://campus2career.zayacodehub.in/student/jobs",
-  resume_url: "https://campus2career.zayacodehub.in/student/resume-center",
-  ats_score: "84",
-  count: "5",
-  student_name: "Priya Sharma",
-  recruiter_name: "John Recruiter",
-  reset_url: "https://campus2career.zayacodehub.in/forgot-password?token=sample",
-  expiry_minutes: "60",
-  rejection_reason: "Incomplete profile information",
-  jobs_html: "<ul><li>AI/ML Intern — Example Company</li><li>Data Analyst — Tech Corp</li></ul>",
-};
+const SAMPLE_VARS = TEMPLATE_SAMPLE_VARS;
 
 export const getEmailStats = async (req, res) => {
   try {
@@ -115,6 +95,11 @@ export const sendTestEmail = async (req, res) => {
     }
 
     const mergedVars = { ...SAMPLE_VARS, ...variables };
+    // Use admin's name for test emails when no custom name provided
+    if (!variables?.user_name && req.user?.name) {
+      mergedVars.user_name = req.user.name;
+    }
+
     const log = await EmailService.queueEmail({
       userId: req.user._id,
       recipient,
