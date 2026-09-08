@@ -200,6 +200,13 @@ export const register = async (req, res) => {
       token,
       user: user.getPublicProfile(),
     });
+
+    if (isRecruiter && user.status === "pending") {
+      setImmediate(() => {
+        NotificationService.notifyRecruiterRegistration(user._id, company || name, name)
+          .catch((e) => console.error("[register] recruiter notification error:", e.message));
+      });
+    }
   } catch (err) {
     if (err.name === 'ValidationError') {
       const errors = Object.keys(err.errors).reduce((acc, key) => {

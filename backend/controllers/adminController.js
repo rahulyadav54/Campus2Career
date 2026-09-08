@@ -1,6 +1,8 @@
 import User from "../models/UserModel.js";
 import Job from "../models/JobModel.js";
 import Application from "../models/ApplicationModel.js";
+import NotificationService from "../services/notificationService.js";
+import { EVENTS } from "../constants/notificationEvents.js";
 
 export const getDashboard = async (req, res) => {
   try {
@@ -111,6 +113,14 @@ export const approveStudent = async (req, res) => {
       message: "Student approved successfully",
       student: updatedStudent.getPublicProfile()
     });
+
+    setImmediate(() => {
+      NotificationService.notify({
+        userId: updatedStudent._id,
+        event: EVENTS.USER_APPROVED,
+        data: { userId: updatedStudent._id, role: "student" },
+      }).catch((e) => console.error("[approveStudent] notification error:", e.message));
+    });
   } catch (err) {
     res.status(500).json({ message: "Server Error", error: err.message });
   }
@@ -127,7 +137,18 @@ export const rejectStudent = async (req, res) => {
     }
     
     console.log('Found student:', student.name, student.email);
-    
+
+    // Send rejection email before account is removed
+    await NotificationService.notify({
+      userId: student._id,
+      event: EVENTS.USER_REJECTED,
+      data: {
+        userId: student._id,
+        role: student.role,
+        comments: req.body?.reason || req.body?.comments || "",
+      },
+    });
+
     // Delete the student
     await User.findByIdAndDelete(req.params.id);
     

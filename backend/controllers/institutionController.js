@@ -2,6 +2,8 @@ import Institution from "../models/InstitutionModel.js";
 import User from "../models/UserModel.js";
 import Application from "../models/ApplicationModel.js";
 import PortfolioItem from "../models/PortfolioItemModel.js";
+import NotificationService from "../services/notificationService.js";
+import { EVENTS } from "../constants/notificationEvents.js";
 
 // Admin: create institution
 export const createInstitution = async (req, res) => {
@@ -137,6 +139,23 @@ export const approveInstitutionStudent = async (req, res) => {
 
     student.status = req.body.action === "approve" ? "active" : "pending";
     await student.save();
+
+    setImmediate(() => {
+      if (req.body.action === "approve") {
+        NotificationService.notify({
+          userId: student._id,
+          event: EVENTS.USER_APPROVED,
+          data: { userId: student._id, role: "student", comments: req.body.comments || "" },
+        }).catch((e) => console.error("[approveInstitutionStudent] notification error:", e.message));
+      } else {
+        NotificationService.notify({
+          userId: student._id,
+          event: EVENTS.USER_REJECTED,
+          data: { userId: student._id, role: "student", comments: req.body.comments || req.body.reason || "" },
+        }).catch((e) => console.error("[approveInstitutionStudent] notification error:", e.message));
+      }
+    });
+
     res.json({ message: `Student ${req.body.action}d`, student: student.getPublicProfile() });
   } catch (error) {
     res.status(500).json({ message: "Unable to update student", error: error.message });

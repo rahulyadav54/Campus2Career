@@ -69,12 +69,14 @@ export const approveUser = async (req, res) => {
       user: user.getPublicProfile()
     });
 
-    // Notify user (non-blocking)
+    // Notify user automatically (non-blocking)
+    const userId = user._id;
+    const userRole = user.role;
     setImmediate(() => {
       NotificationService.notify({
-        userId: user._id,
+        userId,
         event: approved ? EVENTS.USER_APPROVED : EVENTS.USER_REJECTED,
-        data: { userId: user._id, comments, role: user.role },
+        data: { userId, comments, role: userRole },
       }).catch((e) => console.error("[approveUser] notification error:", e.message));
     });
   } catch (error) {

@@ -120,7 +120,7 @@ export const getMentorApplications = async (req, res) => {
 // Mentor: approve/reject application
 export const mentorDecision = async (req, res) => {
   try {
-    const app = await Application.findById(req.params.id);
+    const app = await Application.findById(req.params.id).populate("job");
     if (!app) return res.status(404).json({ message: "Application not found" });
 
     // ensure mentor owns this application
@@ -145,6 +145,16 @@ export const mentorDecision = async (req, res) => {
     // Add activity log for mentor
     await User.findByIdAndUpdate(req.user._id, {
       $push: { activityLog: { action: `${action === 'approve' ? 'Approved' : 'Rejected'} application`, date: new Date() } }
+    });
+
+    setImmediate(() => {
+      NotificationService.notifyApplicationStatus(
+        app._id,
+        app.student,
+        app.status,
+        app.job?.title || "",
+        app.mentorNote || ""
+      ).catch((e) => console.error("[mentorDecision] notification error:", e.message));
     });
     
     res.json(app);

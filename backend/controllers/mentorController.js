@@ -1,5 +1,6 @@
 import User from "../models/UserModel.js";
 import Application from "../models/ApplicationModel.js";
+import NotificationService from "../services/notificationService.js";
 
 export const testMentor = async (req, res) => {
   try {
@@ -195,7 +196,8 @@ export const getDashboard = async (req, res) => {
 export const approveApplication = async (req, res) => {
   try {
     const application = await Application.findById(req.params.applicationId)
-      .populate('student', 'assignedMentor');
+      .populate('student', 'assignedMentor')
+      .populate('job');
 
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
@@ -210,6 +212,16 @@ export const approveApplication = async (req, res) => {
     application.mentorApprovedAt = new Date();
     await application.save();
 
+    setImmediate(() => {
+      NotificationService.notifyApplicationStatus(
+        application._id,
+        application.student._id,
+        application.status,
+        application.job?.title || "",
+        application.mentorNote || ""
+      ).catch((e) => console.error("[approveApplication] notification error:", e.message));
+    });
+
     res.json({ message: "Application approved successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server Error", error: err.message });
@@ -220,7 +232,8 @@ export const rejectApplication = async (req, res) => {
   try {
     const { feedback } = req.body;
     const application = await Application.findById(req.params.applicationId)
-      .populate('student', 'assignedMentor');
+      .populate('student', 'assignedMentor')
+      .populate('job');
 
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
@@ -235,6 +248,16 @@ export const rejectApplication = async (req, res) => {
     application.mentorFeedback = feedback;
     application.rejectedAt = new Date();
     await application.save();
+
+    setImmediate(() => {
+      NotificationService.notifyApplicationStatus(
+        application._id,
+        application.student._id,
+        application.status,
+        application.job?.title || "",
+        feedback || application.mentorNote || ""
+      ).catch((e) => console.error("[rejectApplication] notification error:", e.message));
+    });
 
     res.json({ message: "Application rejected successfully" });
   } catch (err) {
