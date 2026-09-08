@@ -47,12 +47,12 @@ export const toPlainText = (content = {}) => {
  */
 export const toExportHtml = (content = {}, template = {}) => {
   const p = content.personal || {};
-  const margin = content.formatting?.marginMm || 15;
-  const fontSize = content.formatting?.fontSize || 10.5;
+  const margin = content.formatting?.marginMm || 10;
+  const fontSize = content.formatting?.fontSize || 9.5;
   const font = "Calibri, Arial, Helvetica, sans-serif";
 
   const section = (title, inner) => inner
-    ? `<section style="margin-top:12px"><h2 style="font-size:11pt;font-weight:700;text-transform:uppercase;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:6px">${title}</h2>${inner}</section>`
+    ? `<section class="resume-section"><h2>${title}</h2>${inner}</section>`
     : "";
 
   let html = "";
@@ -63,7 +63,7 @@ export const toExportHtml = (content = {}, template = {}) => {
 
   if (content.experience?.length) {
     html += section("Experience", content.experience.map((e) => `
-      <div style="margin-bottom:8px">
+      <div class="entry">
         <div style="display:flex;justify-content:space-between">
           <div><strong>${esc(e.title)}</strong><br/>${esc(e.company)}</div>
           <div style="font-size:9.5pt;white-space:nowrap">${esc(e.startDate)} – ${e.current ? "Present" : esc(e.endDate)}</div>
@@ -74,7 +74,7 @@ export const toExportHtml = (content = {}, template = {}) => {
 
   if (content.education?.length) {
     html += section("Education", content.education.map((e) => `
-      <div style="margin-bottom:6px">
+      <div class="entry">
         <strong>${esc([e.degree, e.field].filter(Boolean).join(" – "))}</strong><br/>
         ${esc(e.institution)}<br/>
         <span style="font-size:9.5pt">${e.gpa ? `CGPA: ${esc(e.gpa)}` : ""} ${esc(e.endDate)} ${esc(e.location)}</span>
@@ -99,11 +99,9 @@ export const toExportHtml = (content = {}, template = {}) => {
   const langs = content.spokenLanguages || (content.languages || []).map((l) => l.language || l).join(", ");
   if (langs) html += section("Languages", `<p style="margin:0">${esc(langs)}</p>`);
 
-  html += `<div style="page-break-before:always"></div>`;
-
   if (content.projects?.length) {
     html += section("Projects", content.projects.map((pr) => `
-      <div style="margin-bottom:8px">
+      <div class="entry">
         <strong>${esc(pr.name)}</strong><br/>
         <em style="font-size:9.5pt">${esc(pr.techStack || (pr.technologies || []).join(" | "))}</em>
         <ul style="margin:2px 0 0 14px;padding:0">${(pr.bullets || []).filter(Boolean).map((b) => `<li>${esc(b)}</li>`).join("")}</ul>
@@ -122,12 +120,44 @@ export const toExportHtml = (content = {}, template = {}) => {
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>${esc(p.name || "Resume")}</title>
 <style>
-@page { size: A4; margin: ${margin}mm; }
-body { font-family: ${font}; font-size: ${fontSize}pt; line-height: 1.25; color: #000; margin: 0; }
-h1 { font-size: 18pt; font-weight: 700; text-transform: uppercase; margin: 0; text-align: center; }
-.tagline { text-align: center; font-size: 10.5pt; margin-top: 2px; }
-.contact { text-align: center; font-size: 9.5pt; margin-top: 4px; }
+@page { size: A4 portrait; margin: ${margin}mm; }
+* { box-sizing: border-box; }
+html, body {
+  width: 210mm;
+  max-width: 210mm;
+  margin: 0;
+  padding: 0;
+  font-family: ${font};
+  font-size: ${fontSize}pt;
+  line-height: 1.15;
+  color: #000;
+}
+h1 { font-size: 16pt; font-weight: 700; text-transform: uppercase; margin: 0; text-align: center; }
+.tagline { text-align: center; font-size: 10pt; margin-top: 1px; }
+.contact { text-align: center; font-size: 9pt; margin-top: 2px; line-height: 1.2; }
 a { color: #000; text-decoration: none; }
+.resume-section { margin-top: 6px; page-break-inside: avoid; break-inside: avoid; }
+.resume-section h2 {
+  font-size: 10pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid #000;
+  padding-bottom: 1px;
+  margin: 0 0 3px;
+  page-break-after: avoid;
+}
+.entry { margin-bottom: 4px; page-break-inside: avoid; break-inside: avoid; }
+ul { margin: 1px 0 0 14px; padding: 0; }
+li { margin-bottom: 0; }
+p { margin: 0; }
+@media print {
+  html, body {
+    height: auto;
+    max-height: ${297 - margin * 2}mm;
+    overflow: hidden;
+  }
+  .resume-section, .entry { page-break-inside: avoid; break-inside: avoid; }
+}
 </style></head><body>
 <h1>${esc(p.name)}</h1>
 ${p.tagline ? `<div class="tagline">${esc(p.tagline)}</div>` : ""}

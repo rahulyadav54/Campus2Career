@@ -404,24 +404,21 @@ html.dark textarea::placeholder {
 }
 
 @media print {
+  @page { size: A4 portrait; margin: 10mm; }
   body * { visibility: hidden; }
   .resume-page, .resume-page * { visibility: visible; }
   .resume-page {
     position: absolute; left: 0; top: 0;
     transform: none !important; box-shadow: none !important;
-    width: 210mm !important; min-height: auto !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
   }
   .resume-preview-outer { background: white !important; padding: 0 !important; }
-  .resume-page-break { page-break-before: always; }
   .no-print { display: none !important; }
-}
-
-.resume-page-break {
-  page-break-before: always;
-  break-before: page;
-  margin-top: 8px;
-  padding-top: 4px;
-  border-top: 1px dashed #e5e7eb;
 }
 
 html[data-compact="true"] .admin-main-pad {

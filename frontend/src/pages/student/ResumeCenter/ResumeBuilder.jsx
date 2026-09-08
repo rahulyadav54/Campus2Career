@@ -210,7 +210,7 @@ export default function ResumeBuilder() {
       if (!saved) return;
       try {
         await resumeOptimizerService.downloadResumePdf(resumeId, resume.title || "resume");
-        toast.success("Use 'Save as PDF' in the print dialog");
+        toast.success("Save as PDF — uncheck 'Headers and footers' for a clean single A4 page");
       } catch (err) {
         // Fallback: print the on-screen preview if API export fails
         toast.error(err.message || "Opening print view…");

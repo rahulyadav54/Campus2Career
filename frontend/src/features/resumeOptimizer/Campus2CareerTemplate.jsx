@@ -1,5 +1,5 @@
 /**
- * Campus2Career ATS Template — matches RESUME TEMPLATE/RAHUL_KUMAR_YADAV PDF layout.
+ * Campus2Career ATS Template — single A4 page, ATS-friendly layout.
  * Fully editable text — not a flattened PDF background.
  */
 
@@ -37,14 +37,14 @@ function SectionTitle({ children }) {
   return (
     <h2
       style={{
-        fontSize: "11pt",
+        fontSize: "10pt",
         fontWeight: 700,
         textTransform: "uppercase",
         letterSpacing: "0.04em",
         borderBottom: "1px solid #000",
-        paddingBottom: "2px",
-        marginTop: "12px",
-        marginBottom: "6px",
+        paddingBottom: "1px",
+        marginTop: "8px",
+        marginBottom: "4px",
         color: "#000",
         fontFamily: FONT,
       }}
@@ -62,9 +62,9 @@ export default function Campus2CareerTemplate({
 }) {
   const p = content?.personal || {};
   const fmt = content?.formatting || {};
-  const margin = fmt.marginMm || 15;
-  const fontSize = fmt.fontSize || 10.5;
-  const bodyStyle = { fontFamily: FONT, fontSize: `${fontSize}pt`, lineHeight: 1.25, color: "#000" };
+  const margin = fmt.marginMm || 10;
+  const fontSize = fmt.fontSize || 9.5;
+  const bodyStyle = { fontFamily: FONT, fontSize: `${fontSize}pt`, lineHeight: 1.15, color: "#000" };
 
   const patchContent = (mutator) => {
     if (!onChange) return;
@@ -122,15 +122,15 @@ export default function Campus2CareerTemplate({
     });
   };
 
-  const pageBreakBeforeProjects = true;
-
   return (
     <div className="resume-preview-outer overflow-auto bg-gray-200 rounded-xl p-4 flex justify-center">
       <div
         className="resume-page bg-white shadow-xl text-black"
         style={{
           width: "210mm",
-          minHeight: "297mm",
+          height: "297mm",
+          maxHeight: "297mm",
+          overflow: editMode ? "auto" : "hidden",
           padding: `${margin}mm`,
           transform: `scale(${zoom / 100})`,
           transformOrigin: "top center",
@@ -331,11 +331,10 @@ export default function Campus2CareerTemplate({
           style={bodyStyle}
         />
 
-        {/* PAGE 2 — PROJECTS */}
-        <div className={pageBreakBeforeProjects ? "resume-page-break" : ""}>
-          <SectionTitle>Projects</SectionTitle>
-          {(content.projects || []).map((pr, i) => (
-            <div key={pr.id || i} className="mb-2">
+        {/* PROJECTS */}
+        <SectionTitle>Projects</SectionTitle>
+        {(content.projects || []).map((pr, i) => (
+          <div key={pr.id || i} className="mb-1">
               <Editable
                 value={pr.name}
                 onChange={editMode ? (v) => updateItem("projects", i, "name", v) : undefined}
@@ -391,7 +390,6 @@ export default function Campus2CareerTemplate({
               </li>
             )}
           </ul>
-        </div>
       </div>
     </div>
   );
