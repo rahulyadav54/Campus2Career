@@ -4,6 +4,7 @@ import AuditService from "../services/auditService.js";
 import NotificationService from "../services/notificationService.js";
 import { EVENTS } from "../constants/notificationEvents.js";
 import { getFrontendBaseUrl } from "../utils/frontendUrl.js";
+import { verifyGoogleIdToken, isGoogleAuthConfigured } from "../services/googleAuthService.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { clientIp } from "../utils/userAgent.js";
@@ -242,6 +243,10 @@ export const login = async (req, res) => {
       return res.status(403).json({ message: "Account is deactivated" });
     }
 
+    if (user.authProvider === "google") {
+      return res.status(400).json({ message: "This account uses Google Sign-In. Please continue with Google." });
+    }
+
     const isMatch = await user.comparePassword(password);
     
     if (!isMatch) {
@@ -265,6 +270,103 @@ export const login = async (req, res) => {
     console.error('Login error:', err);
     res.status(500).json({ message: "Server Error", error: err.message });
   }
+};
+
+// @route POST /api/auth/google
+export const googleLogin = async (req, res) => {
+  try {
+    if (!isGoogleAuthConfigured()) {
+      return res.status(503).json({ message: "Google sign-in is not configured" });
+    }
+
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ message: "Google credential is required" });
+    }
+
+    const profile = await verifyGoogleIdToken(credential);
+
+    let user = await User.findOne({
+      $or: [{ googleId: profile.googleId }, { email: profile.email }],
+    }).select("+password");
+
+    let isNewUser = false;
+
+    if (user) {
+      if (user.googleId && user.googleId !== profile.googleId) {
+        return res.status(400).json({ message: "This email is linked to a different Google account" });
+      }
+
+      if (!user.googleId) {
+        user.googleId = profile.googleId;
+        user.authProvider = user.password ? "both" : "google";
+      }
+
+      if (!user.profileImage && profile.picture) user.profileImage = profile.picture;
+      if (!user.name && profile.name) user.name = profile.name;
+    } else {
+      isNewUser = true;
+      user = new User({
+        name: profile.name,
+        email: profile.email,
+        googleId: profile.googleId,
+        authProvider: "google",
+        password: crypto.randomBytes(32).toString("hex"),
+        role: "student",
+        status: "pending",
+        profileImage: profile.picture || "",
+      });
+    }
+
+    if (user.isActive === false) {
+      return res.status(403).json({ message: "Account is deactivated" });
+    }
+
+    if (user.status === "pending" && !isNewUser) {
+      return res.status(403).json({
+        message: "Account pending approval. You will be notified by email once approved.",
+        pending: true,
+      });
+    }
+
+    user.lastLogin = new Date();
+    user.activityLog.push({
+      action: isNewUser ? "Registered with Google" : "Logged in with Google",
+      date: new Date(),
+    });
+    await user.save();
+
+    if (isNewUser || user.status === "pending") {
+      const token = await issueSessionToken(user, req);
+      return res.status(201).json({
+        success: true,
+        message: "Registration successful. Awaiting admin approval.",
+        pending: true,
+        token,
+        role: user.role,
+        user: user.getPublicProfile(),
+      });
+    }
+
+    await AuditService.logLogin(user._id, req, true);
+
+    res.status(200).json({
+      success: true,
+      token: await issueSessionToken(user, req),
+      role: user.role,
+      user: user.getPublicProfile(),
+    });
+  } catch (err) {
+    console.error("[googleLogin]", err.message);
+    res.status(401).json({ message: err.message || "Google sign-in failed" });
+  }
+};
+
+export const getGoogleAuthConfig = async (_req, res) => {
+  res.json({
+    success: true,
+    enabled: isGoogleAuthConfigured(),
+  });
 };
 
 // @route GET /api/auth/profile

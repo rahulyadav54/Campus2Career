@@ -4,6 +4,7 @@ import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { API_URL } from "../../config/api";
+import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -255,6 +256,16 @@ export default function Register() {
               {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
+
+          {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+            <div className="mt-6">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200" /></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-500">Or continue with</span></div>
+              </div>
+              <GoogleSignInButton mode="signup" />
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-gray-600">

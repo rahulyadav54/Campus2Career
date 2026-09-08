@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { loginUser, handleApiError } from "../../services/auth";
+import GoogleSignInButton from "../../components/auth/GoogleSignInButton";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -23,6 +24,7 @@ export default function Login() {
       const data = await loginUser({ email: email.toLowerCase(), password });
       localStorage.setItem("token", data.token);
       if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("role", data.role || data.user?.role || "student");
 
       toast.success("Login successful!", { duration: 6000 });
       setTimeout(() => navigate(`/${data.role}`), 400);
@@ -100,6 +102,16 @@ export default function Login() {
               {loading ? "Signing in..." : "Sign In"}
             </button>
           </form>
+
+          {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+            <div className="mt-6">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200" /></div>
+                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-500">Or continue with</span></div>
+              </div>
+              <GoogleSignInButton mode="signin" />
+            </div>
+          )}
 
           <div className="mt-6 text-center text-sm text-gray-600">
             <p className="mb-3">

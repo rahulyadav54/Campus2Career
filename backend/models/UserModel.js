@@ -15,7 +15,17 @@ const userSchema = new mongoose.Schema({
             message: "Invalid email format"
         }
     },
-    password: { type: String, required: true, minlength: 8, select: false, default: "" },
+    password: {
+        type: String,
+        minlength: 8,
+        select: false,
+        default: "",
+        required: function () {
+            return !this.googleId;
+        },
+    },
+    googleId: { type: String, unique: true, sparse: true, index: true },
+    authProvider: { type: String, enum: ["local", "google", "both"], default: "local" },
 
     role: {
         type: String,
@@ -137,7 +147,7 @@ const userSchema = new mongoose.Schema({
 
 // 🔑 Hash password before save
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+    if (!this.isModified("password") || !this.password) return next();
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
@@ -145,6 +155,7 @@ userSchema.pre("save", async function (next) {
 
 // 🔑 Compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
+    if (!this.password) return false;
     return await bcrypt.compare(candidatePassword, this.password);
 };
 

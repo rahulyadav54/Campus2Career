@@ -23,6 +23,29 @@ export const loginUser = async (credentials) => {
   return data;
 };
 
+export const googleLoginUser = async (credential) => {
+  let res;
+  try {
+    res = await fetch(`${API_URL}/api/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential }),
+    });
+  } catch {
+    throw new Error('Unable to reach the server. Please check your connection.');
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error('Unexpected server response. Please try again.');
+  }
+
+  if (!res.ok) throw new Error(data.message || 'Google sign-in failed');
+  return data;
+};
+
 export const handleApiError = (error) => {
   if (!error) return 'An unexpected error occurred';
   // fetch-based errors (our loginUser throws plain Error)
