@@ -1,5 +1,5 @@
 import express from "express";
-import { protect, adminOnly, recruiterOnly, staffOnly } from "../middleware/authMiddleware.js";
+import { protect, staffOnly } from "../middleware/authMiddleware.js";
 import {
   getSettings,
   updateSettings,
@@ -26,9 +26,15 @@ const router = express.Router();
 router.use(protect);
 router.use(staffOnly);
 
+// Static routes MUST come before /:id to avoid "settings" being parsed as an ObjectId
+router.get("/settings", getSettings);
+router.put("/settings", updateSettings);
+router.get("/template/download", downloadTemplate);
 router.get("/dashboard", getDashboard);
+
 router.get("/", listAssessments);
 router.post("/", createAssessment);
+
 router.get("/:id", getAssessment);
 router.put("/:id", updateAssessment);
 router.delete("/:id", deleteAssessment);
@@ -41,8 +47,5 @@ router.get("/:id/results", getResults);
 router.post("/:id/shortlist", shortlistCandidates);
 router.post("/:id/import", importQuestions);
 router.get("/:id/stats", getAssessmentStats);
-router.get("/settings", getSettings);
-router.put("/settings", updateSettings);
-router.get("/template/download", downloadTemplate);
 
 export default router;
