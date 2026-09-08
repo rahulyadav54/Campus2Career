@@ -10,7 +10,8 @@
     "seed:demo": "node scripts/seedDemo.js",
     "seed:bulk": "node scripts/seedBulkDataset.js",
     "seed:portal": "node scripts/seedPortalCatalog.js",
-    "seed:admin": "node scripts/seedAdmin.js"
+    "seed:admin": "node scripts/seedAdmin.js",
+    "seed:institution": "node scripts/createInstitutionAdmin.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
