@@ -51,6 +51,8 @@ export default function ResumeBuilder() {
   const [analyzing, setAnalyzing] = useState(false);
   const [suggestion, setSuggestion] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
   const saveTimer = useRef(null);
 
   const load = useCallback(async () => {
@@ -81,22 +83,42 @@ export default function ResumeBuilder() {
 
   useEffect(() => { load(); }, [load]);
 
-  const save = useCallback(async (data) => {
+  const flushSave = useCallback(async (data) => {
+    const payload = data || resume;
+    if (!payload?.content) return false;
+    clearTimeout(saveTimer.current);
     try {
       setSaving(true);
-      await resumeOptimizerService.updateResume(resumeId, { content: data.content, title: data.title, targetRole: data.targetRole });
+      await resumeOptimizerService.updateResume(resumeId, {
+        content: payload.content,
+        title: payload.title,
+        targetRole: payload.targetRole,
+      });
+      setLastSaved(new Date());
+      return true;
     } catch (err) {
       toast.error(err.message || "Save failed");
+      return false;
     } finally {
       setSaving(false);
     }
-  }, [resumeId]);
+  }, [resumeId, resume]);
+
+  const save = useCallback(async (data, { silent = false } = {}) => {
+    const ok = await flushSave(data);
+    if (ok && !silent) toast.success("Resume saved");
+    return ok;
+  }, [flushSave]);
+
+  const handleManualSave = async () => {
+    await save(resume);
+  };
 
   const handleContentChange = (content) => {
     setResume((prev) => {
       const next = { ...prev, content };
       clearTimeout(saveTimer.current);
-      saveTimer.current = setTimeout(() => save(next), 1500);
+      saveTimer.current = setTimeout(() => flushSave(next), 1500);
       return next;
     });
   };
@@ -181,10 +203,22 @@ export default function ResumeBuilder() {
     toast.success("Change applied — review your resume");
   };
 
-  const handlePrint = () => {
-    const url = resumeOptimizerService.exportHtmlUrl(resumeId);
-    const w = window.open(url, "_blank");
-    if (w) w.onload = () => w.print();
+  const handleDownload = async () => {
+    try {
+      setDownloading(true);
+      const saved = await flushSave(resume);
+      if (!saved) return;
+      try {
+        await resumeOptimizerService.downloadResumePdf(resumeId, resume.title || "resume");
+        toast.success("Use 'Save as PDF' in the print dialog");
+      } catch (err) {
+        // Fallback: print the on-screen preview if API export fails
+        toast.error(err.message || "Opening print view…");
+        window.print();
+      }
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const startInterview = async () => {
@@ -222,23 +256,28 @@ export default function ResumeBuilder() {
             type="text"
             value={resume.title}
             onChange={(e) => setResume({ ...resume, title: e.target.value })}
-            onBlur={() => save(resume)}
+            onBlur={() => flushSave(resume)}
             className="font-semibold text-gray-900 border-none outline-none bg-transparent"
           />
-          {saving && <span className="text-xs text-gray-400">Saving…</span>}
+          {saving ? (
+            <span className="text-xs text-gray-400">Saving…</span>
+          ) : lastSaved ? (
+            <span className="text-xs text-green-600">Saved</span>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           <select
             value={resume.targetRole || ""}
-            onChange={(e) => { setResume({ ...resume, targetRole: e.target.value }); save({ ...resume, targetRole: e.target.value }); }}
+            onChange={(e) => { setResume({ ...resume, targetRole: e.target.value }); flushSave({ ...resume, targetRole: e.target.value }); }}
             className="text-sm border border-gray-200 rounded-lg px-2 py-1"
           >
             <option value="">Target role</option>
             {TARGET_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
-          <button type="button" onClick={() => save(resume)} className="p-2 rounded-lg border hover:bg-gray-50" title="Save"><Save className="w-4 h-4" /></button>
-          <button type="button" onClick={handlePrint} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">
-            <Download className="w-4 h-4" /> PDF
+          <button type="button" onClick={handleManualSave} disabled={saving} className="p-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50" title="Save"><Save className="w-4 h-4" /></button>
+          <button type="button" onClick={handleDownload} disabled={downloading || saving} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 disabled:opacity-50">
+            {downloading ? <Loader className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            PDF
           </button>
           <button type="button" onClick={() => resumeOptimizerService.duplicateResume(resumeId).then(() => toast.success("Duplicated"))} className="p-2 rounded-lg border hover:bg-gray-50" title="Duplicate"><Copy className="w-4 h-4" /></button>
           <button type="button" onClick={startInterview} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm">

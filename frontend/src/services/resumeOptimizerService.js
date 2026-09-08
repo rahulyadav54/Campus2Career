@@ -23,6 +23,57 @@ export const resumeOptimizerService = {
   getInterviewContext: (id) => apiClient.get(`${BASE}/${id}/interview-context`),
   exportHtmlUrl: (id) => `${API_URL}${BASE}/${id}/export/html`,
 
+  /** Fetch resume HTML with auth (required for export — window.open alone gets 401). */
+  exportResumeHtml: async (id) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_URL}${BASE}/${id}/export/html`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.message || "Export failed");
+    }
+    return res.text();
+  },
+
+  /** Download resume as HTML file (always works with auth). */
+  downloadResumeHtml: async (id, filename = "resume") => {
+    const html = await resumeOptimizerService.exportResumeHtml(id);
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${filename.replace(/[^\w\s-]/g, "").trim() || "resume"}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  },
+
+  /** Open print dialog for PDF save (Save as PDF in browser). */
+  downloadResumePdf: async (id, filename = "resume") => {
+    const html = await resumeOptimizerService.exportResumeHtml(id);
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, "_blank");
+    if (!w) {
+      URL.revokeObjectURL(url);
+      throw new Error("Popup blocked — allow popups or use Download HTML");
+    }
+    const triggerPrint = () => {
+      try {
+        w.document.title = filename;
+        w.focus();
+        w.print();
+      } catch {
+        /* cross-origin edge case */
+      }
+    };
+    if (w.document?.readyState === "complete") triggerPrint();
+    else w.addEventListener("load", triggerPrint);
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+  },
+
   uploadResume: async (file, { title, templateId, targetRole } = {}) => {
     const token = localStorage.getItem("token");
     const form = new FormData();

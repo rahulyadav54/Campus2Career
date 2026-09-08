@@ -66,27 +66,45 @@ export default function Campus2CareerTemplate({
   const fontSize = fmt.fontSize || 10.5;
   const bodyStyle = { fontFamily: FONT, fontSize: `${fontSize}pt`, lineHeight: 1.25, color: "#000" };
 
-  const update = (path, value) => {
+  const patchContent = (mutator) => {
     if (!onChange) return;
     const next = JSON.parse(JSON.stringify(content));
-    const keys = path.split(".");
-    let ref = next;
-    for (let i = 0; i < keys.length - 1; i++) ref = ref[keys[i]];
-    ref[keys[keys.length - 1]] = value;
+    mutator(next);
     onChange(next);
   };
 
+  const update = (path, value) => {
+    patchContent((next) => {
+      const keys = path.split(".");
+      let ref = next;
+      for (let i = 0; i < keys.length - 1; i++) ref = ref[keys[i]];
+      ref[keys[keys.length - 1]] = value;
+    });
+  };
+
   const updateItem = (section, index, field, value) => {
-    const next = JSON.parse(JSON.stringify(content));
-    next[section][index][field] = value;
-    onChange?.(next);
+    patchContent((next) => {
+      next[section][index][field] = value;
+    });
+  };
+
+  const patchItem = (section, index, fields) => {
+    patchContent((next) => {
+      Object.assign(next[section][index], fields);
+    });
+  };
+
+  const patchPersonal = (fields) => {
+    patchContent((next) => {
+      next.personal = { ...next.personal, ...fields };
+    });
   };
 
   const updateBullet = (section, itemIndex, bulletIndex, value) => {
-    const next = JSON.parse(JSON.stringify(content));
-    if (!next[section][itemIndex].bullets) next[section][itemIndex].bullets = [];
-    next[section][itemIndex].bullets[bulletIndex] = value;
-    onChange?.(next);
+    patchContent((next) => {
+      if (!next[section][itemIndex].bullets) next[section][itemIndex].bullets = [];
+      next[section][itemIndex].bullets[bulletIndex] = value;
+    });
   };
 
   const skillCategories = content.skillCategories?.length
@@ -94,14 +112,14 @@ export default function Campus2CareerTemplate({
     : SKILL_CATEGORIES.map((cat) => ({ id: cat, category: cat, items: [] }));
 
   const updateSkillCategory = (index, field, value) => {
-    const next = JSON.parse(JSON.stringify(content));
-    if (!next.skillCategories) next.skillCategories = skillCategories;
-    if (field === "items") {
-      next.skillCategories[index].items = value.split(/[,|]/).map((s) => s.trim()).filter(Boolean);
-    } else {
-      next.skillCategories[index][field] = value;
-    }
-    onChange?.(next);
+    patchContent((next) => {
+      if (!next.skillCategories) next.skillCategories = skillCategories;
+      if (field === "items") {
+        next.skillCategories[index].items = value.split(/[,|]/).map((s) => s.trim()).filter(Boolean);
+      } else {
+        next.skillCategories[index][field] = value;
+      }
+    });
   };
 
   const pageBreakBeforeProjects = true;
@@ -138,9 +156,11 @@ export default function Campus2CareerTemplate({
               value={[p.email, p.phone, p.location].filter(Boolean).join("  \t")}
               onChange={editMode ? (v) => {
                 const parts = v.split(/\t+|\s{2,}/).map((s) => s.trim());
-                update("personal.email", parts[0] || "");
-                update("personal.phone", parts[1] || "");
-                update("personal.location", parts[2] || "");
+                patchPersonal({
+                  email: parts[0] || "",
+                  phone: parts[1] || "",
+                  location: parts[2] || "",
+                });
               } : undefined}
               placeholder="email@example.com    +91 phone    City, State"
               style={{ textAlign: "center", fontSize: "9.5pt" }}
@@ -151,8 +171,10 @@ export default function Campus2CareerTemplate({
               value={[p.linkedin, p.github].filter(Boolean).join("  \t")}
               onChange={editMode ? (v) => {
                 const parts = v.split(/\t+|\s{2,}/).map((s) => s.trim());
-                update("personal.linkedin", parts[0] || "");
-                update("personal.github", parts[1] || "");
+                patchPersonal({
+                  linkedin: parts[0] || "",
+                  github: parts[1] || "",
+                });
               } : undefined}
               placeholder="linkedin.com/in/you    github.com/you"
               style={{ textAlign: "center", fontSize: "9.5pt" }}
@@ -193,9 +215,11 @@ export default function Campus2CareerTemplate({
                 value={exp.startDate && (exp.endDate || exp.current) ? `${exp.startDate} – ${exp.current ? "Present" : exp.endDate}` : exp.startDate || exp.endDate || ""}
                 onChange={editMode ? (v) => {
                   const [s, e] = v.split("–").map((x) => x.trim());
-                  updateItem("experience", i, "startDate", s || "");
-                  updateItem("experience", i, "endDate", e === "Present" ? "" : e || "");
-                  updateItem("experience", i, "current", e === "Present");
+                  patchItem("experience", i, {
+                    startDate: s || "",
+                    endDate: e === "Present" ? "" : e || "",
+                    current: e === "Present",
+                  });
                 } : undefined}
                 placeholder="MM/YYYY – MM/YYYY"
                 style={{ fontSize: "9.5pt", whiteSpace: "nowrap", textAlign: "right", minWidth: "100px" }}
@@ -243,8 +267,10 @@ export default function Campus2CareerTemplate({
                 value={[edu.endDate, edu.location].filter(Boolean).join("    ")}
                 onChange={editMode ? (v) => {
                   const parts = v.split(/\s{2,}/);
-                  updateItem("education", i, "endDate", parts[0] || "");
-                  updateItem("education", i, "location", parts[1] || "");
+                  patchItem("education", i, {
+                    endDate: parts[0] || "",
+                    location: parts[1] || "",
+                  });
                 } : undefined}
                 placeholder="2028    City"
                 style={{ fontSize: "9.5pt", textAlign: "right" }}
