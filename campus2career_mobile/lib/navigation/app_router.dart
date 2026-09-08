@@ -44,6 +44,12 @@ import '../features/student/jobs_screen.dart';
 import '../features/student/learning_platforms_screen.dart';
 import '../features/student/my_collaborations_screen.dart';
 import '../features/student/resume_import_screen.dart';
+import '../features/student/resume_center/resume_builder_screen.dart';
+import '../features/student/resume_center/resume_center_screen.dart';
+import '../features/student/resume_center/resume_insights_screen.dart';
+import '../features/student/virtual_interview/virtual_interview_live_screen.dart';
+import '../features/student/virtual_interview/virtual_interview_report_screen.dart';
+import '../features/student/virtual_interview/virtual_interview_setup_screen.dart';
 import '../features/student/learning_screen.dart';
 import '../features/student/my_courses_screen.dart';
 import '../features/student/my_learning_screen.dart';
@@ -142,6 +148,29 @@ GoRouter buildRouter(AuthProvider auth) {
       GoRoute(path: '/career-advisor', builder: (_, __) => const CareerAdvisorScreen()),
       GoRoute(path: '/interview-prep', builder: (_, __) => const InterviewPrepScreen()),
       GoRoute(path: '/resume-import', builder: (_, __) => const ResumeImportScreen()),
+      GoRoute(path: '/resume-center', builder: (_, __) => const ResumeCenterScreen()),
+      GoRoute(
+        path: '/resume-center/builder/:id',
+        builder: (_, state) => ResumeBuilderScreen(resumeId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/resume-center/insights',
+        builder: (_, state) => ResumeInsightsScreen(initialTab: state.uri.queryParameters['tab'] ?? 'jobs'),
+      ),
+      GoRoute(
+        path: '/virtual-interview',
+        builder: (_, state) => VirtualInterviewSetupScreen(
+          initialExtra: state.extra is Map ? Map<String, dynamic>.from(state.extra as Map) : null,
+        ),
+      ),
+      GoRoute(
+        path: '/virtual-interview/:sessionId/live',
+        builder: (_, state) => VirtualInterviewLiveScreen(sessionId: state.pathParameters['sessionId']!),
+      ),
+      GoRoute(
+        path: '/virtual-interview/:sessionId/report',
+        builder: (_, state) => VirtualInterviewReportScreen(sessionId: state.pathParameters['sessionId']!),
+      ),
       GoRoute(path: '/recommendations', builder: (_, __) => const JobRecommendationsScreen()),
       GoRoute(path: '/announcements', builder: (_, __) => const AnnouncementsScreen()),
       GoRoute(path: '/opportunities', builder: (_, __) => const OpportunityHubScreen()),

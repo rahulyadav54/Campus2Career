@@ -41,6 +41,26 @@ class ApiHelper {
     return _request(() => _client.dio.delete(path), parse);
   }
 
+  Future<String> getText(String path) async {
+    try {
+      final res = await _client.dio.get<String>(
+        path,
+        options: Options(responseType: ResponseType.plain, headers: {'Accept': 'text/html,text/plain,*/*'}),
+      );
+      if (res.statusCode == 401 || res.statusCode == 403) {
+        throw AuthFailure(_extractMessage(res.data));
+      }
+      if ((res.statusCode ?? 0) >= 400) {
+        throw ServerFailure(_extractMessage(res.data));
+      }
+      return res.data ?? '';
+    } on DioException catch (e) {
+      final err = e.error;
+      if (err is AppFailure) throw err;
+      throw ServerFailure();
+    }
+  }
+
   Future<T> _request<T>(Future<Response> Function() fn, T Function(dynamic)? parse) async {
     try {
       final res = await fn();

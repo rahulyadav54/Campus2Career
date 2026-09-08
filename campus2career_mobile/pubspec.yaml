@@ -1,7 +1,7 @@
 name: campus2career_mobile
 description: "Campus2Career native Android client — Academia • Industry • Students"
 publish_to: 'none'
-version: 1.0.3+4
+version: 1.1.0+5
 
 environment:
   sdk: ">=3.5.0 <4.0.0"

@@ -453,9 +453,10 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actions = [
+      ('Resume Center', Icons.description_outlined, '/resume-center'),
+      ('Virtual Interview', Icons.mic_none, '/virtual-interview'),
       ('AI Advisor', Icons.auto_awesome, '/career-advisor'),
-      ('Interview', Icons.record_voice_over_outlined, '/interview-prep'),
-      ('Resume', Icons.upload_file, '/resume-import'),
+      ('Interview Chat', Icons.record_voice_over_outlined, '/interview-prep'),
       ('Assessments', Icons.assignment_turned_in, '/assessments'),
       ('Jobs for you', Icons.star, '/recommendations'),
       ('Career', Icons.account_tree_outlined, '/career'),

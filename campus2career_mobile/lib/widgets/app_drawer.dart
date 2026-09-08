@@ -142,15 +142,19 @@ class AppDrawer extends StatelessWidget {
         _Item('Dashboard', Icons.dashboard_outlined, '/home'),
         _Item('My profile', Icons.person_outline, '/profile'),
       ]),
+      _Group('AI Career Copilot', [
+        _Item('Resume & Career Optimizer', Icons.description_outlined, '/resume-center'),
+        _Item('Virtual interviewer', Icons.mic_none, '/virtual-interview'),
+        _Item('AI career advisor', Icons.auto_awesome, '/career-advisor'),
+        _Item('Interview chat prep', Icons.record_voice_over_outlined, '/interview-prep'),
+      ]),
       _Group('Career', [
         _Item('Job openings', Icons.work_outline, '/jobs'),
         _Item('Job recommendations', Icons.star_outline, '/recommendations'),
         _Item('My applications', Icons.folder_open, '/applications'),
         _Item('Career guidance', Icons.account_tree_outlined, '/career'),
         _Item('Skill mapping', Icons.trending_up, '/skill-mapping'),
-        _Item('Interview preparation', Icons.record_voice_over_outlined, '/interview-prep'),
-        _Item('AI career advisor', Icons.auto_awesome, '/career-advisor'),
-        _Item('Import resume', Icons.upload_file, '/resume-import'),
+        _Item('Import resume to profile', Icons.upload_file, '/resume-import'),
       ]),
       _Group('Learning', [
         _Item('My courses', Icons.book_outlined, '/my-courses'),

@@ -16,6 +16,8 @@ import 'services/auth_service.dart';
 import 'services/institution_service.dart';
 import 'services/recruiter_service.dart';
 import 'services/student_service.dart';
+import 'services/interview_service.dart';
+import 'services/resume_optimizer_service.dart';
 
 Future<void> main() async {
   runZonedGuarded(() async {
@@ -53,6 +55,8 @@ class _Campus2CareerAppState extends State<Campus2CareerApp> {
   late final RecruiterService _recruiterService;
   late final AcademicianService _academicianService;
   late final InstitutionService _institutionService;
+  late final ResumeOptimizerService _resumeOptimizerService;
+  late final InterviewService _interviewService;
   late final dynamic _router;
 
   @override
@@ -71,6 +75,8 @@ class _Campus2CareerAppState extends State<Campus2CareerApp> {
     _recruiterService = RecruiterService(_apiHelper);
     _academicianService = AcademicianService(_apiHelper);
     _institutionService = InstitutionService(_apiHelper);
+    _resumeOptimizerService = ResumeOptimizerService(_apiHelper);
+    _interviewService = InterviewService(_apiHelper);
     _router = buildRouter(_authProvider);
   }
 
@@ -85,6 +91,8 @@ class _Campus2CareerAppState extends State<Campus2CareerApp> {
         Provider<RecruiterService>.value(value: _recruiterService),
         Provider<AcademicianService>.value(value: _academicianService),
         Provider<InstitutionService>.value(value: _institutionService),
+        Provider<ResumeOptimizerService>.value(value: _resumeOptimizerService),
+        Provider<InterviewService>.value(value: _interviewService),
         ChangeNotifierProvider<AuthProvider>.value(value: _authProvider),
       ],
       child: MaterialApp.router(
