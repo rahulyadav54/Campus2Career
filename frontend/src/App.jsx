@@ -91,6 +91,11 @@ import Announcements from "./pages/shared/Announcements";
 import Notifications from "./pages/shared/Notifications";
 import AdminSettings from "./pages/admin/AdminSettings";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResumeCenter from "./pages/student/ResumeCenter";
+import ResumeBuilder from "./pages/student/ResumeCenter/ResumeBuilder";
+import ResumeJobMatches from "./pages/student/ResumeCenter/JobMatches";
+import ResumeCompanies from "./pages/student/ResumeCenter/Companies";
+import ResumeSkillGaps from "./pages/student/ResumeCenter/SkillGaps";
 
 
 function ThemeSync() {
@@ -135,6 +140,11 @@ function App() {
           <Route path="interview-preparation" element={<InterviewPreparation />} />
           <Route path="virtual-interview" element={<VirtualInterviewer />} />
           <Route path="virtual-interview/:sessionId" element={<VirtualInterviewer />} />
+          <Route path="resume-center" element={<ResumeCenter />} />
+          <Route path="resume-center/builder/:resumeId" element={<ResumeBuilder />} />
+          <Route path="resume-center/jobs" element={<ResumeJobMatches />} />
+          <Route path="resume-center/companies" element={<ResumeCompanies />} />
+          <Route path="resume-center/skills" element={<ResumeSkillGaps />} />
           <Route path="skill-mapping" element={<SkillMapping />} />
           <Route path="learning" element={<LearningRecommendations />} />
           <Route path="learning-platforms" element={<LearningPlatforms />} />

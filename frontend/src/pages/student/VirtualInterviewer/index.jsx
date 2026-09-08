@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import InterviewSetup from "./InterviewSetup";
 import LiveInterview from "./LiveInterview";
 import InterviewReport from "./InterviewReport";
@@ -15,6 +15,8 @@ import { apiClient } from "../../../services/apiClient";
 export default function VirtualInterviewer() {
   const { sessionId: paramSessionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const resumePrep = location.state || {};
   const candidateMedia = useCandidateMedia();
 
   const [view, setView] = useState(paramSessionId ? "report" : "setup");
@@ -132,7 +134,16 @@ export default function VirtualInterviewer() {
   return (
     <div className="w-full min-h-full bg-gray-50">
       {view === "setup" && (
-        <InterviewSetup onStart={handleStartInterview} loading={starting} />
+        <InterviewSetup
+          onStart={handleStartInterview}
+          loading={starting}
+          initialConfig={resumePrep.fromResume ? {
+            targetRole: resumePrep.targetRole || "",
+            jobDescription: resumePrep.jobDescription || "",
+            resumeBased: true,
+            interviewType: "resume-based",
+          } : null}
+        />
       )}
 
       {view === "precheck" && activeSession && (

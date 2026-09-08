@@ -102,14 +102,15 @@ function SectionTitle({ icon: Icon, children }) {
   );
 }
 
-export default function InterviewSetup({ onStart, loading = false }) {
-  const [targetRole,    setTargetRole]    = useState("Software Engineer");
+export default function InterviewSetup({ onStart, loading = false, initialConfig = null }) {
+  const [targetRole,    setTargetRole]    = useState(initialConfig?.targetRole || "Software Engineer");
   const [customRole,    setCustomRole]    = useState("");
-  const [interviewType, setInterviewType] = useState("mixed");
+  const [interviewType, setInterviewType] = useState(initialConfig?.interviewType || "mixed");
   const [difficulty,    setDifficulty]    = useState("intermediate");
   const [personality,   setPersonality]   = useState("professional");
   const [duration,      setDuration]      = useState(10);
-  const [resumeBased,   setResumeBased]   = useState(false);
+  const [resumeBased,   setResumeBased]   = useState(initialConfig?.resumeBased ?? false);
+  const [jobDescription, setJobDescription] = useState(initialConfig?.jobDescription || "");
 
   const effectiveRole = customRole.trim() || targetRole;
 
@@ -125,6 +126,7 @@ export default function InterviewSetup({ onStart, loading = false }) {
       personality,
       durationMinutes: duration,
       resumeBased,
+      jobDescription: jobDescription.trim(),
       presenterUrl:   "/interviewer.jpeg",
     });
   };
@@ -306,6 +308,20 @@ export default function InterviewSetup({ onStart, loading = false }) {
               }`} />
             </div>
           </div>
+
+          {/* Job description for resume-based prep */}
+          {(resumeBased || jobDescription) && (
+            <div>
+              <SectionLabel icon={FileText}>Job Description (optional)</SectionLabel>
+              <textarea
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                rows={4}
+                placeholder="Paste the job description to get job-specific interview questions…"
+                className="w-full text-sm border border-gray-200 rounded-xl p-3 resize-none focus:ring-2 focus:ring-indigo-300 outline-none"
+              />
+            </div>
+          )}
 
           {/* Microphone notice */}
           <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200">

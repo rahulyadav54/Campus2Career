@@ -23,6 +23,7 @@ const roleNavConfig = {
       ]},
       { group: "AI Automation", items: [
         { label: "AI Dashboard", icon: Sparkles, path: "/student/ai-dashboard" },
+        { label: "Resume & Career Optimizer", icon: FileText, path: "/student/resume-center" },
         { label: "AI Career Mission", icon: Target, path: "/student/ai-career-mission" },
         { label: "AI Skill Gap", icon: Activity, path: "/student/ai-skill-gap" },
       ]},

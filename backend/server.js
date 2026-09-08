@@ -38,6 +38,7 @@ import aiOrchestratorRoutes from "./routes/aiOrchestratorRoutes.js";
 import skillGapRoutes from "./routes/skillGapRoutes.js";
 import opportunityScoutRoutes from "./routes/opportunityScoutRoutes.js";
 import interviewRoutes from "./routes/interviewRoutes.js";
+import resumeOptimizerRoutes from "./routes/resumeOptimizerRoutes.js";
 
 dotenv.config({ path: ".env.local" });
 dotenv.config();
@@ -144,6 +145,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/ai-automation", aiOrchestratorRoutes);
 app.use("/api/skill-gap", skillGapRoutes);
 app.use("/api/interviews", interviewRoutes);
+app.use("/api/resume-optimizer", resumeOptimizerRoutes);
 app.use("/api/opportunity-scout", opportunityScoutRoutes);
 app.use("/api/aptitude", aptitudeRoutes);
 app.use("/api/academician-opportunities", academicianOpportunityRoutes);
