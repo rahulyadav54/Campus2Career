@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
+import 'interactive_ui.dart';
 
 class EmptyState extends StatelessWidget {
   final IconData icon;
@@ -90,36 +91,19 @@ class LoadingList extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.border),
         ),
-        child: const Padding(
-          padding: EdgeInsets.all(14),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _Bone(width: 180, height: 14),
-              _Bone(width: 240, height: 12),
-              _Bone(width: 120, height: 12),
+              ShimmerBox(width: 180, height: 14, borderRadius: BorderRadius.circular(6)),
+              const Spacer(),
+              ShimmerBox(width: 240, height: 12, borderRadius: BorderRadius.circular(6)),
+              ShimmerBox(width: 120, height: 12, borderRadius: BorderRadius.circular(6)),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Bone extends StatelessWidget {
-  final double width;
-  final double height;
-  const _Bone({required this.width, required this.height});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: AppColors.divider,
-        borderRadius: BorderRadius.circular(6),
       ),
     );
   }

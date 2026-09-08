@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import '../models/resume_document.dart';
 import 'api_helper.dart';
 
@@ -85,6 +84,8 @@ class ResumeOptimizerService {
     });
     return data['gaps'] is Map ? Map<String, dynamic>.from(data['gaps']) : {};
   }
+
+  Future<String> exportHtml(String id) => _api.getText('$_base/$id/export/html');
 
   Future<Map<String, dynamic>> getInterviewContext(String id) async {
     final data = await _api.get<Map<String, dynamic>>('$_base/$id/interview-context');

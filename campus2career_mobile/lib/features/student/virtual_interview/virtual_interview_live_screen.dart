@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/interview_session.dart';
 import '../../../services/interview_service.dart';
+import '../../../widgets/interactive_ui.dart';
 
 class VirtualInterviewLiveScreen extends StatefulWidget {
   final String sessionId;
@@ -138,6 +140,7 @@ class _VirtualInterviewLiveScreenState extends State<VirtualInterviewLiveScreen>
       await Future.delayed(Duration(milliseconds: turn.thinkingPauseMs));
       await _speak(turn.speakText);
       if (mounted) setState(() => _status = 'Your turn — answer the question');
+      HapticFeedback.lightImpact();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not submit answer')));
@@ -187,25 +190,60 @@ class _VirtualInterviewLiveScreenState extends State<VirtualInterviewLiveScreen>
       ),
       body: Column(
         children: [
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: AppColors.gradientPrimary),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                Icon(_speaking ? Icons.record_voice_over : Icons.person_outline, color: Colors.white, size: 48),
-                const SizedBox(height: 12),
-                Text(_status, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 13)),
-                if (_lastScore != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text('Last answer: $_lastScore/100', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: GlassCard(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 88,
+                        height: 88,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.15),
+                          border: Border.all(color: Colors.white30, width: 2),
+                        ),
+                        child: Icon(_speaking ? Icons.record_voice_over : Icons.person_outline, color: Colors.white, size: 44),
+                      ),
+                      if (_speaking || _processing)
+                        const Positioned(right: 4, top: 4, child: LivePulse(size: 14, color: Colors.white)),
+                    ],
                   ),
-              ],
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (_speaking || _processing) ...[
+                        const TypingDots(),
+                        const SizedBox(width: 8),
+                      ],
+                      Flexible(
+                        child: Text(
+                          _status,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.92), fontSize: 13, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_lastScore != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text('Last answer: $_lastScore/100', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           Expanded(

@@ -5,7 +5,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../models/interview_session.dart';
 import '../../../services/interview_service.dart';
 import '../../../widgets/ai_feature_cards.dart';
-import '../../../widgets/state_views.dart';
 
 class VirtualInterviewSetupScreen extends StatefulWidget {
   final Map<String, dynamic>? initialExtra;

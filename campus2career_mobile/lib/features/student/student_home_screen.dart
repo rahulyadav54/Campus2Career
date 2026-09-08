@@ -11,6 +11,7 @@ import '../../../widgets/app_drawer.dart';
 import '../../../widgets/cached_avatar.dart';
 import '../../../widgets/responsive.dart';
 import '../../../widgets/sign_out_action.dart';
+import '../../../widgets/interactive_ui.dart';
 import '../../../widgets/state_views.dart';
 
 class StudentHomeScreen extends StatefulWidget {
@@ -75,6 +76,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 _GreetingCard(name: context.read<AuthProvider>().user?.name ?? 'Student'),
+                const SizedBox(height: 14),
+                CopilotBanner(
+                  onResume: () => context.push('/resume-center'),
+                  onInterview: () => context.push('/virtual-interview'),
+                ),
                 if (data.announcements.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   _AnnouncementBanner(announcements: data.announcements),
@@ -493,25 +499,38 @@ class _QuickActions extends StatelessWidget {
               mainAxisSpacing: 8,
               crossAxisSpacing: 8,
               children: actions
-                  .map((a) => InkWell(
+                  .map((a) => ScaleTap(
                         onTap: () => context.push(a.$3),
-                        borderRadius: BorderRadius.circular(12),
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppColors.background,
-                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                AppColors.surface,
+                                AppColors.primary.withValues(alpha: 0.04),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: AppColors.border),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(a.$2, color: AppColors.primary, size: 20),
-                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(a.$2, color: AppColors.primary, size: 20),
+                              ),
+                              const SizedBox(height: 6),
                               Text(a.$1,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
                             ],
                           ),
                         ),

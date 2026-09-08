@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
+import 'interactive_ui.dart';
 
 class GradientHeader extends StatelessWidget {
   final String title;
@@ -19,14 +20,21 @@ class GradientHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           colors: AppColors.gradientPrimary,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: SafeArea(
         bottom: false,
@@ -36,21 +44,21 @@ class GradientHeader extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 26),
+                  child: Icon(icon, color: Colors.white, size: 28),
                 ),
                 const Spacer(),
                 if (actions != null) ...actions!,
               ],
             ),
-            const SizedBox(height: 16),
-            Text(title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 6),
-            Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14, height: 1.4)),
+            const SizedBox(height: 18),
+            Text(title, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800, height: 1.15)),
+            const SizedBox(height: 8),
+            Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14, height: 1.45)),
           ],
         ),
       ),
@@ -58,7 +66,7 @@ class GradientHeader extends StatelessWidget {
   }
 }
 
-class ScoreRing extends StatelessWidget {
+class ScoreRing extends StatefulWidget {
   final int score;
   final String label;
   final double size;
@@ -66,28 +74,51 @@ class ScoreRing extends StatelessWidget {
   const ScoreRing({super.key, required this.score, required this.label, this.size = 88});
 
   @override
+  State<ScoreRing> createState() => _ScoreRingState();
+}
+
+class _ScoreRingState extends State<ScoreRing> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final pct = (score.clamp(0, 100)) / 100;
+    final pct = (widget.score.clamp(0, 100)) / 100;
     return Column(
       children: [
         SizedBox(
-          width: size,
-          height: size,
+          width: widget.size,
+          height: widget.size,
           child: Stack(
             alignment: Alignment.center,
             children: [
               CircularProgressIndicator(
-                value: pct,
+                value: pct * _anim.value,
                 strokeWidth: 8,
                 backgroundColor: AppColors.border,
                 color: AppColors.primary,
               ),
-              Text('$score', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              Text('${(widget.score * _anim.value).round()}',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
             ],
           ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+        Text(widget.label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -111,42 +142,43 @@ class FeatureActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+    return ScaleTap(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(color: color.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [color.withValues(alpha: 0.15), color.withValues(alpha: 0.05)],
                 ),
-                child: Icon(icon, color: color, size: 24),
+                borderRadius: BorderRadius.circular(14),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                  ],
-                ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  const SizedBox(height: 3),
+                  Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                ],
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textMuted),
-            ],
-          ),
+            ),
+            Icon(Icons.arrow_forward_ios_rounded, color: AppColors.textMuted, size: 16),
+          ],
         ),
       ),
     );

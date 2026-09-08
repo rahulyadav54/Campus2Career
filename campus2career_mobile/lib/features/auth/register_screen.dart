@@ -143,7 +143,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
-                  initialValue: _role,
+                  value: _role,
                   decoration: const InputDecoration(labelText: 'Account type'),
                   items: const [
                     DropdownMenuItem(value: 'student', child: Text('Student')),
@@ -182,7 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    initialValue: _year,
+                    value: _year,
                     decoration: const InputDecoration(labelText: 'Year'),
                     items: const [
                       DropdownMenuItem(value: '1st', child: Text('1st year')),

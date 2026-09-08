@@ -1,7 +1,7 @@
 name: campus2career_mobile
 description: "Campus2Career native Android client — Academia • Industry • Students"
 publish_to: 'none'
-version: 1.1.0+5
+version: 1.2.0+6
 
 environment:
   sdk: ">=3.5.0 <4.0.0"
@@ -37,14 +37,14 @@ dependencies:
   # Misc utilities
   intl: ^0.20.1
   package_info_plus: ^8.1.1
-  flutter_markdown_plus: ^1.0.5
+  flutter_markdown_plus: ^1.0.3
   speech_to_text: ^7.0.0
-  flutter_tts: ^4.2.2
+  flutter_tts: 3.8.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.1
 
 flutter:

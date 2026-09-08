@@ -87,7 +87,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      initialValue: _type,
+                      value: _type,
                       decoration: const InputDecoration(labelText: 'Type'),
                       items: const [
                         DropdownMenuItem(value: 'full-time', child: Text('Full-time')),
@@ -101,7 +101,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      initialValue: _mode,
+                      value: _mode,
                       decoration: const InputDecoration(labelText: 'Mode'),
                       items: const [
                         DropdownMenuItem(value: 'onsite', child: Text('Onsite')),
