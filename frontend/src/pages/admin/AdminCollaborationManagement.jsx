@@ -11,6 +11,7 @@ import {
   Presentation,
   X,
 } from "lucide-react";
+import RegistrationsPanel from "../../components/collaboration/RegistrationsPanel";
 
 const TYPES = ["workshop", "guest-lecture", "challenge", "project"];
 
@@ -27,6 +28,7 @@ export default function AdminCollaborationManagement() {
   const [activeType, setActiveType] = useState("workshop");
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [regsPanel, setRegsPanel] = useState({ open: false, item: null });
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -797,6 +799,13 @@ export default function AdminCollaborationManagement() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => setRegsPanel({ open: true, item })}
+                    className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors text-xs sm:text-sm font-medium"
+                  >
+                    <Users size={14} />
+                    Registrations
+                  </button>
+                  <button
                     onClick={() => startEdit(item)}
                     className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-xs sm:text-sm font-medium"
                   >
@@ -829,6 +838,12 @@ export default function AdminCollaborationManagement() {
           </p>
         </div>
       )}
+      <RegistrationsPanel
+        open={regsPanel.open}
+        onClose={() => setRegsPanel({ open: false, item: null })}
+        item={regsPanel.item}
+        type={activeType}
+      />
     </div>
   );
 }

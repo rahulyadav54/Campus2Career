@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { FALLBACK_PROJECTS } from "../../data/collaborationCatalog";
+import CollaborationRegistrationModal from "../../components/collaboration/CollaborationRegistrationModal";
 
 const getUserRole = () => {
   try {
@@ -25,6 +26,8 @@ export default function LiveIndustryProjects() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [regModal, setRegModal] = useState({ open: false, id: null });
+  const [regSubmitting, setRegSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -64,18 +67,29 @@ export default function LiveIndustryProjects() {
     }
   };
 
-  const handleApply = async (id) => {
+  const openRegister = (id) => {
     if (String(id).startsWith("demo-")) {
-      toast.success("Application recorded (demo listing). Connect backend seed for live applications.");
+      toast.success("Application recorded (demo listing).");
       return;
     }
+    setRegModal({ open: true, id });
+  };
+
+  const submitRegistration = async (details) => {
+    const id = regModal.id;
+    if (!id) return;
+    setRegSubmitting(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
         `${API_URL}/api/collaborations/projects/${id}/register`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(details),
         }
       );
       if (!res.ok) {
@@ -83,9 +97,12 @@ export default function LiveIndustryProjects() {
         throw new Error(data.message || "Application failed");
       }
       toast.success("Applied successfully!");
+      setRegModal({ open: false, id: null });
       fetchProjects();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setRegSubmitting(false);
     }
   };
 
@@ -395,7 +412,7 @@ export default function LiveIndustryProjects() {
               </div>
 
               <button
-                onClick={() => handleApply(project._id)}
+                onClick={() => openRegister(project._id)}
                 className="mt-3 sm:mt-5 w-full px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm sm:text-base"
               >
                 Apply Now
@@ -416,6 +433,15 @@ export default function LiveIndustryProjects() {
           </p>
         </div>
       )}
+      <CollaborationRegistrationModal
+        open={regModal.open}
+        onClose={() => setRegModal({ open: false, id: null })}
+        onSubmit={submitRegistration}
+        submitting={regSubmitting}
+        showCoverLetter
+        title="Project Application"
+        subtitle="Complete your details to apply for this live industry project."
+      />
     </div>
   );
 }

@@ -40,39 +40,58 @@ class _VirtualInterviewLiveScreenState extends State<VirtualInterviewLiveScreen>
   @override
   void initState() {
     super.initState();
-    _tts.setLanguage('en-IN');
-    _tts.setSpeechRate(0.48);
-    _tts.setCompletionHandler(() {
-      if (mounted) setState(() => _speaking = false);
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _elapsedSec++);
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bootSession());
+  }
+
+  Future<void> _bootSession() async {
+    if (!mounted) return;
+    try {
+      await _tts.setLanguage('en-IN');
+      await _tts.setSpeechRate(0.48);
+      _tts.setCompletionHandler(() {
+        if (mounted) setState(() => _speaking = false);
+      });
+    } catch (e) {
+      debugPrint('TTS init failed: $e');
+    }
+
     final extra = GoRouterState.of(context).extra;
     if (extra is InterviewStartResult) {
       _start = extra;
       _currentQuestion = extra.questionText;
       _waitingReady = extra.waitForReady;
-      _speak(extra.speakText);
+      if (mounted) setState(() {});
+      await _speak(extra.speakText);
     }
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _elapsedSec++);
-    });
   }
 
   @override
   void dispose() {
     _timer?.cancel();
     _answerCtrl.dispose();
-    _tts.stop();
+    unawaited(_tts.stop().catchError((_) {}));
+    unawaited(_speech.stop().catchError((_) {}));
     super.dispose();
   }
 
   Future<void> _speak(String text) async {
     if (text.trim().isEmpty) return;
-    setState(() {
-      _speaking = true;
-      _status = 'Interviewer is speaking…';
-    });
-    await _tts.stop();
-    await _tts.speak(text);
+    if (mounted) {
+      setState(() {
+        _speaking = true;
+        _status = 'Interviewer is speaking…';
+      });
+    }
+    try {
+      await _tts.stop();
+      await _tts.speak(text);
+    } catch (e) {
+      debugPrint('TTS speak failed: $e');
+      if (mounted) setState(() => _speaking = false);
+    }
   }
 
   Future<void> _confirmReady() async {
@@ -98,20 +117,45 @@ class _VirtualInterviewLiveScreenState extends State<VirtualInterviewLiveScreen>
 
   Future<void> _toggleListen() async {
     if (_listening) {
-      await _speech.stop();
-      setState(() => _listening = false);
+      try {
+        await _speech.stop();
+      } catch (_) {}
+      if (mounted) setState(() => _listening = false);
       return;
     }
-    final available = await _speech.initialize();
-    if (!available) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Microphone not available')));
-      return;
+    try {
+      final available = await _speech.initialize(
+        onError: (_) {
+          if (mounted) setState(() => _listening = false);
+        },
+        onStatus: (s) {
+          if ((s == 'done' || s == 'notListening') && mounted) {
+            setState(() => _listening = false);
+          }
+        },
+      );
+      if (!available) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Microphone not available. Enable mic permission in Settings.')),
+        );
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _listening = true);
+      await _speech.listen(
+        onResult: (r) => _answerCtrl.text = r.recognizedWords,
+        listenOptions: SpeechListenOptions(listenMode: ListenMode.confirmation),
+      );
+    } catch (e) {
+      debugPrint('STT failed: $e');
+      if (mounted) {
+        setState(() => _listening = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Voice input failed on this device. Type your answer instead.')),
+        );
+      }
     }
-    setState(() => _listening = true);
-    await _speech.listen(
-      onResult: (r) => _answerCtrl.text = r.recognizedWords,
-      listenMode: ListenMode.confirmation,
-    );
   }
 
   Future<void> _submit() async {

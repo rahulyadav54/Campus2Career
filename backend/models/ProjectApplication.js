@@ -1,8 +1,10 @@
 import mongoose from "mongoose";
+import { registrationDetailsSchema } from "./collaborationRegistrationDetails.js";
 
 const projectApplicationSchema = new mongoose.Schema({
   project: { type: mongoose.Schema.Types.ObjectId, ref: "LiveIndustryProject", required: true },
   student: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  details: { type: registrationDetailsSchema, required: true },
   coverLetter: { type: String },
   appliedAt: { type: Date, default: Date.now },
   status: { type: String, enum: ["applied", "shortlisted", "selected", "rejected", "withdrawn"], default: "applied" }

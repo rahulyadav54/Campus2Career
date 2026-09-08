@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { FALLBACK_LECTURES, FALLBACK_WORKSHOPS } from "../../data/collaborationCatalog";
+import CollaborationRegistrationModal from "../../components/collaboration/CollaborationRegistrationModal";
 
 const getUserRole = () => {
   try {
@@ -27,6 +28,8 @@ export default function Workshops() {
   const [lectures, setLectures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [regModal, setRegModal] = useState({ open: false, id: null });
+  const [regSubmitting, setRegSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -77,11 +80,18 @@ export default function Workshops() {
     }
   };
 
-  const handleRegister = async (id) => {
+  const openRegister = (id) => {
     if (String(id).startsWith("demo-")) {
       toast.success("Registration recorded (demo event).");
       return;
     }
+    setRegModal({ open: true, id });
+  };
+
+  const submitRegistration = async (details) => {
+    const id = regModal.id;
+    if (!id) return;
+    setRegSubmitting(true);
     try {
       const token = localStorage.getItem("token");
       const endpoint =
@@ -90,16 +100,23 @@ export default function Workshops() {
           : `${API_URL}/api/collaborations/guest-lectures/${id}/register`;
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(details),
       });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.message || "Registration failed");
       }
       toast.success("Registered successfully!");
+      setRegModal({ open: false, id: null });
       fetchData();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setRegSubmitting(false);
     }
   };
 
@@ -434,7 +451,7 @@ export default function Workshops() {
               </div>
 
               <button
-                onClick={() => handleRegister(item._id)}
+                onClick={() => openRegister(item._id)}
                 className="mt-3 sm:mt-5 w-full px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm sm:text-base"
               >
                 Register Now
@@ -457,6 +474,14 @@ export default function Workshops() {
           </p>
         </div>
       )}
+      <CollaborationRegistrationModal
+        open={regModal.open}
+        onClose={() => setRegModal({ open: false, id: null })}
+        onSubmit={submitRegistration}
+        submitting={regSubmitting}
+        title={activeTab === "workshops" ? "Workshop Registration" : "Guest Lecture Registration"}
+        subtitle="All fields are required. Your profile details are pre-filled where available."
+      />
     </div>
   );
 }

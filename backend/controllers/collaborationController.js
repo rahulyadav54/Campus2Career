@@ -6,6 +6,43 @@ import WorkshopRegistration from "../models/WorkshopRegistration.js";
 import GuestLectureRegistration from "../models/GuestLectureRegistration.js";
 import ChallengeRegistration from "../models/ChallengeRegistration.js";
 import ProjectApplication from "../models/ProjectApplication.js";
+import {
+  parseRegistrationDetails,
+  registrationsToRows,
+  exportRegistrationsCsv,
+  exportRegistrationsXlsx,
+} from "../services/collaborationRegistration.js";
+
+const REGISTRY = {
+  workshops: {
+    ItemModel: Workshop,
+    RegModel: WorkshopRegistration,
+    regField: "workshop",
+    type: "workshops",
+    countField: "registeredCount",
+  },
+  "guest-lectures": {
+    ItemModel: GuestLecture,
+    RegModel: GuestLectureRegistration,
+    regField: "guestLecture",
+    type: "guest-lectures",
+    countField: "registeredCount",
+  },
+  challenges: {
+    ItemModel: InnovationChallenge,
+    RegModel: ChallengeRegistration,
+    regField: "challenge",
+    type: "challenges",
+    countField: null,
+  },
+  projects: {
+    ItemModel: LiveIndustryProject,
+    RegModel: ProjectApplication,
+    regField: "project",
+    type: "projects",
+    countField: "applicantsCount",
+  },
+};
 
 export const listWorkshops = async (req, res) => {
   try {
@@ -190,73 +227,82 @@ export const deleteProject = async (req, res) => {
 
 export const registerForWorkshop = async (req, res) => {
   try {
-    const item = await Workshop.findById(req.params.id);
+    const cfg = REGISTRY.workshops;
+    const item = await cfg.ItemModel.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Workshop not found" });
 
-    const existing = await WorkshopRegistration.findOne({ workshop: item._id, student: req.user._id });
+    const existing = await cfg.RegModel.findOne({ workshop: item._id, student: req.user._id });
     if (existing) return res.status(400).json({ message: "Already registered for this workshop" });
 
-    await WorkshopRegistration.create({ workshop: item._id, student: req.user._id });
+    const details = parseRegistrationDetails(req.body, req.user);
+    await cfg.RegModel.create({ workshop: item._id, student: req.user._id, details });
     item.registeredCount = (item.registeredCount || 0) + 1;
     await item.save();
 
     res.json({ success: true, message: "Registered successfully", registeredCount: item.registeredCount });
   } catch (err) {
-    res.status(500).json({ message: "Failed to register", error: err.message });
+    res.status(err.statusCode || 500).json({ message: err.message || "Failed to register", error: err.message });
   }
 };
 
 export const registerForGuestLecture = async (req, res) => {
   try {
-    const item = await GuestLecture.findById(req.params.id);
+    const cfg = REGISTRY["guest-lectures"];
+    const item = await cfg.ItemModel.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Guest lecture not found" });
 
-    const existing = await GuestLectureRegistration.findOne({ guestLecture: item._id, student: req.user._id });
+    const existing = await cfg.RegModel.findOne({ guestLecture: item._id, student: req.user._id });
     if (existing) return res.status(400).json({ message: "Already registered for this guest lecture" });
 
-    await GuestLectureRegistration.create({ guestLecture: item._id, student: req.user._id });
+    const details = parseRegistrationDetails(req.body, req.user);
+    await cfg.RegModel.create({ guestLecture: item._id, student: req.user._id, details });
     item.registeredCount = (item.registeredCount || 0) + 1;
     await item.save();
 
     res.json({ success: true, message: "Registered successfully", registeredCount: item.registeredCount });
   } catch (err) {
-    res.status(500).json({ message: "Failed to register", error: err.message });
+    res.status(err.statusCode || 500).json({ message: err.message || "Failed to register", error: err.message });
   }
 };
 
 export const registerForChallenge = async (req, res) => {
   try {
-    const item = await InnovationChallenge.findById(req.params.id);
+    const cfg = REGISTRY.challenges;
+    const item = await cfg.ItemModel.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Innovation challenge not found" });
 
-    const existing = await ChallengeRegistration.findOne({ challenge: item._id, student: req.user._id });
+    const existing = await cfg.RegModel.findOne({ challenge: item._id, student: req.user._id });
     if (existing) return res.status(400).json({ message: "Already registered for this challenge" });
 
-    await ChallengeRegistration.create({
+    const details = parseRegistrationDetails(req.body, req.user, { requireTeamName: true });
+    await cfg.RegModel.create({
       challenge: item._id,
       student: req.user._id,
-      teamName: req.body?.teamName,
-      teamMembers: req.body?.teamMembers || []
+      details,
+      teamName: details.teamName,
     });
 
     res.json({ success: true, message: "Registered successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Failed to register", error: err.message });
+    res.status(err.statusCode || 500).json({ message: err.message || "Failed to register", error: err.message });
   }
 };
 
 export const applyToProject = async (req, res) => {
   try {
-    const item = await LiveIndustryProject.findById(req.params.id);
+    const cfg = REGISTRY.projects;
+    const item = await cfg.ItemModel.findById(req.params.id);
     if (!item) return res.status(404).json({ message: "Live industry project not found" });
 
-    const existing = await ProjectApplication.findOne({ project: item._id, student: req.user._id });
+    const existing = await cfg.RegModel.findOne({ project: item._id, student: req.user._id });
     if (existing) return res.status(400).json({ message: "Already applied for this project" });
 
-    await ProjectApplication.create({
+    const details = parseRegistrationDetails(req.body, req.user);
+    await cfg.RegModel.create({
       project: item._id,
       student: req.user._id,
-      coverLetter: req.body?.coverLetter
+      details,
+      coverLetter: details.coverLetter || req.body?.coverLetter,
     });
 
     item.applicantsCount = (item.applicantsCount || 0) + 1;
@@ -264,7 +310,69 @@ export const applyToProject = async (req, res) => {
 
     res.json({ success: true, message: "Applied successfully", applicantsCount: item.applicantsCount });
   } catch (err) {
-    res.status(500).json({ message: "Failed to apply", error: err.message });
+    res.status(err.statusCode || 500).json({ message: err.message || "Failed to apply", error: err.message });
+  }
+};
+
+/** Staff: list all registrations for a collaboration item */
+export const listItemRegistrations = async (req, res) => {
+  try {
+    const type = req.params.type;
+    const cfg = REGISTRY[type];
+    if (!cfg) return res.status(400).json({ message: "Invalid collaboration type" });
+
+    const item = await cfg.ItemModel.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: "Item not found" });
+
+    const filter = { [cfg.regField]: item._id };
+    const regs = await cfg.RegModel.find(filter)
+      .populate("student", "name email phone department year rollNo institution")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: regs,
+      count: regs.length,
+      item: { _id: item._id, title: item.title },
+      type,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load registrations", error: err.message });
+  }
+};
+
+/** Staff: export registrations as CSV or Excel */
+export const exportItemRegistrations = async (req, res) => {
+  try {
+    const type = req.params.type;
+    const cfg = REGISTRY[type];
+    if (!cfg) return res.status(400).json({ message: "Invalid collaboration type" });
+
+    const item = await cfg.ItemModel.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: "Item not found" });
+
+    const filter = { [cfg.regField]: item._id };
+    const regs = await cfg.RegModel.find(filter)
+      .populate("student", "name email phone department year rollNo institution")
+      .sort({ createdAt: -1 });
+
+    const rows = registrationsToRows(regs, type);
+    const safeTitle = (item.title || "registrations").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_");
+    const format = String(req.query.format || "csv").toLowerCase();
+
+    if (format === "xlsx" || format === "excel") {
+      const { content, filename, contentType } = exportRegistrationsXlsx(rows, `${safeTitle}_registrations.xlsx`);
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      return res.send(content);
+    }
+
+    const { content, filename, contentType } = exportRegistrationsCsv(rows, `${safeTitle}_registrations.csv`);
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.send(content);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to export registrations", error: err.message });
   }
 };
 

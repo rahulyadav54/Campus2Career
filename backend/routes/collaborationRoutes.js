@@ -6,7 +6,8 @@ import {
   updateWorkshop, updateGuestLecture, updateChallenge, updateProject,
   deleteWorkshop, deleteGuestLecture, deleteChallenge, deleteProject,
   registerForWorkshop, registerForGuestLecture, registerForChallenge, applyToProject,
-  getMyCollaborations, getCollaborationStats
+  getMyCollaborations, getCollaborationStats,
+  listItemRegistrations, exportItemRegistrations
 } from "../controllers/collaborationController.js";
 
 const router = express.Router();
@@ -35,6 +36,19 @@ router.delete("/challenges/:id", staffOnly, deleteChallenge);
 router.post("/projects", staffOnly, createProject);
 router.put("/projects/:id", staffOnly, updateProject);
 router.delete("/projects/:id", staffOnly, deleteProject);
+
+// Staff: view & export registrations (must be before /:type/:id/register)
+const regTypes = ["workshops", "guest-lectures", "challenges", "projects"];
+regTypes.forEach((type) => {
+  router.get(`/${type}/:id/registrations`, staffOnly, (req, res) => {
+    req.params.type = type;
+    return listItemRegistrations(req, res);
+  });
+  router.get(`/${type}/:id/registrations/export`, staffOnly, (req, res) => {
+    req.params.type = type;
+    return exportItemRegistrations(req, res);
+  });
+});
 
 // Student registration/apply actions
 router.post("/:type/:id/register", studentOnly, async (req, res) => {

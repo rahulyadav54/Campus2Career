@@ -1,8 +1,10 @@
 import mongoose from "mongoose";
+import { registrationDetailsSchema } from "./collaborationRegistrationDetails.js";
 
 const guestLectureRegistrationSchema = new mongoose.Schema({
   guestLecture: { type: mongoose.Schema.Types.ObjectId, ref: "GuestLecture", required: true },
   student: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  details: { type: registrationDetailsSchema, required: true },
   registeredAt: { type: Date, default: Date.now },
   status: { type: String, enum: ["registered", "attended", "cancelled"], default: "registered" }
 }, { timestamps: true });

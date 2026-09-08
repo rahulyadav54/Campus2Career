@@ -1,8 +1,10 @@
 import mongoose from "mongoose";
+import { registrationDetailsSchema } from "./collaborationRegistrationDetails.js";
 
 const challengeRegistrationSchema = new mongoose.Schema({
   challenge: { type: mongoose.Schema.Types.ObjectId, ref: "InnovationChallenge", required: true },
   student: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  details: { type: registrationDetailsSchema, required: true },
   teamName: { type: String },
   teamMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   registeredAt: { type: Date, default: Date.now },

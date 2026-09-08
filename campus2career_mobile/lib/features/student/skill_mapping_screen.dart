@@ -12,7 +12,7 @@ class SkillMappingScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Skill Mapping')),
       body: FutureBuilder<Map<String, dynamic>>(
-        future: context.read<ApiHelper>().get('/assessments/skill-mapping'),
+        future: context.read<ApiHelper>().get('/career/skill-mapping'),
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) return const LoadingList();
           if (snap.hasError) {
@@ -21,20 +21,36 @@ class SkillMappingScreen extends StatelessWidget {
                 onRetry: () => Navigator.pushReplacement(
                     context, MaterialPageRoute(builder: (_) => const SkillMappingScreen())));
           }
-          final data = Map<String, dynamic>.from(snap.data ?? {});
+          final raw = Map<String, dynamic>.from(snap.data ?? {});
+          final profile = Map<String, dynamic>.from(raw['studentProfile'] ?? {});
+          final strongSkills = _stringList(profile['strengths'] ?? profile['strongSkills']);
+          final improveSkills = _stringList(profile['gaps'] ?? profile['improveSkills']);
+          final industries = (raw['recommendedIndustries'] is List)
+              ? (raw['recommendedIndustries'] as List)
+                  .map((e) => Map<String, dynamic>.from(e as Map))
+                  .map((e) => e['industry']?.toString() ?? '')
+                  .where((s) => s.isNotEmpty)
+                  .toList()
+              : _stringList(profile['industryDemand']);
+
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _section('Strong skills', data['strongSkills'], AppColors.success),
+              _section('Strong skills', strongSkills, AppColors.success),
               const SizedBox(height: 10),
-              _section('Skills to improve', data['improveSkills'] ?? data['gaps'], AppColors.warning),
+              _section('Skills to improve', improveSkills, AppColors.warning),
               const SizedBox(height: 10),
-              _section('Industry demand', data['industryDemand'], AppColors.info),
+              _section('Industry demand', industries, AppColors.info),
             ],
           );
         },
       ),
     );
+  }
+
+  static List<String> _stringList(dynamic value) {
+    if (value is List) return value.map((e) => e.toString()).toList();
+    return const <String>[];
   }
 
   Widget _section(String title, dynamic items, Color color) {

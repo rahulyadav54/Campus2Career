@@ -286,11 +286,12 @@ class StudentService {
         : const <String>[];
     final skills = (j['skills'] is List)
         ? j['skills'].asMap().entries.map((e) => SkillItem(name: e.value.toString(), score: 0)).toList()
-        : const [];
+        : const <SkillItem>[];
     return SkillProfile(
       skills: skills,
       strongSkills: strong,
       improveSkills: gaps,
+      industryDemand: const <String>[],
     );
   }
 

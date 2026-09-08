@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -16,26 +16,32 @@ val keystoreProperties = Properties().apply {
 
 android {
     namespace = "com.zayacodehub.campus2career"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
         applicationId = "com.zayacodehub.campus2career"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
-        // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
-        // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
-        // flag during build.
+        // Android 6.0+ — covers virtually all active devices and required by STT/TTS plugins
+        minSdk = 23
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true
+
+        // Universal ABI coverage for phones + tablets + emulators
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
+        }
+
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     signingConfigs {
@@ -51,18 +57,55 @@ android {
 
     buildTypes {
         release {
+            // Keep off for max device stability (R8/minify can break TTS/STT plugins)
+            isMinifyEnabled = false
+            isShrinkResources = false
             if (keystoreProperties.isNotEmpty()) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
-                // Fall back to debug signing if key.properties is missing.
                 signingConfig = signingConfigs.getByName("debug")
             }
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // Helps older OEMs load Flutter/native libs reliably
+            useLegacyPackaging = true
+        }
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/*.kotlin_module",
+            )
+        }
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    implementation("androidx.multidex:multidex:2.0.1")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {

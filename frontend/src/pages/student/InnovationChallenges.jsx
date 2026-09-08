@@ -12,6 +12,7 @@ import {
   Code,
 } from "lucide-react";
 import { FALLBACK_CHALLENGES } from "../../data/collaborationCatalog";
+import CollaborationRegistrationModal from "../../components/collaboration/CollaborationRegistrationModal";
 
 const getUserRole = () => {
   try {
@@ -26,6 +27,8 @@ export default function InnovationChallenges() {
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [regModal, setRegModal] = useState({ open: false, id: null });
+  const [regSubmitting, setRegSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -64,18 +67,29 @@ export default function InnovationChallenges() {
     }
   };
 
-  const handleApply = async (id) => {
+  const openRegister = (id) => {
     if (String(id).startsWith("demo-")) {
       toast.success("Team registration recorded (demo challenge).");
       return;
     }
+    setRegModal({ open: true, id });
+  };
+
+  const submitRegistration = async (details) => {
+    const id = regModal.id;
+    if (!id) return;
+    setRegSubmitting(true);
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
         `${API_URL}/api/collaborations/challenges/${id}/register`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(details),
         }
       );
       if (!res.ok) {
@@ -83,9 +97,12 @@ export default function InnovationChallenges() {
         throw new Error(data.message || "Application failed");
       }
       toast.success("Registered successfully!");
+      setRegModal({ open: false, id: null });
       fetchChallenges();
     } catch (err) {
       toast.error(err.message);
+    } finally {
+      setRegSubmitting(false);
     }
   };
 
@@ -399,7 +416,7 @@ export default function InnovationChallenges() {
               </div>
 
               <button
-                onClick={() => handleApply(challenge._id)}
+                onClick={() => openRegister(challenge._id)}
                 disabled={challenge.status === "closed"}
                 className="mt-3 sm:mt-5 w-full px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm sm:text-base disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
@@ -423,6 +440,15 @@ export default function InnovationChallenges() {
           </p>
         </div>
       )}
+      <CollaborationRegistrationModal
+        open={regModal.open}
+        onClose={() => setRegModal({ open: false, id: null })}
+        onSubmit={submitRegistration}
+        submitting={regSubmitting}
+        showTeamFields
+        title="Challenge Team Registration"
+        subtitle="Fill in your details and team information to register."
+      />
     </div>
   );
 }
